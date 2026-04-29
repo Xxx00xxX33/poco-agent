@@ -159,6 +159,8 @@
       "assignmentDescription": "Configure the assignee, trigger mode, and schedule before you run the issue.",
       "triggerSetup": "Trigger setup",
       "triggerSetupDescription": "Keep board context intact while adjusting schedule and execution guidance.",
+      "executionStatus": "Execution status",
+      "executionStatusDescription": "Trigger, retry, or release the assignment without leaving the board.",
       "prompt": "Execution prompt",
       "promptDescription": "Keep the prompt editable without mixing it into the execution controls.",
       "executionPreview": "Execution preview",
@@ -1957,6 +1959,7 @@
     "previous": "Previous",
     "next": "Next",
     "page": "Page {{page}}",
+    "pageOf": "{{current}}/{{total}}",
     "of": "/ {{total}}",
     "rowsPerPage": "Rows per page",
     "items": "items"

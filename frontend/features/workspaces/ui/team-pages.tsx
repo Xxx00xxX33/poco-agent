@@ -470,7 +470,7 @@ export function TeamPageClient() {
                       {t("pagination.previous")}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {activityPage}/{activityTotalPages} 页
+                      {t("pagination.pageOf", { current: activityPage, total: activityTotalPages })}
                     </span>
                     <Button
                       type="button"

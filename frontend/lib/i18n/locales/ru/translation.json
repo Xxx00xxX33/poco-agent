@@ -159,6 +159,8 @@
       "assignmentDescription": "Настройте пресет, режим запуска и расписание до запуска issue.",
       "triggerSetup": "Параметры запуска",
       "triggerSetupDescription": "Сохраняйте контекст board, при необходимости дополняя расписание и инструкции для выполнения.",
+      "executionStatus": "Статус выполнения",
+      "executionStatusDescription": "Запускайте, повторяйте или освобождайте assignment, не покидая board.",
       "prompt": "Промпт выполнения",
       "promptDescription": "Промпт редактируется отдельно и не смешивается с управляющими действиями.",
       "executionPreview": "Предпросмотр выполнения",
@@ -1448,6 +1450,7 @@
         "pagination": {
           "range": "Показано {{from}}-{{to}} из {{total}}",
           "page": "Страница {{page}} / {{pages}}",
+    "pageOf": "{{current}}/{{total}}",
           "prev": "Предыдущая",
           "next": "Следующая"
         },

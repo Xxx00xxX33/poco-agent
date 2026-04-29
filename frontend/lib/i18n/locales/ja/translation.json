@@ -159,6 +159,8 @@
       "assignmentDescription": "Issue を実行する前に、担当 preset、トリガーモード、スケジュールを整理します。",
       "triggerSetup": "トリガー設定",
       "triggerSetupDescription": "board の文脈を保ったまま、必要に応じてスケジュールや実行ガイダンスを調整します。",
+      "executionStatus": "実行ステータス",
+      "executionStatusDescription": "board から離れずに、assignment のトリガー・リトライ・リリースを行います。",
       "prompt": "実行プロンプト",
       "promptDescription": "実行コントロールに混ぜずに、プロンプトだけを編集できるようにします。",
       "executionPreview": "実行プレビュー",
@@ -1448,6 +1450,7 @@
         "pagination": {
           "range": "{{from}}-{{to}} / {{total}}を表示",
           "page": "{{page}} / {{pages}}ページ",
+    "pageOf": "{{current}}/{{total}}",
           "prev": "前へ",
           "next": "次へ"
         },

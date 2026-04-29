@@ -159,6 +159,8 @@
       "assignmentDescription": "在执行事项前，先明确 preset、触发方式和调度配置。",
       "triggerSetup": "触发设置",
       "triggerSetupDescription": "保持 board 上下文不变，并在需要时补充调度与执行提示。",
+      "executionStatus": "执行状态",
+      "executionStatusDescription": "不离开当前 board，就地执行 assignment 相关动作。",
       "prompt": "执行提示词",
       "promptDescription": "把提示词编辑和执行控制拆开，避免继续堆成一个长表单。",
       "executionPreview": "执行预览",
@@ -1957,6 +1959,7 @@
     "previous": "上一页",
     "next": "下一页",
     "page": "第 {{page}} 页",
+    "pageOf": "{{current}}/{{total}} 页",
     "of": "/ {{total}} 页",
     "rowsPerPage": "每页显示",
     "items": "条"

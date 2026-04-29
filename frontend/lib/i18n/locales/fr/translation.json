@@ -159,6 +159,8 @@
       "assignmentDescription": "Configurez l’agent, le mode de déclenchement et la planification avant d’exécuter l’issue.",
       "triggerSetup": "Configuration du déclenchement",
       "triggerSetupDescription": "Conservez le contexte du board tout en ajustant la planification et les consignes d’exécution.",
+      "executionStatus": "Statut d’exécution",
+      "executionStatusDescription": "Déclenchez, relancez ou libérez l’assignment sans quitter le board.",
       "prompt": "Prompt d’exécution",
       "promptDescription": "Gardez le prompt modifiable sans le mélanger aux contrôles d’exécution.",
       "executionPreview": "Aperçu de l’exécution",
@@ -1448,6 +1450,7 @@
         "pagination": {
           "range": "Affichage {{from}}-{{to}} de {{total}}",
           "page": "Page {{page}} / {{pages}}",
+    "pageOf": "{{current}}/{{total}}",
           "prev": "Précédent",
           "next": "Suivant"
         },

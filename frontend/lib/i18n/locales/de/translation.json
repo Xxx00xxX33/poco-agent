@@ -159,6 +159,8 @@
       "assignmentDescription": "Konfigurieren Sie Assignee, Auslösemodus und Zeitplan, bevor Sie das Issue starten.",
       "triggerSetup": "Trigger-Setup",
       "triggerSetupDescription": "Behalten Sie den Board-Kontext bei und ergänzen Sie bei Bedarf Zeitplan und Ausführungshinweise.",
+      "executionStatus": "Ausführungsstatus",
+      "executionStatusDescription": "Trigger, retry oder release das Assignment, ohne das Board zu verlassen.",
       "prompt": "Ausführungsprompt",
       "promptDescription": "Der Prompt bleibt bearbeitbar, ohne mit den Ausführungssteuerungen vermischt zu werden.",
       "executionPreview": "Ausführungsvorschau",
@@ -1957,6 +1959,7 @@
     "previous": "Zurück",
     "next": "Weiter",
     "page": "Seite {{page}}",
+    "pageOf": "{{current}}/{{total}}",
     "of": "/ {{total}}",
     "rowsPerPage": "Zeilen pro Seite",
     "items": "Elemente"

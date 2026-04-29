@@ -924,10 +924,10 @@ export function TeamIssueDetailContent({
                     />
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                        执行状态
+                        {t("issues.sections.executionStatus")}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        不离开当前 board，就地执行 assignment 相关动作。
+                        {t("issues.sections.executionStatusDescription")}
                       </p>
                     </div>
                   </button>
