@@ -1,10 +1,12 @@
 import { API_ENDPOINTS, apiClient } from "@/services/api-client";
 
 import type {
+  ChannelTaskActivityMessage,
   ChannelTask,
   ChannelTaskCreateInput,
   ChannelTaskStatusUpdateInput,
   ChannelTaskStatus,
+  ChannelTaskUpdateInput,
 } from "../model/types";
 
 interface ChannelTaskResponse {
@@ -51,6 +53,39 @@ function mapTask(task: ChannelTaskResponse): ChannelTask {
   };
 }
 
+interface ChannelTaskMessageResponse {
+  message_id: string;
+  channel_id: string;
+  author_user_id?: string | null;
+  message_type: "user" | "system" | "task";
+  content: Record<string, unknown>;
+  text_preview?: string | null;
+  thread_root_message_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ChannelTaskThreadResponse {
+  root: ChannelTaskMessageResponse;
+  replies: ChannelTaskMessageResponse[];
+}
+
+function mapActivityMessage(
+  message: ChannelTaskMessageResponse,
+): ChannelTaskActivityMessage {
+  return {
+    messageId: message.message_id,
+    channelId: message.channel_id,
+    authorUserId: message.author_user_id,
+    messageType: message.message_type,
+    content: message.content,
+    textPreview: message.text_preview,
+    threadRootMessageId: message.thread_root_message_id,
+    createdAt: message.created_at,
+    updatedAt: message.updated_at,
+  };
+}
+
 export const channelTasksApi = {
   listTasks: async (serverId: string, channelId: string): Promise<ChannelTask[]> => {
     const tasks = await apiClient.get<ChannelTaskResponse[]>(
@@ -71,6 +106,30 @@ export const channelTasksApi = {
     return mapTask(task);
   },
 
+  getTask: async (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ): Promise<ChannelTask> => {
+    const task = await apiClient.get<ChannelTaskResponse>(
+      API_ENDPOINTS.serverChannelTask(serverId, channelId, taskId),
+    );
+    return mapTask(task);
+  },
+
+  updateTask: async (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+    input: ChannelTaskUpdateInput,
+  ): Promise<ChannelTask> => {
+    const task = await apiClient.patch<ChannelTaskResponse>(
+      API_ENDPOINTS.serverChannelTask(serverId, channelId, taskId),
+      input,
+    );
+    return mapTask(task);
+  },
+
   updateTaskStatus: async (
     serverId: string,
     channelId: string,
@@ -82,5 +141,40 @@ export const channelTasksApi = {
       input,
     );
     return mapTask(task);
+  },
+
+  claimTask: async (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ): Promise<ChannelTask> => {
+    const task = await apiClient.post<ChannelTaskResponse>(
+      API_ENDPOINTS.serverChannelTaskClaim(serverId, channelId, taskId),
+      {},
+    );
+    return mapTask(task);
+  },
+
+  unclaimTask: async (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ): Promise<ChannelTask> => {
+    const task = await apiClient.post<ChannelTaskResponse>(
+      API_ENDPOINTS.serverChannelTaskUnclaim(serverId, channelId, taskId),
+      {},
+    );
+    return mapTask(task);
+  },
+
+  getTaskThread: async (
+    serverId: string,
+    channelId: string,
+    threadRootMessageId: string,
+  ): Promise<ChannelTaskActivityMessage[]> => {
+    const thread = await apiClient.get<ChannelTaskThreadResponse>(
+      API_ENDPOINTS.serverChannelThread(serverId, channelId, threadRootMessageId),
+    );
+    return [thread.root, ...thread.replies].map(mapActivityMessage);
   },
 };

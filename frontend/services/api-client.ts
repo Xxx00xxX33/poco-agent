@@ -202,6 +202,8 @@ export const API_ENDPOINTS = {
     `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/claim`,
   serverChannelTaskUnclaim: (serverId: string, channelId: string, taskId: string) =>
     `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/unclaim`,
+  serverChannelThread: (serverId: string, channelId: string, threadRootMessageId: string) =>
+    `/servers/${serverId}/channels/${channelId}/threads/${threadRootMessageId}`,
 
   // Workspaces
   workspaces: "/workspaces",

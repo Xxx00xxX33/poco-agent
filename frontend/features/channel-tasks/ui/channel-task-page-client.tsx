@@ -52,6 +52,7 @@ import type {
   ChannelTaskStatus,
   ChannelTaskView,
 } from "@/features/channel-tasks/model/types";
+import { ChannelTaskDetailDialog } from "@/features/channel-tasks/ui/channel-task-detail-dialog";
 import { serversApi } from "@/features/servers";
 import type {
   ServerChannelItem,
@@ -158,11 +159,13 @@ function TaskCard({
   view,
   onDragStart,
   onDropBefore,
+  onOpenTask,
 }: {
   task: ChannelTask;
   view: ChannelTaskView;
   onDragStart?: (taskId: string) => void;
   onDropBefore?: (targetTaskId: string, status: ChannelTaskStatus) => void;
+  onOpenTask?: (taskId: string) => void;
 }) {
   const { t } = useT("translation");
   const priorityTone = PRIORITY_TONE[task.priority ?? "medium"] ?? PRIORITY_TONE.medium;
@@ -171,6 +174,7 @@ function TaskCard({
     <article
       draggable={view === "board"}
       onDragStart={() => onDragStart?.(task.taskId)}
+      onClick={() => onOpenTask?.(task.taskId)}
       onDragOver={(event) => {
         if (view === "board") {
           event.preventDefault();
@@ -238,6 +242,7 @@ export function ChannelTaskPageClient({
   const [draggingTaskId, setDraggingTaskId] = React.useState<string | null>(null);
 
   const view = resolveChannelTaskView(searchParams.get("view"));
+  const selectedTaskId = searchParams.get("task");
   const selectedServer = servers.find((server) => server.id === serverId) ?? null;
   const selectedChannel = channels.find((channel) => channel.id === channelId) ?? null;
   const columns = React.useMemo(() => buildChannelTaskColumns(tasks), [tasks]);
@@ -272,6 +277,25 @@ export function ChannelTaskPageClient({
     router.replace(`/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`, {
       scroll: false,
     });
+  };
+
+  const openTask = (taskId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("task", taskId);
+    router.replace(`/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`, {
+      scroll: false,
+    });
+  };
+
+  const closeTask = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("task");
+    router.replace(
+      `/${lng}/servers/${serverId}/channels/${channelId}${params.toString() ? `?${params.toString()}` : ""}`,
+      {
+        scroll: false,
+      },
+    );
   };
 
   const handleRefresh = async () => {
@@ -454,7 +478,12 @@ export function ChannelTaskPageClient({
                   </div>
                   <div className="grid gap-3 xl:grid-cols-2">
                     {group.tasks.map((task) => (
-                      <TaskCard key={task.taskId} task={task} view="list" />
+                      <TaskCard
+                        key={task.taskId}
+                        task={task}
+                        view="list"
+                        onOpenTask={openTask}
+                      />
                     ))}
                   </div>
                 </section>
@@ -511,6 +540,7 @@ export function ChannelTaskPageClient({
                           });
                           setDraggingTaskId(null);
                         }}
+                        onOpenTask={openTask}
                       />
                     ))}
                     <button
@@ -555,6 +585,22 @@ export function ChannelTaskPageClient({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onCreate={handleCreateTask}
+      />
+      <ChannelTaskDetailDialog
+        open={Boolean(selectedTaskId)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            closeTask();
+          }
+        }}
+        serverId={serverId}
+        channelId={channelId}
+        taskId={selectedTaskId}
+        onTaskUpdated={(nextTask) => {
+          setTasks((current) =>
+            current.map((task) => (task.taskId === nextTask.taskId ? nextTask : task)),
+          );
+        }}
       />
     </>
   );

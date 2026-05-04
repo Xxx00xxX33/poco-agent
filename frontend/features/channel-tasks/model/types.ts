@@ -37,3 +37,21 @@ export interface ChannelTaskStatusUpdateInput {
   status: ChannelTaskStatus;
   position: number;
 }
+
+export interface ChannelTaskUpdateInput {
+  title?: string;
+  description?: string | null;
+  priority?: "low" | "medium" | "high" | "urgent" | null;
+}
+
+export interface ChannelTaskActivityMessage {
+  messageId: string;
+  channelId: string;
+  authorUserId?: string | null;
+  messageType: "user" | "system" | "task";
+  content: Record<string, unknown>;
+  textPreview?: string | null;
+  threadRootMessageId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

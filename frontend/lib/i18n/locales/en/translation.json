@@ -89,7 +89,10 @@
     "actions": {
       "refresh": "Refresh",
       "newTask": "New task",
-      "createTask": "Create task"
+      "createTask": "Create task",
+      "save": "Save",
+      "claim": "Claim",
+      "unclaim": "Unclaim"
     },
     "views": {
       "list": "List",
@@ -117,11 +120,34 @@
       "title": "No tasks yet",
       "description": "Create the first task to start collaboration in this channel."
     },
+    "detail": {
+      "title": "Task detail",
+      "description": "Review the task overview, collaboration activity, and execution handoff without leaving the channel context.",
+      "overview": "Overview",
+      "overviewDescription": "Keep the task title, description, and workflow state aligned with the current collaboration plan.",
+      "activity": "Collaboration activity",
+      "activityDescription": "Task creation, claim changes, and status updates stay attached to the channel thread.",
+      "emptyActivity": "No activity yet.",
+      "execution": "Execution summary",
+      "executionDescription": "This section reserves the stable handoff point for later agent runtime work.",
+      "executionPlaceholder": "Execution summary and runtime state will attach here once the channel task flow connects to the agent runtime.",
+      "currentStatus": "Current status: {{status}}",
+      "assigneeAttached": "Assignee attached",
+      "assigneePending": "Assignee pending"
+    },
     "toasts": {
       "loadFailed": "Failed to load channel tasks",
       "created": "Task created",
       "createFailed": "Failed to create task",
-      "moveFailed": "Failed to move task"
+      "moveFailed": "Failed to move task",
+      "detailLoadFailed": "Failed to load task detail",
+      "updated": "Task updated",
+      "updateFailed": "Failed to update task",
+      "claimed": "Task claimed",
+      "unclaimed": "Task unclaimed",
+      "claimFailed": "Failed to update task claim",
+      "statusUpdated": "Task status updated",
+      "statusFailed": "Failed to update task status"
     }
   },
   "workspaces": {

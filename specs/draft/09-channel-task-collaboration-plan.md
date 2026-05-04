@@ -15,7 +15,7 @@
 - [x] Phase 0: 收敛 task 模型与旧 issue 的替代边界 (2026-05-04)
 - [x] Phase 1: 建立 channel-native task 数据契约与 API (2026-05-04)
 - [x] Phase 2: 建立频道内 board/list 双视图 (2026-05-04)
-- [ ] Phase 3: 建立 task detail、认领与 system message 协作流
+- [x] Phase 3: 建立 task detail、认领与 system message 协作流 (2026-05-04)
 - [ ] Phase 4: 验收与旧 issue 入口收口
 
 ---
@@ -262,29 +262,39 @@
 - `frontend/features/issues/lib/issue-detail-view.ts`
 - 新的 task detail 组件
 
+**实现记录：**
+
+- 新增 `frontend/features/channel-tasks/ui/channel-task-detail-dialog.tsx`
+- detail 通过 `task=<taskId>` query state 叠加在 channel 页面上，不脱离当前频道
+- detail 内已接入 task patch、claim / unclaim、status update 与 thread activity 展示
+
 **验收标准：**
 
-- [ ] task detail 支持 overview / collaboration activity / execution summary 分区
-- [ ] detail 与 channel 上下文不脱离
+- [x] task detail 支持 overview / collaboration activity / execution summary 分区
+- [x] detail 与 channel 上下文不脱离
 
 #### 3.2 定义 claim / unclaim / review 流程
 
 **描述：** 与旧 issue 相比，新 task 更强调频道协作，因此 claim 和 `in_review` 阶段要成为明确协议，而不是普通字段更新。
 
+**实现记录：** detail 内的认领按钮直接走 `claim / unclaim` API；状态切换包含 `in_review`，并在刷新 thread activity 后展示对应 system message。
+
 **验收标准：**
 
-- [ ] claim 动作会更新 assignee 并广播 system message
-- [ ] `in_review` 具有明确的产品语义和交互入口
-- [ ] 一个 task 在任意时刻只有一个活跃 assignee
+- [x] claim 动作会更新 assignee 并广播 system message
+- [x] `in_review` 具有明确的产品语义和交互入口
+- [x] 一个 task 在任意时刻只有一个活跃 assignee
 
 #### 3.3 连接后续 agent execution 入口
 
 **描述：** 当前 spec 不深入定义 agent runtime，但 task detail 需要为后续 `agent identity + persistent runtime` 留出稳定挂点。
 
+**实现记录：** detail 中新增 `execution summary` 区块，当前先展示占位说明、当前状态和 assignee 绑定状态，为后续 runtime 接入保留稳定位置。
+
 **验收标准：**
 
-- [ ] task detail 预留 execution summary / runtime state 位置
-- [ ] 新的 execution 入口不需要重新回到旧 issue 页面
+- [x] task detail 预留 execution summary / runtime state 位置
+- [x] 新的 execution 入口不需要重新回到旧 issue 页面
 
 ---
 

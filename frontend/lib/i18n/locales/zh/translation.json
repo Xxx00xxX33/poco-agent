@@ -89,7 +89,10 @@
     "actions": {
       "refresh": "刷新",
       "newTask": "新建任务",
-      "createTask": "创建任务"
+      "createTask": "创建任务",
+      "save": "保存",
+      "claim": "认领",
+      "unclaim": "取消认领"
     },
     "views": {
       "list": "列表",
@@ -117,11 +120,34 @@
       "title": "还没有任务",
       "description": "创建第一个任务，开始在这个频道里协作。"
     },
+    "detail": {
+      "title": "任务详情",
+      "description": "在不离开频道上下文的情况下查看任务概览、协作活动和后续执行挂点。",
+      "overview": "概览",
+      "overviewDescription": "让标题、描述和工作流状态与当前协作计划保持一致。",
+      "activity": "协作活动",
+      "activityDescription": "任务创建、认领变化和状态流转都会挂在同一个频道 thread 下。",
+      "emptyActivity": "还没有协作活动。",
+      "execution": "执行摘要",
+      "executionDescription": "这里预留给后续 agent runtime 接入时使用的稳定挂点。",
+      "executionPlaceholder": "等 channel task 流程接上 agent runtime 后，执行摘要和 runtime state 会出现在这里。",
+      "currentStatus": "当前状态：{{status}}",
+      "assigneeAttached": "已绑定 assignee",
+      "assigneePending": "待认领"
+    },
     "toasts": {
       "loadFailed": "加载频道任务失败",
       "created": "任务已创建",
       "createFailed": "创建任务失败",
-      "moveFailed": "移动任务失败"
+      "moveFailed": "移动任务失败",
+      "detailLoadFailed": "加载任务详情失败",
+      "updated": "任务已更新",
+      "updateFailed": "更新任务失败",
+      "claimed": "任务已认领",
+      "unclaimed": "已取消认领",
+      "claimFailed": "更新认领状态失败",
+      "statusUpdated": "任务状态已更新",
+      "statusFailed": "更新任务状态失败"
     }
   },
   "workspaces": {
