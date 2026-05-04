@@ -1,0 +1,356 @@
+# Agent persistent state and runtime isolation plan
+
+## 元数据
+
+| 字段 | 值 |
+| --- | --- |
+| **创建日期** | 2026-05-04 |
+| **预期改动范围** | backend agent models / backend dispatch semantics / executor_manager runtime lifecycle / executor workspace mounting / frontend agent detail UX / tests |
+| **改动类型** | feat |
+| **优先级** | P0 |
+| **状态** | drafting |
+
+## 实施阶段
+
+- [ ] Phase 0: 收敛 agent 边界、目录结构与非目标
+- [ ] Phase 1: 建立 `AgentIdentity / RuntimePreset / PersistentState` 模型边界
+- [ ] Phase 2: 建立单 agent 单可写 persistent runtime 语义
+- [ ] Phase 3: 建立 temporary runtime snapshot 与显式合并协议
+- [ ] Phase 4: 建立前端可见性、操作入口与验收
+
+---
+
+## 背景
+
+### 问题陈述
+
+新的 constitution 已经明确：MVP 中的 agent 不再只是一个可复用 preset 配置，而是 server / channel 协作面中的长期成员。这会立刻带来一个过去没有真正定死的问题：agent 的长期状态到底放在哪里，谁可以写，什么时候写，以及它和当前运行中的容器是什么关系。
+
+当前 Poco 已有的相关基础主要包括：
+
+- `backend/app/models/preset.py`：保存 prompt、skills、MCP、container_mode 等运行配置
+- `backend/app/models/agent_assignment.py`：把 issue 绑定到 preset 与 session
+- `executor_manager/app/services/container_pool.py`：管理 ephemeral / persistent container
+- `executor/app/core/workspace.py`：在运行实例里准备工作目录和 `.claude_data`
+
+但这套能力还没有形成“长期 agent”语义。尤其是：
+
+- preset 同时被期待承载身份、记忆、操作流程和容器策略
+- persistent container 容易被误当成长期记忆边界
+- 多任务并发时，没有清晰的“谁拥有可写长期状态”的约束
+
+在新的产品主线下，这些问题不能继续留给应用层自由发挥。否则后续 server/channel/task 协作面一旦跑起来，agent 会非常快地陷入记忆污染和运行时耦合。
+
+### 目标
+
+本计划的目标是为新的长期 agent 模型建立稳定边界。重点包括：
+
+- 把身份、运行配置、持久状态和执行 runtime 明确拆开
+- 定义 agent-owned 持久目录结构
+- 定义“每个 agent identity 任一时刻最多一个可写 persistent runtime”
+- 定义 temporary runtime 如何只读持久状态快照，并通过显式 merge 进入长期状态
+
+### 关键洞察
+
+#### 1. 持久状态的所有者必须是 agent，而不是容器
+
+容器是执行载体，agent 才是长期协作实体。长期知识、当前上下文和任务状态应首先属于 agent-owned state，而不是某个恰好仍然活着的容器。
+
+#### 2. 单写者模型是早期最重要的稳定器
+
+如果一个 agent 允许多个 runtime 共享同一份可写状态目录，`MEMORY.md`、`active-context`、工作草稿和队列状态都会立刻被并发污染。
+
+#### 3. temporary runtime 的价值在于隔离试探性执行，而不是分享写权限
+
+MVP 中 temporary runtime 的主要作用是做短任务、验证任务、边缘 case 检查。它应该读长期状态快照，但不应该拥有长期状态写权限。
+
+---
+
+## Phase 0: 收敛 agent 边界、目录结构与非目标
+
+### 目标
+
+先把 agent 的几个核心对象和目录结构钉死，避免后续实现时继续把东西塞回 preset。
+
+### 任务清单
+
+#### 0.1 定义四层对象边界
+
+**描述：** 明确以下四层的职责，作为本计划的总边界：
+
+- `AgentIdentity`：协作层身份
+- `RuntimePreset`：执行配置
+- `PersistentState`：长期状态目录
+- `RuntimeContainer`：一次执行实例
+
+**验收标准：**
+
+- [ ] spec 中明确四层边界与各自职责
+- [ ] spec 中明确 preset 不再承担完整 identity / memory / runtime 语义
+
+#### 0.2 定义持久目录最小结构
+
+**描述：** 明确 agent-owned persistent state 在 MVP 中的最小目录结构。
+
+**建议最小结构：**
+
+```text
+agents/<agent_id>/
+  profile.json
+  MEMORY.md
+  notes/
+    key-knowledge.md
+    active-context.md
+  state/
+    task-state.json
+    channel-state.json
+  artifacts/
+```
+
+**验收标准：**
+
+- [ ] spec 中明确最小目录结构
+- [ ] spec 中明确哪些文件属于长期状态入口
+
+#### 0.3 明确非目标
+
+**非目标：**
+
+- 不在本计划中引入 daemon / local runner
+- 不在本计划中做一个 agent 的多 writable runtime 并发
+- 不在本计划中自动解决 memory merge 策略的所有高级场景
+
+**验收标准：**
+
+- [ ] 非目标写明，避免后续 scope 膨胀
+
+---
+
+## Phase 1: 建立 `AgentIdentity / RuntimePreset / PersistentState` 模型边界
+
+### 目标
+
+先把数据与元数据边界建立好，为后续 runtime 生命周期和前端展示打地基。
+
+### 任务清单
+
+#### 1.1 建立 AgentIdentity 模型
+
+**描述：** 引入新的协作身份实体，让 agent 成为 server/channel 内的成员，而不是仅以 preset id 被间接引用。
+
+**建议字段：**
+
+- name / handle
+- display_name
+- description
+- avatar / visual binding
+- server scope / visibility
+- bound preset id
+- lifecycle state
+
+**涉及文件：**
+
+- `backend/app/models/preset.py`
+- `backend/app/models/workspace_member.py`
+- `backend/app/models/` — 新增 agent identity 相关模型
+- `backend/app/repositories/`
+- `backend/app/schemas/`
+- `backend/app/api/v1/`
+
+**验收标准：**
+
+- [ ] agent identity 独立于 preset 存在
+- [ ] agent identity 可成为 server/channel 协作成员
+
+#### 1.2 收敛 RuntimePreset 为执行配置来源
+
+**描述：** 明确现有 `Preset` 在新主线下的职责：它仍然是 prompt、skills、MCP、模型和 container 策略的配置来源，而不是长期记忆和身份本身。
+
+**涉及文件：**
+
+- `backend/app/models/preset.py`
+- `backend/app/services/preset_service.py`
+- `frontend/features/capabilities/presets/*`
+
+**验收标准：**
+
+- [ ] preset 的产品定位被重新定义为 runtime config
+- [ ] 不再继续把 identity / memory 字段直接塞回 preset 主体
+
+#### 1.3 建立 PersistentState 元数据与文件索引
+
+**描述：** 除了实际目录本身，后台还需要最小元数据来知道 agent 的状态目录在哪里、版本如何、最近更新时间和写入状态是什么。
+
+**涉及文件：**
+
+- `backend/app/models/`
+- `backend/app/repositories/`
+- `backend/app/schemas/`
+- `executor_manager/app/services/workspace_manager.py`
+- `executor/app/core/workspace.py`
+
+**验收标准：**
+
+- [ ] backend 能定位 agent 的持久状态目录
+- [ ] executor / manager 能按 agent identity 挂载该目录
+
+---
+
+## Phase 2: 建立单 agent 单可写 persistent runtime 语义
+
+### 目标
+
+把“一个 agent identity 任一时刻最多一个可写 persistent runtime”从口头约定变成可执行规则。
+
+### 任务清单
+
+#### 2.1 定义 persistent runtime 生命周期
+
+**描述：** 明确 persistent runtime 的创建、复用、释放和 busy 语义。
+
+**涉及文件：**
+
+- `backend/app/models/agent_assignment.py`
+- `backend/app/services/agent_assignment_service.py`
+- `backend/app/services/session_service.py`
+- `executor_manager/app/services/container_pool.py`
+- `executor_manager/app/scheduler/task_dispatcher.py`
+
+**验收标准：**
+
+- [ ] 同一 agent identity 不会并发获得两个 writable persistent runtime
+- [ ] persistent runtime 有明确的 busy / idle / failed / retired 状态
+
+#### 2.2 建立任务排队或改派协议
+
+**描述：** 当同一个 agent 已有 active writable runtime 时，新任务不能静默并发进入同一可写状态目录，需要明确策略。
+
+**MVP 可接受策略：**
+
+- 进入 agent 内部队列
+- 返回 busy 提示，要求人工改派
+
+**验收标准：**
+
+- [ ] spec 中明确 busy 时的新任务处理策略
+- [ ] 不允许“多个任务共享同一可写 runtime 并发写”
+
+#### 2.3 收敛 assignment 与 runtime 的绑定关系
+
+**描述：** 随着 task 主线切换，assignment 不再只是“issue 绑定 preset”，而应能表达“task 绑定 agent identity 和 runtime state”。
+
+**涉及文件：**
+
+- `backend/app/models/agent_assignment.py`
+- `backend/app/repositories/agent_assignment_repository.py`
+- `backend/app/schemas/agent_assignment.py`
+- `backend/app/services/agent_assignment_service.py`
+
+**验收标准：**
+
+- [ ] assignment 能表达 agent identity 级 runtime 绑定
+- [ ] runtime 状态在 task detail 中可追踪
+
+---
+
+## Phase 3: 建立 temporary runtime snapshot 与显式合并协议
+
+### 目标
+
+让 temporary runtime 成为受控的只读试探性执行层，而不是长期状态的另一个写入口。
+
+### 任务清单
+
+#### 3.1 定义 snapshot 装载协议
+
+**描述：** temporary runtime 启动时如何读取 persistent state，必须明确成 snapshot 语义，而不是共享可写挂载。
+
+**涉及文件：**
+
+- `executor_manager/app/services/workspace_manager.py`
+- `executor_manager/app/services/container_pool.py`
+- `executor/app/core/workspace.py`
+- `executor/app/hooks/workspace.py`
+
+**验收标准：**
+
+- [ ] temporary runtime 读取的是 persistent state snapshot
+- [ ] temporary runtime 默认没有长期状态目录写权限
+
+#### 3.2 定义 merge / promote 协议
+
+**描述：** temporary runtime 的输出如果要进入长期状态，必须通过显式 merge 或人工确认，而不是执行结束自动写回。
+
+**验收标准：**
+
+- [ ] spec 中明确 merge / promote 是显式动作
+- [ ] 自动执行结果不会静默污染长期记忆
+
+#### 3.3 明确临时执行与长期知识的交互边界
+
+**描述：** 区分“这次任务产出”与“值得进入长期 knowledge base 的结论”，避免把所有执行日志都塞进 MEMORY。
+
+**验收标准：**
+
+- [ ] spec 中明确长期知识、当前上下文、任务草稿三类产物的归属边界
+
+---
+
+## Phase 4: 建立前端可见性、操作入口与验收
+
+### 目标
+
+让用户在协作面里能看见 agent 的长期状态与运行时状态，而不是只能从底层 session 猜测。
+
+### 任务清单
+
+#### 4.1 建立 agent detail / status 面板
+
+**描述：** 在 channel task detail 或 agent profile 中展示：
+
+- 当前绑定 preset
+- 当前 persistent runtime 状态
+- 当前 active task
+- 最近更新时间
+- 长期状态目录摘要
+
+**涉及文件：**
+
+- `frontend/features/workspaces/*`
+- `frontend/features/issues/*`
+- 新的 `frontend/features/agents/*`（如采用）
+
+**验收标准：**
+
+- [ ] 用户能看见 agent 的身份、配置来源和 runtime 状态
+- [ ] 用户能区分 persistent runtime 与 temporary runtime
+
+#### 4.2 建立操作入口与受控动作
+
+**描述：** 至少要为以下动作预留显式入口：
+
+- 初始化 agent
+- 查看长期状态摘要
+- 触发 temporary runtime
+- 将 temporary 结果 promote 回长期状态
+
+**验收标准：**
+
+- [ ] 高风险动作不是隐藏的后台分支
+- [ ] 用户能理解什么时候在改长期状态、什么时候只是跑临时任务
+
+---
+
+## 风险与缓解
+
+| 风险 | 影响 | 缓解措施 |
+| --- | --- | --- |
+| 持久目录、preset、runtime 继续耦合 | 后续越改越像超级对象 | 在 Phase 0 和 Phase 1 显式固定四层边界 |
+| persistent runtime 忙时没有清晰策略 | 任务 silently 并发写长期状态 | 在 Phase 2 明确单写者约束和排队/改派协议 |
+| temporary runtime 共享挂载长期目录 | 长期记忆被短任务污染 | 在 Phase 3 强制 snapshot + 显式 merge |
+
+---
+
+## 总结
+
+这份 spec 的作用是把“长期 agent”从一个模糊愿景收敛成可实施的边界。完成后，Poco 的 agent 将不再只是一个 preset 驱动的短期执行入口，而是一个拥有身份、长期状态和受控 runtime 的协作成员。
