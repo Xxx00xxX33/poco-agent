@@ -1,6 +1,7 @@
 import json
 import logging
 import mimetypes
+import os
 import shutil
 import tarfile
 from dataclasses import dataclass, asdict
@@ -282,6 +283,38 @@ class WorkspaceManager:
         """Get container mount path."""
         workspace_dir = self.get_workspace_path(user_id, session_id, create=True)
         return str(workspace_dir / "workspace")
+
+    def get_agent_state_dir(self, agent_identity_id: str, create: bool = True) -> Path:
+        """Get the persistent state directory for an agent identity."""
+        agent_dir = self.base_dir / "agents" / agent_identity_id
+        if create:
+            (agent_dir / "notes").mkdir(parents=True, exist_ok=True)
+            (agent_dir / "state").mkdir(parents=True, exist_ok=True)
+            (agent_dir / "artifacts").mkdir(parents=True, exist_ok=True)
+            (agent_dir / "profile.json").touch(exist_ok=True)
+            (agent_dir / "MEMORY.md").touch(exist_ok=True)
+        return agent_dir
+
+    def create_agent_state_snapshot(
+        self,
+        agent_identity_id: str,
+        snapshot_name: str,
+    ) -> Path:
+        """Create a read-only snapshot directory for temporary runtime access."""
+        source_dir = self.get_agent_state_dir(agent_identity_id, create=True)
+        snapshot_root = self.temp_dir / "agent-snapshots" / agent_identity_id
+        snapshot_root.mkdir(parents=True, exist_ok=True)
+        snapshot_dir = snapshot_root / snapshot_name
+        if snapshot_dir.exists():
+            shutil.rmtree(snapshot_dir)
+        shutil.copytree(source_dir, snapshot_dir)
+        for current_root, current_dirs, current_files in os.walk(snapshot_dir):
+            for directory in current_dirs:
+                Path(current_root, directory).chmod(0o555)
+            for file_name in current_files:
+                Path(current_root, file_name).chmod(0o444)
+        snapshot_dir.chmod(0o555)
+        return snapshot_dir
 
     def archive_workspace(
         self,

@@ -1,7 +1,9 @@
 from app.core.database import Base, TimestampMixin
 
 from app.models.agent_assignment import AgentAssignment
+from app.models.agent_identity import AgentIdentity
 from app.models.agent_message import AgentMessage
+from app.models.agent_persistent_state import AgentPersistentState
 from app.models.agent_run import AgentRun
 from app.models.agent_scheduled_task import AgentScheduledTask
 from app.models.agent_session import AgentSession
@@ -30,6 +32,7 @@ from app.models.project_local_mount import ProjectLocalMount
 from app.models.server import Server
 from app.models.server_channel import ServerChannel
 from app.models.server_channel_message import ServerChannelMessage
+from app.models.server_channel_agent_member import ServerChannelAgentMember
 from app.models.server_channel_member import ServerChannelMember
 from app.models.server_channel_task import ServerChannelTask
 from app.models.server_invite import ServerInvite
@@ -61,7 +64,9 @@ __all__ = [
     "ActiveSession",
     "ActivityLog",
     "AgentAssignment",
+    "AgentIdentity",
     "AgentMessage",
+    "AgentPersistentState",
     "AgentRun",
     "AgentScheduledTask",
     "AgentSession",
@@ -85,6 +90,7 @@ __all__ = [
     "ProjectLocalMount",
     "Server",
     "ServerChannel",
+    "ServerChannelAgentMember",
     "ServerChannelMessage",
     "ServerChannelMember",
     "ServerChannelTask",

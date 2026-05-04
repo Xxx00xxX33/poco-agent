@@ -38,6 +38,7 @@ from app.api.v1 import (
     runs,
     schedules,
     search,
+    server_agents,
     server_channel_messages,
     server_channel_tasks,
     server_channels,
@@ -91,6 +92,8 @@ api_v1_router.include_router(claude_md.router)
 api_v1_router.include_router(models.router)
 api_v1_router.include_router(search.router)
 api_v1_router.include_router(servers.router)
+api_v1_router.include_router(server_agents.router)
+api_v1_router.include_router(server_agents.channel_router)
 api_v1_router.include_router(server_members.router)
 api_v1_router.include_router(server_invites.router)
 api_v1_router.include_router(server_invites.accept_router)

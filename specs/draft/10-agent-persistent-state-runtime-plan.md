@@ -8,12 +8,12 @@
 | **预期改动范围** | backend agent models / backend dispatch semantics / executor_manager runtime lifecycle / executor workspace mounting / frontend agent detail UX / tests |
 | **改动类型** | feat |
 | **优先级** | P0 |
-| **状态** | drafting |
+| **状态** | in-progress |
 
 ## 实施阶段
 
-- [ ] Phase 0: 收敛 agent 边界、目录结构与非目标
-- [ ] Phase 1: 建立 `AgentIdentity / RuntimePreset / PersistentState` 模型边界
+- [x] Phase 0: 收敛 agent 边界、目录结构与非目标 (2026-05-05)
+- [x] Phase 1: 建立 `AgentIdentity / RuntimePreset / PersistentState` 模型边界 (2026-05-05)
 - [ ] Phase 2: 建立单 agent 单可写 persistent runtime 语义
 - [ ] Phase 3: 建立 temporary runtime snapshot 与显式合并协议
 - [ ] Phase 4: 建立前端可见性、操作入口与验收
@@ -97,8 +97,8 @@ MVP 中 temporary runtime 的主要作用是做短任务、验证任务、边缘
 
 **验收标准：**
 
-- [ ] spec 中明确四层边界与各自职责
-- [ ] spec 中明确 preset 不再承担完整 identity / memory / runtime 语义
+- [x] spec 中明确四层边界与各自职责
+- [x] spec 中明确 preset 不再承担完整 identity / memory / runtime 语义
 
 #### 0.2 定义持久目录最小结构
 
@@ -121,8 +121,8 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] spec 中明确最小目录结构
-- [ ] spec 中明确哪些文件属于长期状态入口
+- [x] spec 中明确最小目录结构
+- [x] spec 中明确哪些文件属于长期状态入口
 
 #### 0.3 明确非目标
 
@@ -134,7 +134,7 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] 非目标写明，避免后续 scope 膨胀
+- [x] 非目标写明，避免后续 scope 膨胀
 
 ---
 
@@ -169,11 +169,19 @@ agents/<agent_id>/
 - `backend/app/schemas/`
 - `backend/app/api/v1/`
 
+**实现记录：**
+
+- 新增 `backend/app/models/agent_identity.py`
+- 新增 `backend/app/models/agent_persistent_state.py`
+- 新增 `backend/app/models/server_channel_agent_member.py`
+- 新增 `backend/app/services/agent_identity_service.py`
+- 新增 `backend/app/api/v1/server_agents.py`
+
 **验收标准：**
 
-- [ ] agent identity 独立于 preset 存在
-- [ ] agent identity 可成为 server/channel 协作成员
-- [ ] agent identity 可成为 DM 中的会话成员
+- [x] agent identity 独立于 preset 存在
+- [x] agent identity 可成为 server/channel 协作成员
+- [x] agent identity 可成为 DM 中的会话成员
 
 #### 1.2 收敛 RuntimePreset 为执行配置来源
 
@@ -187,8 +195,8 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] preset 的产品定位被重新定义为 runtime config
-- [ ] 不再继续把 identity / memory 字段直接塞回 preset 主体
+- [x] preset 的产品定位被重新定义为 runtime config
+- [x] 不再继续把 identity / memory 字段直接塞回 preset 主体
 
 #### 1.3 建立 PersistentState 元数据与文件索引
 
@@ -202,10 +210,12 @@ agents/<agent_id>/
 - `executor_manager/app/services/workspace_manager.py`
 - `executor/app/core/workspace.py`
 
+**实现记录：** `executor_manager/app/services/workspace_manager.py` 已新增 `get_agent_state_dir()` 与 `create_agent_state_snapshot()`，和 backend 的 `AgentPersistentState` 元数据形成统一目录约定。
+
 **验收标准：**
 
-- [ ] backend 能定位 agent 的持久状态目录
-- [ ] executor / manager 能按 agent identity 挂载该目录
+- [x] backend 能定位 agent 的持久状态目录
+- [x] executor / manager 能按 agent identity 挂载该目录
 
 ---
 

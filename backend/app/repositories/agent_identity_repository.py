@@ -1,0 +1,52 @@
+import uuid
+
+from sqlalchemy.orm import Session, joinedload
+
+from app.models.agent_identity import AgentIdentity
+
+
+class AgentIdentityRepository:
+    @staticmethod
+    def create(session_db: Session, agent_identity: AgentIdentity) -> AgentIdentity:
+        session_db.add(agent_identity)
+        return agent_identity
+
+    @staticmethod
+    def get_by_id(
+        session_db: Session,
+        agent_identity_id: uuid.UUID,
+    ) -> AgentIdentity | None:
+        return (
+            session_db.query(AgentIdentity)
+            .options(joinedload(AgentIdentity.persistent_state))
+            .filter(AgentIdentity.id == agent_identity_id)
+            .first()
+        )
+
+    @staticmethod
+    def get_by_server_and_handle(
+        session_db: Session,
+        server_id: uuid.UUID,
+        handle: str,
+    ) -> AgentIdentity | None:
+        return (
+            session_db.query(AgentIdentity)
+            .filter(
+                AgentIdentity.server_id == server_id,
+                AgentIdentity.handle == handle,
+            )
+            .first()
+        )
+
+    @staticmethod
+    def list_by_server(
+        session_db: Session,
+        server_id: uuid.UUID,
+    ) -> list[AgentIdentity]:
+        return (
+            session_db.query(AgentIdentity)
+            .options(joinedload(AgentIdentity.persistent_state))
+            .filter(AgentIdentity.server_id == server_id)
+            .order_by(AgentIdentity.created_at.asc(), AgentIdentity.display_name.asc())
+            .all()
+        )
