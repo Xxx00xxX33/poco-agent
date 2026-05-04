@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.models.server_channel import ServerChannel
@@ -66,6 +67,31 @@ class ServerChannelRepository:
             .order_by(ServerChannel.created_at.asc(), ServerChannel.name.asc())
             .all()
         )
+
+    @staticmethod
+    def get_direct_message(
+        session_db: Session,
+        *,
+        server_id: uuid.UUID,
+        direct_user_id: str | None,
+        direct_agent_identity_id: uuid.UUID | None,
+    ) -> ServerChannel | None:
+        query = session_db.query(ServerChannel).filter(
+            ServerChannel.server_id == server_id,
+            ServerChannel.conversation_type == "direct_message",
+            ServerChannel.archived_at.is_(None),
+        )
+        if direct_user_id is not None:
+            query = query.filter(ServerChannel.direct_user_id == direct_user_id)
+        else:
+            query = query.filter(ServerChannel.direct_user_id.is_(None))
+        if direct_agent_identity_id is not None:
+            query = query.filter(
+                ServerChannel.direct_agent_identity_id == direct_agent_identity_id
+            )
+        else:
+            query = query.filter(ServerChannel.direct_agent_identity_id.is_(None))
+        return query.first()
 
 
 class ServerChannelMemberRepository:

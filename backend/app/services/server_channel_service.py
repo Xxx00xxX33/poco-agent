@@ -7,14 +7,21 @@ from sqlalchemy.orm import Session
 from app.core.errors.error_codes import ErrorCode
 from app.core.errors.exceptions import AppException
 from app.models.server_channel import ServerChannel
+from app.models.server_channel_agent_member import ServerChannelAgentMember
 from app.models.server_channel_member import ServerChannelMember
 from app.models.user import User
+from app.repositories.agent_identity_repository import AgentIdentityRepository
+from app.repositories.server_channel_agent_member_repository import (
+    ServerChannelAgentMemberRepository,
+)
+from app.repositories.server_member_repository import ServerMemberRepository
 from app.repositories.server_channel_repository import (
     ServerChannelMemberRepository,
     ServerChannelRepository,
 )
 from app.repositories.server_repository import ServerRepository
 from app.schemas.server_channel import (
+    DirectMessageCreateRequest,
     ServerChannelCreateRequest,
     ServerChannelMemberResponse,
     ServerChannelResponse,
@@ -87,6 +94,7 @@ class ServerChannelService:
                 server_id=server.id,
                 name=name,
                 slug=self._unique_slug(db, server.id, self._slugify(name)),
+                conversation_type="channel",
                 visibility=request.visibility,
                 created_by=current_user.id,
             ),
@@ -184,3 +192,112 @@ class ServerChannelService:
         if membership is not None:
             membership.status = "left"
             db.commit()
+
+    def create_direct_message(
+        self,
+        db: Session,
+        current_user: User,
+        server_id: uuid.UUID,
+        request: DirectMessageCreateRequest,
+    ) -> ServerChannelResponse:
+        require_server_member(db, server_id, current_user.id)
+        server = ServerRepository.get_by_id(db, server_id)
+        if server is None:
+            raise AppException(
+                error_code=ErrorCode.NOT_FOUND,
+                message=f"Server not found: {server_id}",
+            )
+
+        if bool(request.target_user_id) == bool(request.target_agent_identity_id):
+            raise AppException(
+                error_code=ErrorCode.BAD_REQUEST,
+                message="Exactly one DM target must be provided",
+            )
+
+        direct_user_id = request.target_user_id
+        direct_agent_identity_id = request.target_agent_identity_id
+
+        if direct_user_id:
+            membership = ServerMemberRepository.get_by_server_and_user(
+                db,
+                server_id,
+                direct_user_id,
+            )
+            if membership is None or membership.status != "active":
+                raise AppException(
+                    error_code=ErrorCode.BAD_REQUEST,
+                    message="DM target user must be an active server member",
+                )
+
+        if direct_agent_identity_id:
+            agent_identity = AgentIdentityRepository.get_by_id(
+                db,
+                direct_agent_identity_id,
+            )
+            if agent_identity is None or agent_identity.server_id != server_id:
+                raise AppException(
+                    error_code=ErrorCode.BAD_REQUEST,
+                    message="DM target agent must belong to the same server",
+                )
+
+        existing = ServerChannelRepository.get_direct_message(
+            db,
+            server_id=server_id,
+            direct_user_id=direct_user_id,
+            direct_agent_identity_id=direct_agent_identity_id,
+        )
+        if existing is not None:
+            return self._build_channel_response(existing)
+
+        slug_seed = direct_user_id or str(direct_agent_identity_id)
+        slug = self._unique_slug(db, server.id, self._slugify(f"dm-{slug_seed}"))
+        name = (
+            f"DM {direct_user_id}"
+            if direct_user_id
+            else f"DM {str(direct_agent_identity_id)[:8]}"
+        )
+        channel = ServerChannelRepository.create(
+            db,
+            ServerChannel(
+                server_id=server.id,
+                name=name,
+                slug=slug,
+                conversation_type="direct_message",
+                visibility="private",
+                direct_user_id=direct_user_id,
+                direct_agent_identity_id=direct_agent_identity_id,
+                created_by=current_user.id,
+            ),
+        )
+        ServerChannelMemberRepository.create(
+            db,
+            ServerChannelMember(
+                channel=channel,
+                user_id=current_user.id,
+                role="owner",
+                status="active",
+            ),
+        )
+        if direct_user_id:
+            ServerChannelMemberRepository.create(
+                db,
+                ServerChannelMember(
+                    channel=channel,
+                    user_id=direct_user_id,
+                    role="member",
+                    status="active",
+                ),
+            )
+        if direct_agent_identity_id:
+            ServerChannelAgentMemberRepository.create(
+                db,
+                ServerChannelAgentMember(
+                    channel_id=channel.id,
+                    agent_identity_id=direct_agent_identity_id,
+                    role="member",
+                    status="active",
+                ),
+            )
+        db.commit()
+        db.refresh(channel)
+        return self._build_channel_response(channel)

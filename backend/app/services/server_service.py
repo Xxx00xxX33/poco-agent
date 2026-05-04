@@ -70,6 +70,7 @@ class ServerService:
                 server=server,
                 name=name,
                 slug=slug,
+                conversation_type="channel",
                 visibility=visibility,
                 created_by=current_user.id,
             ),

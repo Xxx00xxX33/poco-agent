@@ -8,12 +8,12 @@
 | **预期改动范围** | frontend server shell / conversation layout / DM and channel navigation / composer UX / thread panel / backend conversation APIs / task derivation entry / i18n copy / tests |
 | **改动类型** | feat |
 | **优先级** | P0 |
-| **状态** | drafting |
+| **状态** | in-progress |
 
 ## 实施阶段
 
-- [ ] Phase 0: 收敛 chat-first 主线与 task 派生边界
-- [ ] Phase 1: 建立 channel / DM 会话模型与成员语义
+- [x] Phase 0: 收敛 chat-first 主线与 task 派生边界 (2026-05-05)
+- [x] Phase 1: 建立 channel / DM 会话模型与成员语义 (2026-05-05)
 - [ ] Phase 2: 建立桌面端三模块三列协作布局
 - [ ] Phase 3: 建立消息、mentions、thread 与右侧上下文面板
 - [ ] Phase 4: 建立 create-as-task 流程与 task tab 投影
@@ -89,8 +89,8 @@
 
 **验收标准：**
 
-- [ ] spec 中明确 channel / DM 是主语义对象
-- [ ] spec 中明确 task 来自 conversation 中的显式派生动作
+- [x] spec 中明确 channel / DM 是主语义对象
+- [x] spec 中明确 task 来自 conversation 中的显式派生动作
 
 #### 0.2 定义和 `09` 的边界
 
@@ -98,8 +98,8 @@
 
 **验收标准：**
 
-- [ ] spec 中明确 `09` 只约束 task 子域
-- [ ] spec 中明确 chat 主页面与 task tab 的分工
+- [x] spec 中明确 `09` 只约束 task 子域
+- [x] spec 中明确 chat 主页面与 task tab 的分工
 
 ---
 
@@ -118,19 +118,31 @@
 - channel：多人共享会话
 - direct message：用户和用户、用户和 agent，或未来 agent 和 agent 的私信会话
 
+**实现记录：**
+
+- `server_channels` 已新增 `conversation_type`
+- direct message 通过独立的 `POST /servers/{server_id}/direct-messages` 创建
+- `ServerChannelResponse` 现可区分 `channel` 与 `direct_message`
+
 **验收标准：**
 
-- [ ] channel 和 DM 在产品层有统一的 conversation 语义
-- [ ] 会话成员可以是 human user 或 agent identity
+- [x] channel 和 DM 在产品层有统一的 conversation 语义
+- [x] 会话成员可以是 human user 或 agent identity
 
 #### 1.2 定义邀请与进入会话的语义
 
 **描述：** 用户必须能把人类成员或 agent 邀请进 channel，而不是仅通过 task assignee 间接拉进协作。
 
+**实现记录：**
+
+- 复用既有 human channel membership
+- 新增 `server_channel_agent_members`
+- direct message 支持以 human user 或 agent identity 作为目标创建会话
+
 **验收标准：**
 
-- [ ] spec 中明确 channel 支持邀请 human / agent 成员
-- [ ] spec 中明确 DM 是直接进入 conversation，而不是 task 详情的副产物
+- [x] spec 中明确 channel 支持邀请 human / agent 成员
+- [x] spec 中明确 DM 是直接进入 conversation，而不是 task 详情的副产物
 
 ---
 

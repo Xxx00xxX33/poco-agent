@@ -33,7 +33,25 @@ class ServerChannel(Base, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    conversation_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="channel",
+        server_default=text("'channel'"),
+        index=True,
+    )
     visibility: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    direct_user_id: Mapped[str | None] = mapped_column(
+        String(255),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    direct_agent_identity_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_identities.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_by: Mapped[str] = mapped_column(
         String(255),
         ForeignKey("users.id", ondelete="SET NULL"),

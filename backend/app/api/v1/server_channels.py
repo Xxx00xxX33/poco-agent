@@ -8,6 +8,7 @@ from app.core.deps import get_current_user, get_db
 from app.models.user import User
 from app.schemas.response import Response, ResponseSchema
 from app.schemas.server_channel import (
+    DirectMessageCreateRequest,
     ServerChannelCreateRequest,
     ServerChannelMemberResponse,
     ServerChannelResponse,
@@ -15,6 +16,10 @@ from app.schemas.server_channel import (
 from app.services.server_channel_service import ServerChannelService
 
 router = APIRouter(prefix="/servers/{server_id}/channels", tags=["server-channels"])
+dm_router = APIRouter(
+    prefix="/servers/{server_id}/direct-messages",
+    tags=["server-direct-messages"],
+)
 
 service = ServerChannelService()
 
@@ -41,6 +46,17 @@ async def create_server_channel(
 ) -> JSONResponse:
     result = service.create_channel(db, current_user, server_id, request)
     return Response.success(data=result, message="Server channel created successfully")
+
+
+@dm_router.post("", response_model=ResponseSchema[ServerChannelResponse])
+async def create_direct_message(
+    server_id: uuid.UUID,
+    request: DirectMessageCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    result = service.create_direct_message(db, current_user, server_id, request)
+    return Response.success(data=result, message="Direct message created successfully")
 
 
 @router.post("/{channel_id}/archive", response_model=ResponseSchema[ServerChannelResponse])

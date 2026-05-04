@@ -4,11 +4,12 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from app.models.server import Server
+from app.models.agent_identity import AgentIdentity
 from app.models.server_channel import ServerChannel
 from app.models.server_invite import ServerInvite
 from app.models.user import User
 from app.schemas.server import ServerCreateRequest
-from app.schemas.server_channel import ServerChannelCreateRequest
+from app.schemas.server_channel import DirectMessageCreateRequest, ServerChannelCreateRequest
 from app.schemas.server_invite import ServerInviteAcceptRequest
 from app.services.server_channel_service import ServerChannelService
 from app.services.server_invite_service import ServerInviteService
@@ -76,6 +77,7 @@ class ServerServiceTests(unittest.TestCase):
         default_channel = create_channel.call_args.args[1]
         self.assertEqual(default_channel.name, "Personal")
         self.assertEqual(default_channel.visibility, "private")
+        self.assertEqual(default_channel.conversation_type, "channel")
         create_channel_member.assert_called_once()
         self.db.commit.assert_called_once()
         self.assertEqual(result[0].kind, "personal")
@@ -125,6 +127,7 @@ class ServerServiceTests(unittest.TestCase):
         default_channel = create_channel.call_args.args[1]
         self.assertEqual(default_channel.name, "general")
         self.assertEqual(default_channel.visibility, "public")
+        self.assertEqual(default_channel.conversation_type, "channel")
         create_channel_member.assert_called_once()
         self.db.commit.assert_called_once()
         self.assertEqual(result.kind, "shared")
@@ -199,6 +202,7 @@ class ServerChannelServiceTests(unittest.TestCase):
             server_id=self.server.id,
             name="general",
             slug="general",
+            conversation_type="channel",
             visibility="public",
             created_by="user-1",
             archived_at=None,
@@ -226,6 +230,75 @@ class ServerChannelServiceTests(unittest.TestCase):
         self.db.commit.assert_called_once()
         self.assertIsNotNone(channel.archived_at)
         self.assertEqual(result.channel_id, channel.id)
+
+    def test_member_can_create_direct_message_with_agent(self) -> None:
+        service = ServerChannelService()
+        agent_identity = AgentIdentity(
+            id=uuid.uuid4(),
+            server_id=self.server.id,
+            preset_id=7,
+            handle="backend-specialist",
+            display_name="Backend Specialist",
+            description=None,
+            visual_key="preset-visual-02",
+            visibility="server",
+            lifecycle_state="active",
+            created_by="user-1",
+            updated_by="user-1",
+        )
+
+        with (
+            patch(
+                "app.services.server_channel_service.require_server_member",
+                return_value=MagicMock(status="active", role="member"),
+            ),
+            patch(
+                "app.services.server_channel_service.ServerRepository.get_by_id",
+                return_value=self.server,
+            ),
+            patch(
+                "app.services.server_channel_service.ServerChannelRepository.get_by_server_slug",
+                return_value=None,
+            ),
+            patch(
+                "app.services.server_channel_service.AgentIdentityRepository.get_by_id",
+                return_value=agent_identity,
+            ),
+            patch(
+                "app.services.server_channel_service.ServerChannelRepository.get_direct_message",
+                return_value=None,
+            ),
+            patch(
+                "app.services.server_channel_service.ServerChannelRepository.create"
+            ) as create_channel,
+            patch(
+                "app.services.server_channel_service.ServerChannelMemberRepository.create"
+            ) as create_member,
+            patch(
+                "app.services.server_channel_service.ServerChannelAgentMemberRepository.create"
+            ) as create_agent_member,
+        ):
+            def build_channel(_db, channel):
+                channel.id = uuid.uuid4()
+                channel.created_at = datetime.now(UTC)
+                channel.updated_at = datetime.now(UTC)
+                return channel
+
+            create_channel.side_effect = build_channel
+
+            result = service.create_direct_message(
+                self.db,
+                self.user,
+                self.server.id,
+                DirectMessageCreateRequest(target_agent_identity_id=agent_identity.id),
+            )
+
+        create_channel.assert_called_once()
+        create_member.assert_called_once()
+        create_agent_member.assert_called_once()
+        created_channel = create_channel.call_args.args[1]
+        self.assertEqual(created_channel.conversation_type, "direct_message")
+        self.assertEqual(result.conversation_type, "direct_message")
 
 
 class ServerInviteServiceTests(unittest.TestCase):
