@@ -236,6 +236,25 @@
       "agent": "Agent",
       "human": "Human"
     },
+    "createChannel": {
+      "title": "Create channel",
+      "name": "Name",
+      "namePlaceholder": "e.g. ai-research",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this channel about?",
+      "members": "Members",
+      "optional": "(optional)",
+      "memberSearchPlaceholder": "Search members by name",
+      "create": "Create channel"
+    },
+    "leaveConfirm": {
+      "title": "Leave channel?",
+      "description": "You will leave #{{channel}} and stop participating in this channel.",
+      "ownerTitle": "Dissolve channel?",
+      "ownerDescription": "You own #{{channel}}. Leaving will dissolve this channel for everyone.",
+      "leave": "Leave",
+      "dissolve": "Dissolve"
+    },
     "channelSettings": {
       "title": "Channel settings",
       "description": "Review channel details and administrative actions.",
@@ -309,12 +328,17 @@
       "threadFailed": "Failed to load thread",
       "dmFailed": "Failed to open direct message",
       "taskCreated": "Task created from message",
+      "channelCreated": "Channel created",
+      "channelCreateFailed": "Failed to create channel",
       "channelUpdated": "Channel updated",
       "channelUpdateFailed": "Failed to update channel",
       "channelArchived": "Channel archived",
       "channelArchiveFailed": "Failed to archive channel",
       "channelDeleted": "Channel deleted",
       "channelDeleteFailed": "Failed to delete channel",
+      "channelLeft": "Left channel",
+      "channelDissolved": "Channel dissolved",
+      "channelLeaveFailed": "Failed to leave channel",
       "memberAdded": "Member added",
       "memberAddFailed": "Failed to add member",
       "serverCreated": "Server created",

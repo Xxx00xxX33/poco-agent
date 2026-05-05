@@ -236,6 +236,25 @@
       "agent": "Agent",
       "human": "メンバー"
     },
+    "createChannel": {
+      "title": "チャンネルを作成",
+      "name": "名前",
+      "namePlaceholder": "例: ai-research",
+      "description": "説明",
+      "descriptionPlaceholder": "このチャンネルは何のためのものですか？",
+      "members": "メンバー",
+      "optional": "（任意）",
+      "memberSearchPlaceholder": "名前でメンバーを検索",
+      "create": "チャンネルを作成"
+    },
+    "leaveConfirm": {
+      "title": "チャンネルを退出しますか？",
+      "description": "#{{channel}} を退出し、このチャンネルへの参加を停止します。",
+      "ownerTitle": "チャンネルを解散しますか？",
+      "ownerDescription": "あなたは #{{channel}} の所有者です。退出すると、このチャンネルは全員に対して解散されます。",
+      "leave": "退出",
+      "dissolve": "解散"
+    },
     "channelSettings": {
       "title": "チャンネル設定",
       "description": "チャンネルの詳細と管理操作を確認します。",
@@ -309,12 +328,17 @@
       "threadFailed": "スレッドの読み込みに失敗しました",
       "dmFailed": "ダイレクトメッセージを開けませんでした",
       "taskCreated": "メッセージからタスクを作成しました",
+      "channelCreated": "チャンネルを作成しました",
+      "channelCreateFailed": "チャンネルの作成に失敗しました",
       "channelUpdated": "チャンネルを更新しました",
       "channelUpdateFailed": "チャンネルの更新に失敗しました",
       "channelArchived": "チャンネルをアーカイブしました",
       "channelArchiveFailed": "チャンネルのアーカイブに失敗しました",
       "channelDeleted": "チャンネルを削除しました",
       "channelDeleteFailed": "チャンネルの削除に失敗しました",
+      "channelLeft": "チャンネルを退出しました",
+      "channelDissolved": "チャンネルを解散しました",
+      "channelLeaveFailed": "チャンネルの退出に失敗しました",
       "memberAdded": "メンバーを追加しました",
       "memberAddFailed": "メンバーの追加に失敗しました",
       "serverCreated": "サーバーを作成しました",

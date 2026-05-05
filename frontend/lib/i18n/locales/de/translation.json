@@ -236,6 +236,25 @@
       "agent": "Agent",
       "human": "Person"
     },
+    "createChannel": {
+      "title": "Kanal erstellen",
+      "name": "Name",
+      "namePlaceholder": "z. B. ai-research",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Worum geht es in diesem Kanal?",
+      "members": "Mitglieder",
+      "optional": "(optional)",
+      "memberSearchPlaceholder": "Mitglieder nach Namen suchen",
+      "create": "Kanal erstellen"
+    },
+    "leaveConfirm": {
+      "title": "Kanal verlassen?",
+      "description": "Du verlässt #{{channel}} und nimmst nicht mehr an diesem Kanal teil.",
+      "ownerTitle": "Kanal auflösen?",
+      "ownerDescription": "Du bist Eigentümer von #{{channel}}. Beim Verlassen wird dieser Kanal für alle aufgelöst.",
+      "leave": "Verlassen",
+      "dissolve": "Auflösen"
+    },
     "channelSettings": {
       "title": "Kanaleinstellungen",
       "description": "Kanaldetails und Verwaltungsaktionen prüfen.",
@@ -309,12 +328,17 @@
       "threadFailed": "Thread konnte nicht geladen werden",
       "dmFailed": "Direktnachricht konnte nicht geöffnet werden",
       "taskCreated": "Aufgabe aus Nachricht erstellt",
+      "channelCreated": "Kanal erstellt",
+      "channelCreateFailed": "Kanal konnte nicht erstellt werden",
       "channelUpdated": "Kanal aktualisiert",
       "channelUpdateFailed": "Kanal konnte nicht aktualisiert werden",
       "channelArchived": "Kanal archiviert",
       "channelArchiveFailed": "Kanal konnte nicht archiviert werden",
       "channelDeleted": "Kanal gelöscht",
       "channelDeleteFailed": "Kanal konnte nicht gelöscht werden",
+      "channelLeft": "Kanal verlassen",
+      "channelDissolved": "Kanal aufgelöst",
+      "channelLeaveFailed": "Kanal konnte nicht verlassen werden",
       "memberAdded": "Mitglied hinzugefügt",
       "memberAddFailed": "Mitglied konnte nicht hinzugefügt werden",
       "serverCreated": "Server erstellt",

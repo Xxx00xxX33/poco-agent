@@ -236,6 +236,25 @@
       "agent": "Агент",
       "human": "Участник"
     },
+    "createChannel": {
+      "title": "Создать канал",
+      "name": "Название",
+      "namePlaceholder": "например, ai-research",
+      "description": "Описание",
+      "descriptionPlaceholder": "О чём этот канал?",
+      "members": "Участники",
+      "optional": "(необязательно)",
+      "memberSearchPlaceholder": "Искать участников по имени",
+      "create": "Создать канал"
+    },
+    "leaveConfirm": {
+      "title": "Покинуть канал?",
+      "description": "Вы покинете #{{channel}} и больше не будете участвовать в этом канале.",
+      "ownerTitle": "Расформировать канал?",
+      "ownerDescription": "Вы владелец #{{channel}}. Если вы покинете его, канал будет расформирован для всех.",
+      "leave": "Покинуть",
+      "dissolve": "Расформировать"
+    },
     "channelSettings": {
       "title": "Настройки канала",
       "description": "Просматривайте сведения о канале и административные действия.",
@@ -309,12 +328,17 @@
       "threadFailed": "Не удалось загрузить тред",
       "dmFailed": "Не удалось открыть личное сообщение",
       "taskCreated": "Задача создана из сообщения",
+      "channelCreated": "Канал создан",
+      "channelCreateFailed": "Не удалось создать канал",
       "channelUpdated": "Канал обновлён",
       "channelUpdateFailed": "Не удалось обновить канал",
       "channelArchived": "Канал архивирован",
       "channelArchiveFailed": "Не удалось архивировать канал",
       "channelDeleted": "Канал удалён",
       "channelDeleteFailed": "Не удалось удалить канал",
+      "channelLeft": "Вы покинули канал",
+      "channelDissolved": "Канал расформирован",
+      "channelLeaveFailed": "Не удалось покинуть канал",
       "memberAdded": "Участник добавлен",
       "memberAddFailed": "Не удалось добавить участника",
       "serverCreated": "Сервер создан",

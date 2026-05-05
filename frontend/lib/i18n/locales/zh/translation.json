@@ -236,6 +236,25 @@
       "agent": "Agent",
       "human": "成员"
     },
+    "createChannel": {
+      "title": "创建频道",
+      "name": "名称",
+      "namePlaceholder": "例如：ai-research",
+      "description": "描述",
+      "descriptionPlaceholder": "这个频道用于什么？",
+      "members": "成员",
+      "optional": "（可选）",
+      "memberSearchPlaceholder": "按名称搜索成员",
+      "create": "创建频道"
+    },
+    "leaveConfirm": {
+      "title": "离开频道？",
+      "description": "你将离开 #{{channel}}，不再参与这个频道。",
+      "ownerTitle": "解散频道？",
+      "ownerDescription": "你是 #{{channel}} 的所有者。离开会为所有人解散这个频道。",
+      "leave": "离开",
+      "dissolve": "解散"
+    },
     "channelSettings": {
       "title": "频道设置",
       "description": "查看频道详情和管理动作。",
@@ -309,12 +328,17 @@
       "threadFailed": "加载 thread 失败",
       "dmFailed": "打开私信失败",
       "taskCreated": "已从消息创建任务",
+      "channelCreated": "频道已创建",
+      "channelCreateFailed": "创建频道失败",
       "channelUpdated": "频道已更新",
       "channelUpdateFailed": "更新频道失败",
       "channelArchived": "频道已归档",
       "channelArchiveFailed": "归档频道失败",
       "channelDeleted": "频道已删除",
       "channelDeleteFailed": "删除频道失败",
+      "channelLeft": "已离开频道",
+      "channelDissolved": "频道已解散",
+      "channelLeaveFailed": "离开频道失败",
       "memberAdded": "成员已添加",
       "memberAddFailed": "添加成员失败",
       "serverCreated": "服务器已创建",

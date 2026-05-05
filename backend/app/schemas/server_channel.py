@@ -10,7 +10,10 @@ ServerConversationType = Literal["channel", "direct_message"]
 
 class ServerChannelCreateRequest(BaseModel):
     name: str
+    description: str | None = None
     visibility: ServerChannelVisibility = "public"
+    member_user_ids: list[str] = Field(default_factory=list)
+    agent_identity_ids: list[UUID] = Field(default_factory=list)
 
 
 class ServerChannelUpdateRequest(BaseModel):

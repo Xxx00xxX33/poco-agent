@@ -119,11 +119,38 @@ class ServerChannelService:
                 server_id=server.id,
                 name=name,
                 slug=self._unique_slug(db, server.id, self._slugify(name)),
+                description=request.description.strip()
+                if request.description is not None
+                else None,
                 conversation_type="channel",
                 visibility=request.visibility,
                 created_by=current_user.id,
             ),
         )
+        db.flush()
+        member_user_ids = {
+            item.strip() for item in request.member_user_ids if item.strip()
+        }
+        member_user_ids.discard(current_user.id)
+        for user_id in member_user_ids:
+            server_member = ServerMemberRepository.get_by_server_and_user(
+                db,
+                server.id,
+                user_id,
+            )
+            if server_member is None or server_member.status != "active":
+                raise AppException(
+                    error_code=ErrorCode.BAD_REQUEST,
+                    message=f"User is not an active server member: {user_id}",
+                )
+        agent_identity_ids = set(request.agent_identity_ids)
+        for agent_identity_id in agent_identity_ids:
+            agent_identity = AgentIdentityRepository.get_by_id(db, agent_identity_id)
+            if agent_identity is None or agent_identity.server_id != server.id:
+                raise AppException(
+                    error_code=ErrorCode.BAD_REQUEST,
+                    message=f"Agent identity is not in this server: {agent_identity_id}",
+                )
         ServerChannelMemberRepository.create(
             db,
             ServerChannelMember(
@@ -133,6 +160,26 @@ class ServerChannelService:
                 status="active",
             ),
         )
+        for user_id in member_user_ids:
+            ServerChannelMemberRepository.create(
+                db,
+                ServerChannelMember(
+                    channel=channel,
+                    user_id=user_id,
+                    role="member",
+                    status="active",
+                ),
+            )
+        for agent_identity_id in agent_identity_ids:
+            ServerChannelAgentMemberRepository.create(
+                db,
+                ServerChannelAgentMember(
+                    channel_id=channel.id,
+                    agent_identity_id=agent_identity_id,
+                    role="member",
+                    status="active",
+                ),
+            )
         db.commit()
         db.refresh(channel)
         return self._build_channel_response(channel)
@@ -358,6 +405,10 @@ class ServerChannelService:
             current_user.id,
         )
         if membership is not None:
+            if membership.role == "owner":
+                ServerChannelRepository.delete(db, channel)
+                db.commit()
+                return
             membership.status = "left"
             db.commit()
 

@@ -236,6 +236,25 @@
       "agent": "Agent",
       "human": "Humain"
     },
+    "createChannel": {
+      "title": "Créer un canal",
+      "name": "Nom",
+      "namePlaceholder": "ex. ai-research",
+      "description": "Description",
+      "descriptionPlaceholder": "Quel est l’objet de ce canal ?",
+      "members": "Membres",
+      "optional": "(facultatif)",
+      "memberSearchPlaceholder": "Rechercher des membres par nom",
+      "create": "Créer le canal"
+    },
+    "leaveConfirm": {
+      "title": "Quitter le canal ?",
+      "description": "Vous quitterez #{{channel}} et ne participerez plus à ce canal.",
+      "ownerTitle": "Dissoudre le canal ?",
+      "ownerDescription": "Vous êtes propriétaire de #{{channel}}. Le quitter dissoudra ce canal pour tout le monde.",
+      "leave": "Quitter",
+      "dissolve": "Dissoudre"
+    },
     "channelSettings": {
       "title": "Paramètres du canal",
       "description": "Consultez les détails du canal et les actions d’administration.",
@@ -309,12 +328,17 @@
       "threadFailed": "Impossible de charger le fil",
       "dmFailed": "Impossible d’ouvrir le message direct",
       "taskCreated": "Tâche créée depuis le message",
+      "channelCreated": "Canal créé",
+      "channelCreateFailed": "Impossible de créer le canal",
       "channelUpdated": "Canal mis à jour",
       "channelUpdateFailed": "Impossible de mettre à jour le canal",
       "channelArchived": "Canal archivé",
       "channelArchiveFailed": "Impossible d’archiver le canal",
       "channelDeleted": "Canal supprimé",
       "channelDeleteFailed": "Impossible de supprimer le canal",
+      "channelLeft": "Canal quitté",
+      "channelDissolved": "Canal dissous",
+      "channelLeaveFailed": "Impossible de quitter le canal",
       "memberAdded": "Membre ajouté",
       "memberAddFailed": "Impossible d’ajouter le membre",
       "serverCreated": "Serveur créé",

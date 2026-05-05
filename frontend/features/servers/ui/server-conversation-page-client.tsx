@@ -4,10 +4,12 @@ import * as React from "react";
 import {
   Archive,
   Bot,
+  Check,
   ChevronLeft,
   Hash,
   Lock,
   Plus,
+  Search,
   Settings2,
   Trash2,
   UserRound,
@@ -16,6 +18,16 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +54,7 @@ import type {
   ServerChannelMemberItem,
   ServerConversationMessage,
   ServerItem,
+  ServerMemberItem,
 } from "@/features/servers/model/types";
 import { useServerMembership } from "@/features/servers/hooks/use-server-membership";
 import {
@@ -199,6 +212,7 @@ function ConversationContent({
   onOpenThread,
   onOpenSettings,
   onOpenMembers,
+  onOpenLeaveConfirm,
   onToggleSaved,
   isSending,
   currentUserId,
@@ -217,6 +231,7 @@ function ConversationContent({
   onOpenThread: (message: ServerConversationMessage) => void;
   onOpenSettings: () => void;
   onOpenMembers: () => void;
+  onOpenLeaveConfirm: () => void;
   onToggleSaved: (messageId: string) => void;
   isSending: boolean;
   currentUserId?: string | null;
@@ -278,7 +293,13 @@ function ConversationContent({
             >
               <Settings2 className="size-4" />
             </Button>
-            <Button type="button" variant="outline" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onOpenLeaveConfirm}
+              disabled={!channel}
+            >
               {t("conversationView.leave")}
             </Button>
             <Button
@@ -385,6 +406,252 @@ function ConversationContent({
         </div>
       </div>
     </section>
+  );
+}
+
+function CreateChannelDialog({
+  open,
+  agents,
+  members,
+  currentUserId,
+  onOpenChange,
+  onCreate,
+}: {
+  open: boolean;
+  agents: ServerAgentItem[];
+  members: ServerMemberItem[];
+  currentUserId?: string | null;
+  onOpenChange: (open: boolean) => void;
+  onCreate: (input: {
+    name: string;
+    description: string;
+    memberUserIds: string[];
+    agentIdentityIds: string[];
+  }) => Promise<void>;
+}) {
+  const { t } = useT("translation");
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [memberSearch, setMemberSearch] = React.useState("");
+  const [selectedHumanIds, setSelectedHumanIds] = React.useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectedAgentIds, setSelectedAgentIds] = React.useState<Set<string>>(
+    () => new Set(),
+  );
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) {
+      setName("");
+      setDescription("");
+      setMemberSearch("");
+      setSelectedHumanIds(new Set());
+      setSelectedAgentIds(new Set());
+      setIsSubmitting(false);
+    }
+  }, [open]);
+
+  const keyword = memberSearch.trim().toLowerCase();
+  const visibleAgents = agents.filter((agent) => {
+    if (!keyword) {
+      return true;
+    }
+    return `${agent.displayName} ${agent.handle}`.toLowerCase().includes(keyword);
+  });
+  const visibleMembers = members
+    .filter((member) => member.status === "active" && member.userId !== currentUserId)
+    .filter((member) => {
+      if (!keyword) {
+        return true;
+      }
+      return member.userId.toLowerCase().includes(keyword);
+    });
+
+  const toggleSelected = (
+    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
+    id: string,
+  ) => {
+    setter((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name.trim()) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await onCreate({
+        name,
+        description,
+        memberUserIds: Array.from(selectedHumanIds),
+        agentIdentityIds: Array.from(selectedAgentIds),
+      });
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md border-2 border-border p-0 shadow-[var(--shadow-lg)] sm:rounded-md">
+        <form onSubmit={(event) => void handleSubmit(event)}>
+          <DialogHeader className="border-b border-border px-6 py-5 text-left">
+            <DialogTitle className="text-lg font-semibold uppercase tracking-[0.08em]">
+              {t("conversationView.createChannel.title")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 px-6 py-5">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
+                {t("conversationView.createChannel.name")}{" "}
+                <span className="text-primary">*</span>
+              </label>
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t("conversationView.createChannel.namePlaceholder")}
+                className="h-11 rounded-none border-2 border-border bg-background text-base shadow-none"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
+                {t("conversationView.createChannel.description")}{" "}
+                <span className="text-muted-foreground">
+                  {t("conversationView.createChannel.optional")}
+                </span>
+              </label>
+              <Textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder={t(
+                  "conversationView.createChannel.descriptionPlaceholder",
+                )}
+                rows={3}
+                className="rounded-none border-2 border-border bg-background text-base shadow-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
+                {t("conversationView.createChannel.members")}{" "}
+                <span className="text-muted-foreground">
+                  {t("conversationView.createChannel.optional")}
+                </span>
+              </label>
+              <div className="flex h-11 items-center gap-2 border-2 border-border bg-background px-3">
+                <Search className="size-4 text-muted-foreground" />
+                <input
+                  value={memberSearch}
+                  onChange={(event) => setMemberSearch(event.target.value)}
+                  placeholder={t(
+                    "conversationView.createChannel.memberSearchPlaceholder",
+                  )}
+                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+              <div className="max-h-72 overflow-y-auto border-2 border-border bg-background p-2">
+                <div className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("conversationView.members.agents")}
+                </div>
+                <div className="space-y-1">
+                  {visibleAgents.map((agent) => {
+                    const selected = selectedAgentIds.has(agent.id);
+                    return (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() =>
+                          toggleSelected(setSelectedAgentIds, agent.id)
+                        }
+                        className={cn(
+                          "flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors",
+                          selected
+                            ? "bg-primary/15 text-foreground"
+                            : "hover:bg-muted/30",
+                        )}
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
+                          <Bot className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {agent.displayName || agent.handle}
+                        </span>
+                        {selected ? <Check className="size-4 text-primary" /> : null}
+                      </button>
+                    );
+                  })}
+                  {visibleAgents.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      {t("conversationView.members.noAgents")}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="mt-3 px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("conversationView.members.humans")}
+                </div>
+                <div className="space-y-1">
+                  {visibleMembers.map((member) => {
+                    const selected = selectedHumanIds.has(member.userId);
+                    return (
+                      <button
+                        key={member.userId}
+                        type="button"
+                        onClick={() =>
+                          toggleSelected(setSelectedHumanIds, member.userId)
+                        }
+                        className={cn(
+                          "flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors",
+                          selected
+                            ? "bg-primary/15 text-foreground"
+                            : "hover:bg-muted/30",
+                        )}
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
+                          <UserRound className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {member.userId}
+                        </span>
+                        {selected ? <Check className="size-4 text-primary" /> : null}
+                      </button>
+                    );
+                  })}
+                  {visibleMembers.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      {t("conversationView.members.noHumans")}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="grid grid-cols-2 gap-2 border-t border-border px-6 py-5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button type="submit" disabled={isSubmitting || !name.trim()}>
+              {t("conversationView.createChannel.create")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -691,10 +958,13 @@ export function ServerConversationPageClient({
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [membersOpen, setMembersOpen] = React.useState(false);
   const [serverAccessOpen, setServerAccessOpen] = React.useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = React.useState(false);
+  const [leaveChannelOpen, setLeaveChannelOpen] = React.useState(false);
   const [agentPresetOpen, setAgentPresetOpen] = React.useState(false);
   const [colleagueDetailClosed, setColleagueDetailClosed] =
     React.useState(false);
   const [isArchivingChannel, setIsArchivingChannel] = React.useState(false);
+  const [isLeavingChannel, setIsLeavingChannel] = React.useState(false);
 
   const switchServer = React.useCallback(
     (nextServerId: string) => {
@@ -781,6 +1051,14 @@ export function ServerConversationPageClient({
   const humanCandidates = React.useMemo(
     () => buildHumanMentionCandidates(channelMembers),
     [channelMembers],
+  );
+  const isChannelOwner = Boolean(
+    selectedChannel &&
+      profile?.id &&
+      (selectedChannel.createdBy === profile.id ||
+        channelMembers.some(
+          (member) => member.userId === profile.id && member.role === "owner",
+        )),
   );
 
   const allFeedItems = React.useMemo<FeedItem[]>(() => {
@@ -1203,6 +1481,73 @@ export function ServerConversationPageClient({
     }
   };
 
+  const handleCreateChannel = async (input: {
+    name: string;
+    description: string;
+    memberUserIds: string[];
+    agentIdentityIds: string[];
+  }) => {
+    if (!selectedServerId) {
+      return;
+    }
+    try {
+      const channel = await serversApi.createChannel(selectedServerId, {
+        name: input.name.trim(),
+        description: input.description.trim() || null,
+        memberUserIds: input.memberUserIds,
+        agentIdentityIds: input.agentIdentityIds,
+      });
+      setChannels((current) => [...current, channel]);
+      setMessagesByChannel((current) => ({
+        ...current,
+        [channel.id]: [],
+      }));
+      toast.success(t("conversationView.toasts.channelCreated"));
+      openChannel(channel);
+    } catch (error) {
+      console.error("[ServersWorkspace] create channel failed", error);
+      toast.error(t("conversationView.toasts.channelCreateFailed"));
+      throw error;
+    }
+  };
+
+  const handleLeaveChannel = async () => {
+    if (!selectedServerId || !activeChannelId) {
+      return;
+    }
+    setIsLeavingChannel(true);
+    try {
+      await serversApi.leaveChannel(selectedServerId, activeChannelId);
+      setChannels((current) =>
+        current.filter((channel) => channel.id !== activeChannelId),
+      );
+      setMessagesByChannel((current) => {
+        const next = { ...current };
+        delete next[activeChannelId];
+        return next;
+      });
+      setLeaveChannelOpen(false);
+      saveLastSelection({
+        mode: "search",
+        serverId: selectedServerId,
+        channelId: null,
+      });
+      router.replace(`/${lng}/servers?mode=search&server=${selectedServerId}`);
+      toast.success(
+        t(
+          isChannelOwner
+            ? "conversationView.toasts.channelDissolved"
+            : "conversationView.toasts.channelLeft",
+        ),
+      );
+    } catch (error) {
+      console.error("[ServersWorkspace] leave channel failed", error);
+      toast.error(t("conversationView.toasts.channelLeaveFailed"));
+    } finally {
+      setIsLeavingChannel(false);
+    }
+  };
+
   const toggleSaved = (messageId: string) => {
     setSavedMessageIds((current) => {
       const next = new Set(current);
@@ -1354,6 +1699,7 @@ export function ServerConversationPageClient({
     onOpenMode: openMode,
     onOpenTasks: openTaskMode,
     onOpenChannel: openChannel,
+    onCreateChannel: () => setCreateChannelOpen(true),
   };
 
   return (
@@ -1481,6 +1827,7 @@ export function ServerConversationPageClient({
               }
               onOpenSettings={() => setSettingsOpen(true)}
               onOpenMembers={() => setMembersOpen(true)}
+              onOpenLeaveConfirm={() => setLeaveChannelOpen(true)}
               onToggleSaved={toggleSaved}
               isSending={isSending}
               currentUserId={profile?.id}
@@ -1526,6 +1873,50 @@ export function ServerConversationPageClient({
         </div>
       </div>
 
+      <CreateChannelDialog
+        open={createChannelOpen}
+        agents={serverAgents}
+        members={serverMembers}
+        currentUserId={profile?.id}
+        onOpenChange={setCreateChannelOpen}
+        onCreate={handleCreateChannel}
+      />
+      <AlertDialog open={leaveChannelOpen} onOpenChange={setLeaveChannelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t(
+                isChannelOwner
+                  ? "conversationView.leaveConfirm.ownerTitle"
+                  : "conversationView.leaveConfirm.title",
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                isChannelOwner
+                  ? "conversationView.leaveConfirm.ownerDescription"
+                  : "conversationView.leaveConfirm.description",
+                { channel: selectedChannel?.name ?? "" },
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLeavingChannel}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleLeaveChannel()}
+              disabled={isLeavingChannel || !selectedChannel}
+            >
+              {t(
+                isChannelOwner
+                  ? "conversationView.leaveConfirm.dissolve"
+                  : "conversationView.leaveConfirm.leave",
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ChannelSettingsDialog
         open={settingsOpen}
         channel={selectedChannel}

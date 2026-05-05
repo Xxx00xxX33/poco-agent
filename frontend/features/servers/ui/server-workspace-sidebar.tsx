@@ -49,6 +49,7 @@ export function ServerWorkspaceSidebar({
   onOpenMode,
   onOpenTasks,
   onOpenChannel,
+  onCreateChannel,
   variant = "desktop",
 }: {
   servers: ServerItem[];
@@ -63,6 +64,7 @@ export function ServerWorkspaceSidebar({
   onOpenMode: (mode: WorkspaceMode) => void;
   onOpenTasks: () => void;
   onOpenChannel: (channel: ServerChannelItem) => void;
+  onCreateChannel: () => void;
   variant?: "desktop" | "mobile";
 }) {
   const { t } = useT("translation");
@@ -177,7 +179,13 @@ export function ServerWorkspaceSidebar({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {t("conversationView.channels")}
             </p>
-            <Button type="button" variant="outline" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onCreateChannel}
+              aria-label={t("conversationView.createChannel.title")}
+            >
               +
             </Button>
           </div>

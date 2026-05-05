@@ -423,6 +423,29 @@ export const serversApi = {
     return mapChannel(channel);
   },
 
+  createChannel: async (
+    serverId: string,
+    input: {
+      name: string;
+      description?: string | null;
+      visibility?: ServerChannelVisibility;
+      memberUserIds?: string[];
+      agentIdentityIds?: string[];
+    },
+  ): Promise<ServerChannelItem> => {
+    const channel = await apiClient.post<ServerChannelResponse>(
+      API_ENDPOINTS.serverChannels(serverId),
+      {
+        name: input.name,
+        description: input.description ?? null,
+        visibility: input.visibility ?? "public",
+        member_user_ids: input.memberUserIds ?? [],
+        agent_identity_ids: input.agentIdentityIds ?? [],
+      },
+    );
+    return mapChannel(channel);
+  },
+
   updateChannel: async (
     serverId: string,
     channelId: string,
@@ -478,5 +501,23 @@ export const serversApi = {
       },
     );
     return mapChannelMember(member);
+  },
+
+  addAgentToChannel: async (
+    serverId: string,
+    channelId: string,
+    input: {
+      agentIdentityId: string;
+      role?: string;
+    },
+  ): Promise<void> => {
+    await apiClient.post(`/servers/${serverId}/channels/${channelId}/agents`, {
+      agent_identity_id: input.agentIdentityId,
+      role: input.role ?? "member",
+    });
+  },
+
+  leaveChannel: async (serverId: string, channelId: string): Promise<void> => {
+    await apiClient.post(`/servers/${serverId}/channels/${channelId}/leave`);
   },
 };
