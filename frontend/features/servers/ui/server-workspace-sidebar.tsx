@@ -2,7 +2,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  Bookmark,
   Hash,
   Inbox,
   LayoutGrid,
@@ -35,7 +34,6 @@ const NAV_ITEMS = [
   ["tasksTab", LayoutGrid, "tasks"],
   ["colleaguesTab", Users, "colleagues"],
   ["inbox", Inbox, "inbox"],
-  ["saved", Bookmark, "saved"],
 ] as const satisfies readonly [string, LucideIcon, WorkspaceMode][];
 
 export function ServerWorkspaceSidebar({
@@ -43,7 +41,6 @@ export function ServerWorkspaceSidebar({
   selectedServerId,
   mode,
   inboxCount,
-  savedCount,
   topLevelChannels,
   directMessages,
   activeChannelId,
@@ -58,7 +55,6 @@ export function ServerWorkspaceSidebar({
   selectedServerId: string | null;
   mode: WorkspaceMode;
   inboxCount: number;
-  savedCount: number;
   topLevelChannels: ServerChannelItem[];
   directMessages: ServerChannelItem[];
   activeChannelId: string | null;
@@ -170,10 +166,6 @@ export function ServerWorkspaceSidebar({
                   <span className="text-sm text-muted-foreground">
                     {inboxCount}
                   </span>
-                ) : nextMode === "saved" ? (
-                  <span className="text-sm text-muted-foreground">
-                    {savedCount}
-                  </span>
                 ) : null}
               </button>
             );
@@ -202,7 +194,7 @@ export function ServerWorkspaceSidebar({
                     : "border-transparent bg-transparent text-foreground hover:bg-muted/20",
                 )}
               >
-                <Hash className="size-5" />
+                <Hash className="size-3" />
                 <span className="truncate text-sm">{channel.name}</span>
               </button>
             ))}

@@ -7,7 +7,6 @@ export type ColleagueSelection =
 export type WorkspaceMode =
   | "search"
   | "inbox"
-  | "saved"
   | "colleagues"
   | "tasks"
   | "conversation";

@@ -42,3 +42,30 @@ export function buildHumanMentionCandidates(
       kind: "human",
     }));
 }
+
+export function messageMentionsUser(
+  message: ServerConversationMessage,
+  userId?: string | null,
+): boolean {
+  const normalizedUserId = userId?.trim();
+  if (!normalizedUserId) {
+    return false;
+  }
+
+  const text =
+    typeof message.content.text === "string"
+      ? message.content.text
+      : (message.textPreview ?? "");
+  const mentionPattern = new RegExp(
+    `(^|\\s)@${normalizedUserId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|\\s|[,.!?;:])`,
+    "i",
+  );
+  return mentionPattern.test(text);
+}
+
+export function hasInboxSignal(
+  message: ServerConversationMessage,
+  userId?: string | null,
+): boolean {
+  return messageMentionsUser(message, userId) || message.replyCount > 0;
+}

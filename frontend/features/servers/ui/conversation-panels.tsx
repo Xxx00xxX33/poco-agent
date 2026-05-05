@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
+import { Bookmark, Inbox, MailOpen, Search } from "lucide-react";
 
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import type { FeedItem } from "@/features/servers/ui/server-workspace-types";
 import { useT } from "@/lib/i18n/client";
+import { cn } from "@/lib/utils";
 
 import { getMessageAuthor, MessageRow } from "./conversation-message-row";
 
@@ -134,32 +135,72 @@ export function SearchPanel({
 }
 
 export function FeedPanel({
-  mode,
-  items,
+  inboxItems,
+  savedItems,
   savedMessageIds,
+  currentUserId,
   onOpenThread,
   onToggleSaved,
 }: {
-  mode: "inbox" | "saved";
-  items: FeedItem[];
+  inboxItems: FeedItem[];
+  savedItems: FeedItem[];
   savedMessageIds: Set<string>;
+  currentUserId?: string | null;
   onOpenThread: (item: FeedItem) => void;
   onToggleSaved: (messageId: string) => void;
 }) {
   const { t } = useT("translation");
-  const isSaved = mode === "saved";
+  const [filter, setFilter] = React.useState<"all" | "unread" | "saved">(
+    "all",
+  );
+  const unreadItems = React.useMemo(
+    () =>
+      inboxItems.filter(
+        (item) =>
+          item.message.messageType !== "user" ||
+          item.message.authorUserId !== currentUserId,
+      ),
+    [currentUserId, inboxItems],
+  );
+  const items =
+    filter === "saved"
+      ? savedItems
+      : filter === "unread"
+        ? unreadItems
+        : inboxItems;
+
+  const filters = [
+    ["all", Inbox, t("conversationView.all"), inboxItems.length],
+    ["unread", MailOpen, t("conversationView.unread"), unreadItems.length],
+    ["saved", Bookmark, t("conversationView.saved"), savedItems.length],
+  ] as const;
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border px-6 py-5">
-        <div className="flex gap-3">
-          <div className="rounded-md border border-border bg-primary/15 px-5 py-3 text-sm font-medium text-foreground">
-            {t("conversationView.all")}
-          </div>
-          {!isSaved ? (
-            <div className="rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-foreground">
-              {t("conversationView.unread")}
-            </div>
-          ) : null}
+      <div className="border-b border-border px-6 py-4">
+        <div className="flex gap-2">
+          {filters.map(([value, Icon, label, count]) => {
+            const isActive = filter === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium text-foreground transition-colors",
+                  isActive
+                    ? "border-primary/40 bg-primary/15"
+                    : "border-border bg-card hover:bg-muted/20",
+                )}
+              >
+                <Icon className="size-4" />
+                <span>{label}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto bg-background">
@@ -177,7 +218,7 @@ export function FeedPanel({
         ) : (
           <div className="flex h-full items-center justify-center px-8 text-center">
             <p className="text-lg text-muted-foreground">
-              {isSaved
+              {filter === "saved"
                 ? t("conversationView.noSaved")
                 : t("conversationView.noInbox")}
             </p>

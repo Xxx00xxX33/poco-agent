@@ -46,6 +46,7 @@ import type {
 import { useServerMembership } from "@/features/servers/hooks/use-server-membership";
 import {
   buildHumanMentionCandidates,
+  hasInboxSignal,
   sortMessagesChronologically,
   type MentionCandidate,
 } from "@/features/servers/lib/server-conversation-view";
@@ -85,12 +86,14 @@ const LAST_SELECTION_KEY = "poco-servers-last-selection-v1";
 const SAVED_MESSAGES_KEY = "poco-saved-messages-v1";
 
 function resolveWorkspaceMode(value: string | null): WorkspaceMode | null {
+  if (value === "saved") {
+    return "inbox";
+  }
   if (
     value === "search" ||
     value === "tasks" ||
     value === "colleagues" ||
-    value === "inbox" ||
-    value === "saved"
+    value === "inbox"
   ) {
     return value;
   }
@@ -104,7 +107,7 @@ function isDrawerCompatibleWithMode(
   if (drawer.type === "none") {
     return true;
   }
-  if (mode === "search" || mode === "inbox" || mode === "saved") {
+  if (mode === "search" || mode === "inbox") {
     return drawer.type === "thread";
   }
   if (mode === "tasks") {
@@ -759,8 +762,7 @@ export function ServerConversationPageClient({
         : null,
     [drawer, tasks],
   );
-  const feedModeActive =
-    mode === "search" || mode === "inbox" || mode === "saved";
+  const feedModeActive = mode === "search" || mode === "inbox";
   const tasksModeActive = Boolean(channelId) && mode === "tasks";
   const colleaguesModeActive = mode === "colleagues";
   const showMobileBack = !isDesktop && isMobileDetailVisible;
@@ -809,7 +811,13 @@ export function ServerConversationPageClient({
     });
   }, [allFeedItems, searchValue]);
 
-  const inboxItems = React.useMemo(() => allFeedItems, [allFeedItems]);
+  const inboxItems = React.useMemo(
+    () =>
+      allFeedItems.filter((item) =>
+        hasInboxSignal(item.message, profile?.id),
+      ),
+    [allFeedItems, profile?.id],
+  );
   const savedItems = React.useMemo(
     () => allFeedItems.filter((item) => savedMessageIds.has(item.message.id)),
     [allFeedItems, savedMessageIds],
@@ -1331,16 +1339,13 @@ export function ServerConversationPageClient({
           ? t("conversationView.colleaguesTab")
           : mode === "inbox"
             ? t("conversationView.inbox")
-            : mode === "saved"
-              ? t("conversationView.saved")
-              : t("conversationView.searchInServer");
+            : t("conversationView.searchInServer");
 
   const sidebarProps = {
     servers,
     selectedServerId,
     mode,
     inboxCount: inboxItems.length,
-    savedCount: savedItems.length,
     topLevelChannels,
     directMessages,
     activeChannelId,
@@ -1411,25 +1416,12 @@ export function ServerConversationPageClient({
                   }
                   onToggleSaved={toggleSaved}
                 />
-              ) : mode === "saved" ? (
-                <FeedPanel
-                  mode="saved"
-                  items={savedItems}
-                  savedMessageIds={savedMessageIds}
-                  onOpenThread={(item) =>
-                    setDrawer({
-                      type: "thread",
-                      channelId: item.channel.id,
-                      rootMessageId: item.message.id,
-                    })
-                  }
-                  onToggleSaved={toggleSaved}
-                />
               ) : (
                 <FeedPanel
-                  mode="inbox"
-                  items={inboxItems}
+                  inboxItems={inboxItems}
+                  savedItems={savedItems}
                   savedMessageIds={savedMessageIds}
+                  currentUserId={profile?.id}
                   onOpenThread={(item) =>
                     setDrawer({
                       type: "thread",
