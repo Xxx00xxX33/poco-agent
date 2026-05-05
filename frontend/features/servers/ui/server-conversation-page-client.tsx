@@ -44,6 +44,11 @@ import type {
   ServerItem,
 } from "@/features/servers/model/types";
 import { useServerMembership } from "@/features/servers/hooks/use-server-membership";
+import {
+  buildHumanMentionCandidates,
+  sortMessagesChronologically,
+  type MentionCandidate,
+} from "@/features/servers/lib/server-conversation-view";
 import { shouldShowServerMobileDetail } from "@/features/servers/lib/server-mobile-navigation";
 import { AgentPresetDialog } from "@/features/servers/ui/agent-preset-dialog";
 import { ChannelTasksWorkspace } from "@/features/servers/ui/channel-tasks-workspace";
@@ -71,6 +76,7 @@ import type {
   FeedItem,
   WorkspaceMode,
 } from "@/features/servers/ui/server-workspace-types";
+import { useUserAccount } from "@/features/user/hooks/use-user-account";
 import { useLanguage } from "@/hooks/use-language";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
@@ -162,14 +168,6 @@ function loadLastSelection(): Record<string, string | null> | null {
   }
 }
 
-type MentionCandidate = {
-  id: string;
-  label: string;
-  handle: string;
-  kind: "agent" | "human";
-  description?: string | null;
-};
-
 function getMentionTrigger(
   value: string,
 ): { start: number; query: string } | null {
@@ -181,17 +179,6 @@ function getMentionTrigger(
     start: match.index + match[0].lastIndexOf("@"),
     query: match[1].toLowerCase(),
   };
-}
-
-function buildHumanMentionCandidates(
-  members: ServerChannelMemberItem[],
-): MentionCandidate[] {
-  return members.map((member) => ({
-    id: member.userId,
-    label: member.userId,
-    handle: member.userId,
-    kind: "human",
-  }));
 }
 
 function ConversationContent({
@@ -211,6 +198,7 @@ function ConversationContent({
   onOpenMembers,
   onToggleSaved,
   isSending,
+  currentUserId,
 }: {
   channel: ServerChannelItem | null;
   agents: ServerAgentItem[];
@@ -228,12 +216,13 @@ function ConversationContent({
   onOpenMembers: () => void;
   onToggleSaved: (messageId: string) => void;
   isSending: boolean;
+  currentUserId?: string | null;
 }) {
   const { t } = useT("translation");
   const Icon = channel?.conversationType === "direct_message" ? Lock : Hash;
   const mentionTrigger = React.useMemo(() => getMentionTrigger(draft), [draft]);
   const mentionCandidates = React.useMemo<MentionCandidate[]>(() => {
-    const humans = buildHumanMentionCandidates(members);
+    const humans = buildHumanMentionCandidates(members, currentUserId);
     const agentCandidates = agents.map((agent) => ({
       id: agent.id,
       label: agent.displayName,
@@ -251,7 +240,7 @@ function ConversationContent({
         return haystack.includes(mentionTrigger.query);
       })
       .slice(0, 8);
-  }, [agents, mentionTrigger, members]);
+  }, [agents, currentUserId, mentionTrigger, members]);
 
   const insertMention = (candidate: MentionCandidate) => {
     if (!mentionTrigger) {
@@ -648,6 +637,7 @@ export function ServerConversationPageClient({
   const lng = useLanguage() || "en";
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { profile } = useUserAccount();
 
   const [servers, setServers] = React.useState<ServerItem[]>([]);
   const [selectedServerId, setSelectedServerId] = React.useState<string | null>(
@@ -756,7 +746,10 @@ export function ServerConversationPageClient({
     (channel) => channel.conversationType === "direct_message",
   );
   const currentMessages = React.useMemo(
-    () => (activeChannelId ? (messagesByChannel[activeChannelId] ?? []) : []),
+    () =>
+      activeChannelId
+        ? sortMessagesChronologically(messagesByChannel[activeChannelId] ?? [])
+        : [],
     [activeChannelId, messagesByChannel],
   );
   const selectedTask = React.useMemo(
@@ -1498,6 +1491,7 @@ export function ServerConversationPageClient({
               onOpenMembers={() => setMembersOpen(true)}
               onToggleSaved={toggleSaved}
               isSending={isSending}
+              currentUserId={profile?.id}
             />
           )}
 
