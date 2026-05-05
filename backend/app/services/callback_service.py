@@ -22,6 +22,7 @@ from app.services.run_lifecycle_service import RunLifecycleService
 from app.services.im import ImEventService
 from app.services.agent_assignment_service import AgentAssignmentService
 from app.services.agent_runtime_service import AgentRuntimeService
+from app.services.channel_artifact_service import ChannelArtifactService
 from app.services.pending_skill_creation_service import PendingSkillCreationService
 from app.services.session_queue_service import SessionQueueService
 from app.services.session_service import SessionService
@@ -45,6 +46,7 @@ class CallbackService:
         self._im_events = ImEventService()
         self._assignment_service = AgentAssignmentService()
         self._agent_runtime_service = AgentRuntimeService()
+        self._channel_artifact_service = ChannelArtifactService()
 
     def _parse_run_id(self, raw_run_id: str | None) -> uuid.UUID | None:
         if not raw_run_id:
@@ -580,6 +582,16 @@ class CallbackService:
             error_message=callback.error_message,
         )
         self._sync_agent_runtime(db, db_session, callback.status.value)
+
+        if (
+            should_apply_workspace_export
+            and not preserve_existing_ready_workspace
+            and (db_session.workspace_export_status or "").strip().lower() == "ready"
+        ):
+            self._channel_artifact_service.sync_session_workspace_artifacts(
+                db,
+                db_session,
+            )
 
         db.commit()
         return CallbackResponse(

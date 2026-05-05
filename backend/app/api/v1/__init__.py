@@ -7,6 +7,7 @@ from app.api.v1 import (
     audio,
     callback,
     capability_recommendations,
+    server_channel_artifacts,
     claude_md,
     env_vars,
     filesystem,
@@ -99,6 +100,7 @@ api_v1_router.include_router(server_invites.router)
 api_v1_router.include_router(server_invites.accept_router)
 api_v1_router.include_router(server_channels.router)
 api_v1_router.include_router(server_channels.dm_router)
+api_v1_router.include_router(server_channel_artifacts.router)
 api_v1_router.include_router(server_channel_messages.router)
 api_v1_router.include_router(server_channel_tasks.router)
 api_v1_router.include_router(im.router)

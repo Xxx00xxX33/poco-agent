@@ -9,6 +9,7 @@ from app.models.agent_scheduled_task import AgentScheduledTask
 from app.models.agent_session import AgentSession
 from app.models.activity_log import ActivityLog
 from app.models.auth_identity import AuthIdentity
+from app.models.channel_artifact import ChannelArtifact
 from app.models.claude_md import UserClaudeMdSetting
 from app.models.env_var import UserEnvVar
 from app.models.im import (
@@ -72,6 +73,7 @@ __all__ = [
     "AgentSession",
     "AgentSessionQueueItem",
     "AuthIdentity",
+    "ChannelArtifact",
     "Channel",
     "ChannelDelivery",
     "DedupEvent",
