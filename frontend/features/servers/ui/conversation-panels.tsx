@@ -1,8 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Bookmark, ChevronDown, Inbox, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { FeedItem } from "@/features/servers/ui/server-workspace-types";
 import { useT } from "@/lib/i18n/client";
 
@@ -25,7 +32,7 @@ export function SearchPanel({
 }) {
   const { t } = useT("translation");
   const [mineOnly, setMineOnly] = React.useState(false);
-  const [todayOnly, setTodayOnly] = React.useState(false);
+  const [timeFilter, setTimeFilter] = React.useState<"any" | "today">("any");
 
   const visibleItems = React.useMemo(() => {
     const now = new Date();
@@ -36,7 +43,7 @@ export function SearchPanel({
       ) {
         return false;
       }
-      if (todayOnly) {
+      if (timeFilter === "today") {
         const createdAt = new Date(item.message.createdAt);
         return (
           createdAt.getFullYear() === now.getFullYear() &&
@@ -46,7 +53,7 @@ export function SearchPanel({
       }
       return true;
     });
-  }, [items, mineOnly, todayOnly]);
+  }, [items, mineOnly, timeFilter]);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -76,18 +83,24 @@ export function SearchPanel({
           >
             {t("conversationView.myMessages")}
           </button>
-          <button
-            type="button"
-            onClick={() => setTodayOnly((value) => !value)}
-            className={`flex items-center gap-2 rounded-md border border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground transition-colors ${
-              todayOnly ? "bg-primary/15" : "bg-card hover:bg-muted/20"
-            }`}
+          <Select
+            value={timeFilter}
+            onValueChange={(value) =>
+              setTimeFilter(value === "today" ? "today" : "any")
+            }
           >
-            {todayOnly
-              ? t("conversationView.today")
-              : t("conversationView.anyTime")}
-            <ChevronDown className="size-4" />
-          </button>
+            <SelectTrigger className="h-9 w-fit min-w-32 border-border bg-card text-xs font-medium uppercase tracking-wide text-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="any">
+                {t("conversationView.anyTime")}
+              </SelectItem>
+              <SelectItem value="today">
+                {t("conversationView.today")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto bg-background">
@@ -137,29 +150,6 @@ export function FeedPanel({
   const isSaved = mode === "saved";
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="border-b border-border px-6 py-5">
-        <div className="flex items-center gap-4">
-          <div className="flex size-11 items-center justify-center rounded-md border border-border bg-muted text-foreground">
-            {isSaved ? (
-              <Bookmark className="size-5" />
-            ) : (
-              <Inbox className="size-5" />
-            )}
-          </div>
-          <div>
-            <p className="text-2xl font-semibold text-foreground">
-              {isSaved
-                ? t("conversationView.saved")
-                : t("conversationView.inbox")}
-            </p>
-            <p className="text-base text-muted-foreground">
-              {isSaved
-                ? t("conversationView.savedCount", { count: items.length })
-                : t("conversationView.activeCount", { count: items.length })}
-            </p>
-          </div>
-        </div>
-      </div>
       <div className="border-b border-border px-6 py-5">
         <div className="flex gap-3">
           <div className="rounded-md border border-border bg-primary/15 px-5 py-3 text-sm font-medium text-foreground">

@@ -180,6 +180,9 @@
     "searchInServer": "Search in server",
     "inbox": "Inbox",
     "saved": "Saved",
+    "mobile": {
+      "back": "Back to server navigation"
+    },
     "channels": "Channels",
     "directMessages": "Direct messages",
     "noDirectMessages": "No direct messages yet",

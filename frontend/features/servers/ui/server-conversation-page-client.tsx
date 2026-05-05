@@ -3,16 +3,11 @@
 import * as React from "react";
 import {
   Archive,
-  Bookmark,
   Bot,
+  ChevronLeft,
   Hash,
-  Inbox,
-  LayoutGrid,
-  LayoutList,
   Lock,
-  MessageSquare,
   Plus,
-  Search,
   Settings2,
   Trash2,
   UserRound,
@@ -31,21 +26,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { channelTasksApi } from "@/features/channel-tasks/api/channel-tasks-api";
-import {
-  buildChannelTaskColumns,
-  buildChannelTaskListGroups,
-  resolveChannelTaskView,
-} from "@/features/channel-tasks/lib/channel-task-board";
+import { resolveChannelTaskView } from "@/features/channel-tasks/lib/channel-task-board";
 import type {
   ChannelTask,
   ChannelTaskActivityMessage,
@@ -60,7 +44,9 @@ import type {
   ServerItem,
 } from "@/features/servers/model/types";
 import { useServerMembership } from "@/features/servers/hooks/use-server-membership";
+import { shouldShowServerMobileDetail } from "@/features/servers/lib/server-mobile-navigation";
 import { AgentPresetDialog } from "@/features/servers/ui/agent-preset-dialog";
+import { ChannelTasksWorkspace } from "@/features/servers/ui/channel-tasks-workspace";
 import { ColleagueDetail } from "@/features/servers/ui/colleague-detail";
 import { ColleaguesPanel } from "@/features/servers/ui/colleagues-panel";
 import {
@@ -78,6 +64,7 @@ import {
   SearchPanel,
 } from "@/features/servers/ui/conversation-panels";
 import { ServerAccessDialog } from "@/features/servers/ui/server-access-dialog";
+import { ServerWorkspaceSidebar } from "@/features/servers/ui/server-workspace-sidebar";
 import type {
   ColleagueSelection,
   DrawerState,
@@ -102,6 +89,25 @@ function resolveWorkspaceMode(value: string | null): WorkspaceMode | null {
     return value;
   }
   return null;
+}
+
+function isDrawerCompatibleWithMode(
+  drawer: DrawerState,
+  mode: WorkspaceMode,
+): boolean {
+  if (drawer.type === "none") {
+    return true;
+  }
+  if (mode === "search" || mode === "inbox" || mode === "saved") {
+    return drawer.type === "thread";
+  }
+  if (mode === "tasks") {
+    return drawer.type === "task";
+  }
+  if (mode === "colleagues") {
+    return drawer.type === "colleague";
+  }
+  return drawer.type === "thread" || drawer.type === "agent";
 }
 
 function loadSavedMessageIds(): Set<string> {
@@ -677,6 +683,14 @@ export function ServerConversationPageClient({
     resolveWorkspaceMode(searchParams.get("mode")) ??
       (channelId ? "conversation" : "search"),
   );
+  const [isDesktop, setIsDesktop] = React.useState(false);
+  const [isMobileDetailVisible, setIsMobileDetailVisible] = React.useState(() =>
+    shouldShowServerMobileDetail({
+      isDesktop: false,
+      channelId,
+      modeFromUrl: resolveWorkspaceMode(searchParams.get("mode")),
+    }),
+  );
   const [taskView, setTaskView] = React.useState<ChannelTaskView>(
     resolveChannelTaskView(searchParams.get("view")),
   );
@@ -756,6 +770,7 @@ export function ServerConversationPageClient({
     mode === "search" || mode === "inbox" || mode === "saved";
   const tasksModeActive = Boolean(channelId) && mode === "tasks";
   const colleaguesModeActive = mode === "colleagues";
+  const showMobileBack = !isDesktop && isMobileDetailVisible;
   const colleagueSelection = React.useMemo<ColleagueSelection | null>(() => {
     if (drawer.type === "colleague" && drawer.selection) {
       return drawer.selection;
@@ -842,6 +857,38 @@ export function ServerConversationPageClient({
   }, [loadServers]);
 
   React.useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+
+    const updateMatches = (matches: boolean) => {
+      setIsDesktop(matches);
+      setIsMobileDetailVisible(
+        shouldShowServerMobileDetail({
+          isDesktop: matches,
+          channelId,
+          modeFromUrl: resolveWorkspaceMode(searchParams.get("mode")),
+        }),
+      );
+    };
+
+    updateMatches(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      updateMatches(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, [channelId, searchParams]);
+
+  React.useEffect(() => {
     const loadServerContext = async () => {
       if (!selectedServerId) {
         setChannels([]);
@@ -890,6 +937,15 @@ export function ServerConversationPageClient({
   }, [activeChannelId, selectedServerId, t]);
 
   React.useEffect(() => {
+    if (mode === "colleagues") {
+      setColleagueDetailClosed(false);
+    }
+    setDrawer((current) =>
+      isDrawerCompatibleWithMode(current, mode) ? current : { type: "none" },
+    );
+  }, [mode]);
+
+  React.useEffect(() => {
     if (mode !== "colleagues") {
       return;
     }
@@ -902,9 +958,15 @@ export function ServerConversationPageClient({
     const firstAgent = serverAgents[0];
     const firstMember = serverMembers[0];
     if (firstAgent) {
-      setDrawer({ type: "colleague", selection: { kind: "agent", id: firstAgent.id } });
+      setDrawer({
+        type: "colleague",
+        selection: { kind: "agent", id: firstAgent.id },
+      });
     } else if (firstMember) {
-      setDrawer({ type: "colleague", selection: { kind: "human", id: firstMember.id } });
+      setDrawer({
+        type: "colleague",
+        selection: { kind: "human", id: firstMember.id },
+      });
     }
   }, [colleagueDetailClosed, drawer, mode, serverAgents, serverMembers]);
 
@@ -912,6 +974,7 @@ export function ServerConversationPageClient({
     const lastSelection = loadLastSelection();
     if (
       !channelId &&
+      isDesktop &&
       selectedServerId &&
       lastSelection?.serverId === selectedServerId &&
       (lastSelection.mode === "channel" || lastSelection.mode === "dm") &&
@@ -921,7 +984,7 @@ export function ServerConversationPageClient({
         `/${lng}/servers/${selectedServerId}/channels/${lastSelection.channelId}?tab=chat`,
       );
     }
-  }, [channelId, lng, router, selectedServerId]);
+  }, [channelId, isDesktop, lng, router, selectedServerId]);
 
   React.useEffect(() => {
     const loadThread = async () => {
@@ -974,6 +1037,7 @@ export function ServerConversationPageClient({
 
   const openMode = (nextMode: WorkspaceMode) => {
     setMode(nextMode);
+    setIsMobileDetailVisible(true);
     if (nextMode === "colleagues") {
       setColleagueDetailClosed(false);
     }
@@ -995,6 +1059,7 @@ export function ServerConversationPageClient({
     if (!selectedServerId) {
       return;
     }
+    setIsMobileDetailVisible(true);
     const targetChannelId =
       activeChannelId ??
       selectedChannel?.id ??
@@ -1032,6 +1097,7 @@ export function ServerConversationPageClient({
     if (!selectedServerId) {
       return;
     }
+    setIsMobileDetailVisible(true);
     saveLastSelection({
       mode: channel.conversationType === "direct_message" ? "dm" : "channel",
       serverId: selectedServerId,
@@ -1249,417 +1315,230 @@ export function ServerConversationPageClient({
     }
   };
 
+  const handleMobileBack = () => {
+    setIsMobileDetailVisible(false);
+    setDrawer({ type: "none" });
+    setMode("search");
+    const params = new URLSearchParams();
+    if (selectedServerId) {
+      params.set("server", selectedServerId);
+    }
+    router.replace(
+      `/${lng}/servers${params.toString() ? `?${params.toString()}` : ""}`,
+      { scroll: false },
+    );
+  };
+
+  const mobileDetailTitle =
+    mode === "conversation"
+      ? (selectedChannel?.name ?? t("conversationView.loading"))
+      : mode === "tasks"
+        ? t("conversationView.tasksTab")
+        : mode === "colleagues"
+          ? t("conversationView.colleaguesTab")
+          : mode === "inbox"
+            ? t("conversationView.inbox")
+            : mode === "saved"
+              ? t("conversationView.saved")
+              : t("conversationView.searchInServer");
+
+  const sidebarProps = {
+    servers,
+    selectedServerId,
+    mode,
+    inboxCount: inboxItems.length,
+    savedCount: savedItems.length,
+    topLevelChannels,
+    directMessages,
+    activeChannelId,
+    onSelectServer: setSelectedServerId,
+    onOpenServerAccess: () => setServerAccessOpen(true),
+    onOpenMode: openMode,
+    onOpenTasks: openTaskMode,
+    onOpenChannel: openChannel,
+  };
+
   return (
     <main className="relative flex h-[calc(100vh-4rem)] min-h-0 flex-1 overflow-hidden border-t border-border bg-background">
-      <aside className="hidden w-[17rem] shrink-0 border-r border-border bg-card md:flex md:flex-col lg:w-[18rem]">
-        <div className="border-b border-border px-4 py-4">
-          <div className="flex items-center gap-2">
-            <Select
-              value={selectedServerId ?? ""}
-              onValueChange={(value) => setSelectedServerId(value)}
-            >
-              <SelectTrigger className="w-full border-border bg-background text-sm">
-                <SelectValue placeholder={t("servers.title")} />
-              </SelectTrigger>
-              <SelectContent>
-                {servers.map((server) => (
-                  <SelectItem key={server.id} value={server.id}>
-                    {server.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <ServerWorkspaceSidebar {...sidebarProps} />
+
+      {!isMobileDetailVisible ? (
+        <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <ServerWorkspaceSidebar {...sidebarProps} variant="mobile" />
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          "min-w-0 flex-1 flex-col overflow-hidden md:flex",
+          isMobileDetailVisible ? "flex" : "hidden",
+        )}
+      >
+        {showMobileBack ? (
+          <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="icon"
-              onClick={() => setServerAccessOpen(true)}
-              aria-label={t("conversationView.serverAccess.title")}
-              className="size-9 shrink-0"
+              className="shrink-0 text-muted-foreground"
+              aria-label={t("conversationView.mobile.back")}
+              title={t("conversationView.mobile.back")}
+              onClick={handleMobileBack}
             >
-              <Plus className="size-4" />
+              <ChevronLeft className="size-4" />
             </Button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-          <div className="space-y-1">
-            {(
-              [
-                ["searchInServer", Search, "search"],
-                ["tasksTab", LayoutGrid, "tasks"],
-                ["colleaguesTab", Users, "colleagues"],
-                ["inbox", Inbox, "inbox"],
-                ["saved", Bookmark, "saved"],
-              ] as const
-            ).map(([key, Icon, nextMode]) => {
-              const isActive = mode === nextMode;
-              return (
-                <button
-                  key={nextMode}
-                  type="button"
-                  onClick={() => {
-                    if (nextMode === "tasks") {
-                      openTaskMode();
-                      return;
-                    }
-                    openMode(nextMode as WorkspaceMode);
-                  }}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left transition-colors",
-                    isActive
-                      ? "bg-muted text-foreground"
-                      : "text-foreground hover:bg-muted/20",
-                  )}
-                >
-                  <span className="flex items-center gap-3 text-sm">
-                    <Icon className="size-5" />
-                    {t(`conversationView.${key}`)}
-                  </span>
-                  {nextMode === "inbox" ? (
-                    <span className="text-sm text-muted-foreground">
-                      {inboxItems.length}
-                    </span>
-                  ) : nextMode === "saved" ? (
-                    <span className="text-sm text-muted-foreground">
-                      {savedItems.length}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {t("conversationView.channels")}
-              </p>
-              <Button type="button" variant="outline" size="sm">
-                +
-              </Button>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-semibold text-foreground">
+                {mobileDetailTitle}
+              </h1>
+              {selectedServer ? (
+                <p className="truncate text-sm text-muted-foreground">
+                  {selectedServer.name}
+                </p>
+              ) : null}
             </div>
-            <div className="space-y-2">
-              {topLevelChannels.map((channel) => (
-                <button
-                  key={channel.id}
-                  type="button"
-                  onClick={() => openChannel(channel)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors",
-                    channel.id === activeChannelId
-                      ? "border-primary/40 bg-primary/10 text-foreground"
-                      : "border-transparent bg-transparent text-foreground hover:bg-muted/20",
-                  )}
-                >
-                  <Hash className="size-5" />
-                  <span className="truncate text-sm">{channel.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+          </header>
+        ) : null}
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {t("conversationView.directMessages")}
-              </p>
-              <span className="text-xs text-muted-foreground">
-                {directMessages.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {directMessages.map((channel) => (
-                <button
-                  key={channel.id}
-                  type="button"
-                  onClick={() => openChannel(channel)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors",
-                    channel.id === activeChannelId
-                      ? "border-primary/40 bg-primary/10 text-foreground"
-                      : "border-transparent bg-transparent text-foreground hover:bg-muted/20",
-                  )}
-                >
-                  <MessageSquare className="size-5" />
-                  <span className="truncate text-sm">{channel.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </div>
-      </aside>
-
-      {feedModeActive ? (
-        <section className="flex min-w-0 flex-1 flex-col">
-          {mode === "search" ? (
-            <SearchPanel
-              search={searchValue}
-              onSearchChange={setSearchValue}
-              items={filteredSearchItems}
-              savedMessageIds={savedMessageIds}
-              onOpenThread={(item) =>
-                setDrawer({
-                  type: "thread",
-                  channelId: item.channel.id,
-                  rootMessageId: item.message.id,
-                })
-              }
-              onToggleSaved={toggleSaved}
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {feedModeActive ? (
+            <section className="flex min-w-0 flex-1 flex-col">
+              {mode === "search" ? (
+                <SearchPanel
+                  search={searchValue}
+                  onSearchChange={setSearchValue}
+                  items={filteredSearchItems}
+                  savedMessageIds={savedMessageIds}
+                  onOpenThread={(item) =>
+                    setDrawer({
+                      type: "thread",
+                      channelId: item.channel.id,
+                      rootMessageId: item.message.id,
+                    })
+                  }
+                  onToggleSaved={toggleSaved}
+                />
+              ) : mode === "saved" ? (
+                <FeedPanel
+                  mode="saved"
+                  items={savedItems}
+                  savedMessageIds={savedMessageIds}
+                  onOpenThread={(item) =>
+                    setDrawer({
+                      type: "thread",
+                      channelId: item.channel.id,
+                      rootMessageId: item.message.id,
+                    })
+                  }
+                  onToggleSaved={toggleSaved}
+                />
+              ) : (
+                <FeedPanel
+                  mode="inbox"
+                  items={inboxItems}
+                  savedMessageIds={savedMessageIds}
+                  onOpenThread={(item) =>
+                    setDrawer({
+                      type: "thread",
+                      channelId: item.channel.id,
+                      rootMessageId: item.message.id,
+                    })
+                  }
+                  onToggleSaved={toggleSaved}
+                />
+              )}
+            </section>
+          ) : colleaguesModeActive ? (
+            <ColleaguesPanel
+              agents={serverAgents}
+              members={serverMembers}
+              selection={colleagueSelection}
+              onSelect={(selection) => {
+                setColleagueDetailClosed(false);
+                setDrawer({ type: "colleague", selection });
+              }}
+              onAddAgent={() => setAgentPresetOpen(true)}
+              onInviteMember={() => setServerAccessOpen(true)}
             />
-          ) : mode === "saved" ? (
-            <FeedPanel
-              mode="saved"
-              items={savedItems}
-              savedMessageIds={savedMessageIds}
-              onOpenThread={(item) =>
-                setDrawer({
-                  type: "thread",
-                  channelId: item.channel.id,
-                  rootMessageId: item.message.id,
-                })
-              }
-              onToggleSaved={toggleSaved}
-            />
-          ) : (
-            <FeedPanel
-              mode="inbox"
-              items={inboxItems}
-              savedMessageIds={savedMessageIds}
-              onOpenThread={(item) =>
-                setDrawer({
-                  type: "thread",
-                  channelId: item.channel.id,
-                  rootMessageId: item.message.id,
-                })
-              }
-              onToggleSaved={toggleSaved}
-            />
-          )}
-        </section>
-      ) : colleaguesModeActive ? (
-        <ColleaguesPanel
-          agents={serverAgents}
-          members={serverMembers}
-          selection={colleagueSelection}
-          onSelect={(selection) => {
-            setColleagueDetailClosed(false);
-            setDrawer({ type: "colleague", selection });
-          }}
-          onAddAgent={() => setAgentPresetOpen(true)}
-          onInviteMember={() => setServerAccessOpen(true)}
-        />
-      ) : tasksModeActive ? (
-        <section className="flex min-w-0 flex-1 flex-col">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-            <Select
-              value={activeChannelId ?? ""}
-              onValueChange={(value) => {
+          ) : tasksModeActive ? (
+            <ChannelTasksWorkspace
+              tasks={tasks}
+              taskView={taskView}
+              activeChannelId={activeChannelId}
+              topLevelChannels={topLevelChannels}
+              onSelectChannel={(value) => {
                 router.push(
                   `/${lng}/servers/${selectedServerId}/channels/${value}?tab=chat&mode=tasks&view=${taskView}`,
                 );
               }}
-            >
-              <SelectTrigger className="w-fit min-w-[180px] border-border bg-background text-sm">
-                <SelectValue placeholder={t("conversationView.channels")} />
-              </SelectTrigger>
-              <SelectContent>
-                {topLevelChannels.map((channel) => (
-                  <SelectItem key={channel.id} value={channel.id}>
-                    {channel.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-1 rounded-md border border-border bg-card p-1">
-              <Button
-                type="button"
-                variant={taskView === "board" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => updateTaskView("board")}
-              >
-                <LayoutGrid className="size-4" />
-                {t("conversationView.boardView")}
-              </Button>
-              <Button
-                type="button"
-                variant={taskView === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => updateTaskView("list")}
-              >
-                <LayoutList className="size-4" />
-                {t("conversationView.listView")}
-              </Button>
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
-            {taskView === "board" ? (
-              <div className="overflow-x-auto">
-                <div className="grid min-w-[980px] grid-cols-4 gap-4">
-                  {buildChannelTaskColumns(tasks).map((column) => (
-                    <section
-                      key={column.status}
-                      className="flex min-h-[32rem] flex-col rounded-md border border-border bg-muted/10 p-3"
-                    >
-                      <div className="mb-3 flex items-center justify-between gap-3 px-1">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold text-foreground">
-                            {t(`channelTasks.statuses.${column.status}`)}
-                          </span>
-                        </div>
-                        <span className="rounded-md border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
-                          {column.tasks.length}
-                        </span>
-                      </div>
-                      <div className="min-h-0 flex-1 space-y-3">
-                        {column.tasks.length > 0 ? (
-                          column.tasks.map((task) => (
-                            <button
-                              key={task.taskId}
-                              type="button"
-                              onClick={() =>
-                                setDrawer({ type: "task", taskId: task.taskId })
-                              }
-                              className="w-full rounded-md border border-border bg-card px-4 py-4 text-left transition-colors hover:bg-muted/20"
-                            >
-                              <p className="text-xs font-medium text-muted-foreground">
-                                #{task.taskId.slice(0, 4)}
-                              </p>
-                              <p className="mt-2 text-base font-semibold text-foreground">
-                                {task.title}
-                              </p>
-                              {task.description ? (
-                                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                                  {task.description}
-                                </p>
-                              ) : null}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="flex min-h-32 items-center rounded-md border border-dashed border-border bg-background/70 px-4 py-10 text-sm text-muted-foreground">
-                            {t("conversationView.emptyTaskColumn", {
-                              status: t(
-                                `channelTasks.statuses.${column.status}`,
-                              ),
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-              </div>
-            ) : buildChannelTaskListGroups(tasks).length > 0 ? (
-              <div className="space-y-6">
-                {buildChannelTaskListGroups(tasks).map((group) => (
-                  <section key={group.status} className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-sm bg-primary/15 px-2 py-1 text-xs font-semibold uppercase text-foreground">
-                        {t(`channelTasks.statuses.${group.status}`)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {group.tasks.length}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      {group.tasks.map((task) => (
-                        <button
-                          key={task.taskId}
-                          type="button"
-                          onClick={() =>
-                            setDrawer({ type: "task", taskId: task.taskId })
-                          }
-                          className="w-full rounded-md border border-border bg-card px-4 py-4 text-left hover:bg-muted/20"
-                        >
-                          <p className="text-base font-semibold text-foreground">
-                            {task.title}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <div className="flex min-h-[28rem] items-center justify-center rounded-md border border-dashed border-border bg-muted/10 px-6 py-12 text-center">
-                <div className="max-w-sm space-y-2">
-                  <LayoutList className="mx-auto size-8 text-muted-foreground" />
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("conversationView.emptyTaskListTitle")}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("conversationView.emptyTaskListDescription")}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      ) : (
-        <ConversationContent
-          channel={selectedChannel}
-          agents={channelAgents}
-          members={channelMembers}
-          messages={currentMessages}
-          savedMessageIds={savedMessageIds}
-          draft={draft}
-          asTask={asTask}
-          isLoading={isLoading}
-          onDraftChange={setDraft}
-          onAsTaskChange={setAsTask}
-          onSend={() => void handleSend()}
-          onOpenThread={(message) =>
-            setDrawer({
-              type: "thread",
-              channelId: activeChannelId!,
-              rootMessageId: message.id,
-            })
-          }
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenMembers={() => setMembersOpen(true)}
-          onToggleSaved={toggleSaved}
-          isSending={isSending}
-        />
-      )}
+              onUpdateView={updateTaskView}
+              onOpenTask={(taskId) => setDrawer({ type: "task", taskId })}
+            />
+          ) : (
+            <ConversationContent
+              channel={selectedChannel}
+              agents={channelAgents}
+              members={channelMembers}
+              messages={currentMessages}
+              savedMessageIds={savedMessageIds}
+              draft={draft}
+              asTask={asTask}
+              isLoading={isLoading}
+              onDraftChange={setDraft}
+              onAsTaskChange={setAsTask}
+              onSend={() => void handleSend()}
+              onOpenThread={(message) =>
+                setDrawer({
+                  type: "thread",
+                  channelId: activeChannelId!,
+                  rootMessageId: message.id,
+                })
+              }
+              onOpenSettings={() => setSettingsOpen(true)}
+              onOpenMembers={() => setMembersOpen(true)}
+              onToggleSaved={toggleSaved}
+              isSending={isSending}
+            />
+          )}
 
-      {drawer.type === "thread" ? (
-        <ThreadDrawer
-          thread={threadMessages}
-          draft={threadDraft}
-          onDraftChange={setThreadDraft}
-          onSend={() => void handleReply()}
-          onClose={() => setDrawer({ type: "none" })}
-          isSending={isSending}
-        />
-      ) : drawer.type === "task" && selectedTask ? (
-        <TaskDrawer
-          task={selectedTask}
-          activity={taskActivity}
-          onClose={() => setDrawer({ type: "none" })}
-        />
-      ) : drawer.type === "agent" ? (
-        <AgentDrawer
-          agents={channelAgents}
-          selectedAgentId={drawer.agentId}
-          onSelectAgent={(id) => setDrawer({ type: "agent", agentId: id })}
-          onClose={() => setDrawer({ type: "none" })}
-          onOpenDm={handleOpenDm}
-        />
-      ) : drawer.type === "colleague" ? (
-        <ColleagueDetail
-          selection={colleagueSelection}
-          agents={serverAgents}
-          members={serverMembers}
-          onClose={() => {
-            setColleagueDetailClosed(true);
-            setDrawer({ type: "none" });
-          }}
-          onOpenDm={handleOpenDm}
-          onRemoveMember={(membershipId) =>
-            void removeMember(membershipId)
-          }
-        />
-      ) : null}
+          {drawer.type === "thread" ? (
+            <ThreadDrawer
+              thread={threadMessages}
+              draft={threadDraft}
+              onDraftChange={setThreadDraft}
+              onSend={() => void handleReply()}
+              onClose={() => setDrawer({ type: "none" })}
+              isSending={isSending}
+            />
+          ) : drawer.type === "task" && selectedTask ? (
+            <TaskDrawer
+              task={selectedTask}
+              activity={taskActivity}
+              onClose={() => setDrawer({ type: "none" })}
+            />
+          ) : drawer.type === "agent" ? (
+            <AgentDrawer
+              agents={channelAgents}
+              selectedAgentId={drawer.agentId}
+              onSelectAgent={(id) => setDrawer({ type: "agent", agentId: id })}
+              onClose={() => setDrawer({ type: "none" })}
+              onOpenDm={handleOpenDm}
+            />
+          ) : drawer.type === "colleague" ? (
+            <ColleagueDetail
+              selection={colleagueSelection}
+              agents={serverAgents}
+              members={serverMembers}
+              onClose={() => {
+                setColleagueDetailClosed(true);
+                setDrawer({ type: "none" });
+              }}
+              onOpenDm={handleOpenDm}
+              onRemoveMember={(membershipId) => void removeMember(membershipId)}
+            />
+          ) : null}
+        </div>
+      </div>
 
       <ChannelSettingsDialog
         open={settingsOpen}
