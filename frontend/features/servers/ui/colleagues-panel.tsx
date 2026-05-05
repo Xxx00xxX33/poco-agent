@@ -1,0 +1,142 @@
+"use client";
+
+import { Bot, Plus, UserRound } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import type {
+  ServerAgentItem,
+  ServerMemberItem,
+} from "@/features/servers/model/types";
+import type { ColleagueSelection } from "@/features/servers/ui/server-workspace-types";
+import { useT } from "@/lib/i18n/client";
+import { cn } from "@/lib/utils";
+
+export function ColleaguesPanel({
+  agents,
+  members,
+  selection,
+  onSelect,
+  onAddAgent,
+  onInviteMember,
+}: {
+  agents: ServerAgentItem[];
+  members: ServerMemberItem[];
+  selection: ColleagueSelection | null;
+  onSelect: (selection: ColleagueSelection) => void;
+  onAddAgent: () => void;
+  onInviteMember: () => void;
+}) {
+  const { t } = useT("translation");
+  return (
+    <section className="flex min-w-0 flex-1 flex-col border-r border-border bg-background xl:max-w-[21rem] xl:shrink-0">
+      <div className="border-b border-border px-6 py-5">
+        <p className="text-base font-semibold text-foreground">
+          {t("conversationView.colleagues.title")}
+        </p>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {t("conversationView.colleagues.agents")} {agents.length}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onAddAgent}
+              aria-label={t("conversationView.agentPreset.title")}
+              className="size-8"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {agents.length > 0 ? (
+              agents.map((agent) => (
+                <button
+                  key={agent.id}
+                  type="button"
+                  onClick={() => onSelect({ kind: "agent", id: agent.id })}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition-colors",
+                    selection?.kind === "agent" && selection.id === agent.id
+                      ? "border-primary/40 bg-primary/10"
+                      : "border-transparent hover:bg-muted/20",
+                  )}
+                >
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                    <Bot className="size-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-foreground">
+                      {agent.displayName}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      @{agent.handle}
+                    </span>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-border px-3 py-6 text-sm text-muted-foreground">
+                {t("conversationView.colleagues.noAgents")}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {t("conversationView.colleagues.humans")} {members.length}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onInviteMember}
+              aria-label={t("conversationView.serverAccess.invitesTitle")}
+              className="size-8"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {members.length > 0 ? (
+              members.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => onSelect({ kind: "human", id: member.id })}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition-colors",
+                    selection?.kind === "human" && selection.id === member.id
+                      ? "border-primary/40 bg-primary/10"
+                      : "border-transparent hover:bg-muted/20",
+                  )}
+                >
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                    <UserRound className="size-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-foreground">
+                      {member.userId}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {member.role}
+                    </span>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-border px-3 py-6 text-sm text-muted-foreground">
+                {t("conversationView.colleagues.noHumans")}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}

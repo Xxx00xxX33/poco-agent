@@ -5,10 +5,6 @@ import {
   Archive,
   Bookmark,
   Bot,
-  CalendarDays,
-  Clipboard,
-  Copy,
-  ArrowLeft,
   Hash,
   Inbox,
   LayoutGrid,
@@ -16,12 +12,9 @@ import {
   Lock,
   MessageSquare,
   Plus,
-  RefreshCw,
   Search,
   Settings2,
-  Shield,
   Trash2,
-  UserPlus,
   UserRound,
   Users,
 } from "lucide-react";
@@ -64,12 +57,12 @@ import type {
   ServerChannelItem,
   ServerChannelMemberItem,
   ServerConversationMessage,
-  ServerInviteItem,
   ServerItem,
-  ServerMemberItem,
 } from "@/features/servers/model/types";
-import { presetsService } from "@/features/capabilities/presets/api/presets-api";
-import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
+import { useServerMembership } from "@/features/servers/hooks/use-server-membership";
+import { AgentPresetDialog } from "@/features/servers/ui/agent-preset-dialog";
+import { ColleagueDetail } from "@/features/servers/ui/colleague-detail";
+import { ColleaguesPanel } from "@/features/servers/ui/colleagues-panel";
 import {
   AgentDrawer,
   TaskDrawer,
@@ -84,6 +77,7 @@ import {
   FeedPanel,
   SearchPanel,
 } from "@/features/servers/ui/conversation-panels";
+import { ServerAccessDialog } from "@/features/servers/ui/server-access-dialog";
 import type {
   ColleagueSelection,
   DrawerState,
@@ -637,594 +631,6 @@ function ChannelMembersDialog({
   );
 }
 
-function ServerAccessDialog({
-  open,
-  server,
-  invites,
-  isWorking,
-  onOpenChange,
-  onCreateServer,
-  onAcceptInvite,
-  onCreateInvite,
-  onCopyInvite,
-}: {
-  open: boolean;
-  server: ServerItem | null;
-  invites: ServerInviteItem[];
-  isWorking: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreateServer: (name: string) => void;
-  onAcceptInvite: (token: string) => void;
-  onCreateInvite: () => void;
-  onCopyInvite: (token: string) => void;
-}) {
-  const { t } = useT("translation");
-  const [serverName, setServerName] = React.useState("");
-  const [inviteToken, setInviteToken] = React.useState("");
-
-  React.useEffect(() => {
-    if (!open) {
-      setServerName("");
-      setInviteToken("");
-    }
-  }, [open]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{t("conversationView.serverAccess.title")}</DialogTitle>
-          <DialogDescription>
-            {t("conversationView.serverAccess.description")}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <section className="space-y-3 rounded-md border border-border bg-card p-4">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                {t("conversationView.serverAccess.createTitle")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("conversationView.serverAccess.createDescription")}
-              </p>
-            </div>
-            <Input
-              value={serverName}
-              onChange={(event) => setServerName(event.target.value)}
-              placeholder={t("conversationView.serverAccess.serverName")}
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onCreateServer(serverName)}
-              disabled={isWorking || !serverName.trim()}
-            >
-              <Plus className="size-4" />
-              {t("conversationView.serverAccess.createAction")}
-            </Button>
-          </section>
-
-          <section className="space-y-3 rounded-md border border-border bg-card p-4">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                {t("conversationView.serverAccess.joinTitle")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("conversationView.serverAccess.joinDescription")}
-              </p>
-            </div>
-            <Input
-              value={inviteToken}
-              onChange={(event) => setInviteToken(event.target.value)}
-              placeholder={t("conversationView.serverAccess.inviteKey")}
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onAcceptInvite(inviteToken)}
-              disabled={isWorking || !inviteToken.trim()}
-            >
-              <UserPlus className="size-4" />
-              {t("conversationView.serverAccess.joinAction")}
-            </Button>
-          </section>
-        </div>
-
-        <section className="space-y-3 rounded-md border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                {t("conversationView.serverAccess.invitesTitle")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {server
-                  ? t("conversationView.serverAccess.invitesDescription", {
-                      server: server.name,
-                    })
-                  : t("conversationView.serverAccess.noServer")}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onCreateInvite}
-              disabled={isWorking || !server}
-            >
-              <RefreshCw className="size-4" />
-              {t("conversationView.serverAccess.generateInvite")}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {invites.length > 0 ? (
-              invites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-mono text-xs text-foreground">
-                      {invite.token}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t("conversationView.serverAccess.inviteMeta", {
-                        used: invite.usedCount,
-                        max: invite.maxUses,
-                      })}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onCopyInvite(invite.token)}
-                    aria-label={t("conversationView.serverAccess.copyInvite")}
-                  >
-                    <Copy className="size-4" />
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-md border border-dashed border-border px-3 py-8 text-center text-sm text-muted-foreground">
-                {t("conversationView.serverAccess.noInvites")}
-              </div>
-            )}
-          </div>
-        </section>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AgentPresetDialog({
-  open,
-  presets,
-  isWorking,
-  onOpenChange,
-  onCreateAgent,
-}: {
-  open: boolean;
-  presets: Preset[];
-  isWorking: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreateAgent: (input: {
-    presetId: number;
-    displayName: string;
-    handle: string;
-    description: string;
-  }) => void;
-}) {
-  const { t } = useT("translation");
-  const [presetId, setPresetId] = React.useState("");
-  const [displayName, setDisplayName] = React.useState("");
-  const [handle, setHandle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-
-  React.useEffect(() => {
-    if (!open) {
-      setPresetId("");
-      setDisplayName("");
-      setHandle("");
-      setDescription("");
-    }
-  }, [open]);
-
-  React.useEffect(() => {
-    const preset = presets.find((item) => String(item.preset_id) === presetId);
-    if (!preset) {
-      return;
-    }
-    setDisplayName((current) => current || preset.name);
-    setDescription((current) => current || preset.description || "");
-  }, [presetId, presets]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("conversationView.agentPreset.title")}</DialogTitle>
-          <DialogDescription>
-            {t("conversationView.agentPreset.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              {t("conversationView.agentPreset.preset")}
-            </label>
-            <Select value={presetId} onValueChange={setPresetId}>
-              <SelectTrigger className="border-border bg-background">
-                <SelectValue
-                  placeholder={t("conversationView.agentPreset.selectPreset")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {presets.map((preset) => (
-                  <SelectItem
-                    key={preset.preset_id}
-                    value={String(preset.preset_id)}
-                  >
-                    {preset.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder={t("conversationView.agentPreset.displayName")}
-            />
-            <Input
-              value={handle}
-              onChange={(event) => setHandle(event.target.value)}
-              placeholder={t("conversationView.agentPreset.handle")}
-            />
-          </div>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={4}
-            placeholder={t("conversationView.agentPreset.agentDescription")}
-            className="rounded-md border-border bg-background text-sm shadow-none"
-          />
-        </div>
-        <DialogFooter>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() =>
-              onCreateAgent({
-                presetId: Number(presetId),
-                displayName,
-                handle,
-                description,
-              })
-            }
-            disabled={isWorking || !presetId || !displayName.trim()}
-          >
-            <Bot className="size-4" />
-            {t("conversationView.agentPreset.create")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ColleaguesPanel({
-  agents,
-  members,
-  selection,
-  onSelect,
-  onAddAgent,
-  onInviteMember,
-}: {
-  agents: ServerAgentItem[];
-  members: ServerMemberItem[];
-  selection: ColleagueSelection | null;
-  onSelect: (selection: ColleagueSelection) => void;
-  onAddAgent: () => void;
-  onInviteMember: () => void;
-}) {
-  const { t } = useT("translation");
-  return (
-    <section className="flex min-w-0 flex-1 flex-col border-r border-border bg-background xl:max-w-[21rem] xl:shrink-0">
-      <div className="border-b border-border px-6 py-5">
-        <p className="text-base font-semibold text-foreground">
-          {t("conversationView.colleagues.title")}
-        </p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3 px-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {t("conversationView.colleagues.agents")} {agents.length}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={onAddAgent}
-              aria-label={t("conversationView.agentPreset.title")}
-              className="size-8"
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {agents.length > 0 ? (
-              agents.map((agent) => (
-                <button
-                  key={agent.id}
-                  type="button"
-                  onClick={() => onSelect({ kind: "agent", id: agent.id })}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition-colors",
-                    selection?.kind === "agent" && selection.id === agent.id
-                      ? "border-primary/40 bg-primary/10"
-                      : "border-transparent hover:bg-muted/20",
-                  )}
-                >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
-                    <Bot className="size-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {agent.displayName}
-                    </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      @{agent.handle}
-                    </span>
-                  </span>
-                </button>
-              ))
-            ) : (
-              <div className="rounded-md border border-dashed border-border px-3 py-6 text-sm text-muted-foreground">
-                {t("conversationView.colleagues.noAgents")}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="mt-6 space-y-3">
-          <div className="flex items-center justify-between gap-3 px-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {t("conversationView.colleagues.humans")} {members.length}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={onInviteMember}
-              aria-label={t("conversationView.serverAccess.invitesTitle")}
-              className="size-8"
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {members.length > 0 ? (
-              members.map((member) => (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => onSelect({ kind: "human", id: member.id })}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition-colors",
-                    selection?.kind === "human" && selection.id === member.id
-                      ? "border-primary/40 bg-primary/10"
-                      : "border-transparent hover:bg-muted/20",
-                  )}
-                >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
-                    <UserRound className="size-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {member.userId}
-                    </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {member.role}
-                    </span>
-                  </span>
-                </button>
-              ))
-            ) : (
-              <div className="rounded-md border border-dashed border-border px-3 py-6 text-sm text-muted-foreground">
-                {t("conversationView.colleagues.noHumans")}
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    </section>
-  );
-}
-
-function ColleagueDetail({
-  selection,
-  agents,
-  members,
-  onClose,
-  onOpenDm,
-  onRemoveMember,
-}: {
-  selection: ColleagueSelection | null;
-  agents: ServerAgentItem[];
-  members: ServerMemberItem[];
-  onClose: () => void;
-  onOpenDm: (agentId: string) => void;
-  onRemoveMember: (membershipId: number) => void;
-}) {
-  const { t } = useT("translation");
-  const selectedAgent =
-    selection?.kind === "agent"
-      ? (agents.find((agent) => agent.id === selection.id) ?? null)
-      : null;
-  const selectedMember =
-    selection?.kind === "human"
-      ? (members.find((member) => member.id === selection.id) ?? null)
-      : null;
-
-  return (
-    <aside className="absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-border bg-card md:left-[17rem] md:w-auto lg:left-[18rem] xl:static xl:min-w-0 xl:flex-1">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label={t("conversationView.backToContext")}
-            className="shrink-0 xl:hidden"
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <p className="text-base font-semibold text-foreground">
-            {t("conversationView.colleagues.detailTitle")}
-          </p>
-        </div>
-        <Button type="button" variant="outline" size="sm" onClick={onClose}>
-          {t("conversationView.close")}
-        </Button>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {selectedAgent ? (
-          <div className="space-y-5 px-6 py-6">
-            <div className="flex items-start gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-md border border-border bg-primary/10 text-foreground">
-                <Bot className="size-6" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-semibold text-foreground">
-                  {selectedAgent.displayName}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  @{selectedAgent.handle}
-                </p>
-              </div>
-            </div>
-            <div className="rounded-md border border-border bg-background px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {t("conversationView.colleagues.description")}
-              </p>
-              <p className="mt-3 text-sm leading-6 text-foreground">
-                {selectedAgent.description ||
-                  t("servers.agents.emptyDescription")}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile
-                icon={<Shield className="size-4" />}
-                label={t("conversationView.colleagues.lifecycle")}
-                value={selectedAgent.lifecycleState}
-              />
-              <InfoTile
-                icon={<Clipboard className="size-4" />}
-                label={t("servers.agents.preset", {
-                  id: selectedAgent.presetId,
-                })}
-                value={selectedAgent.visualKey}
-              />
-            </div>
-            <InfoTile
-              icon={<CalendarDays className="size-4" />}
-              label={t("conversationView.colleagues.created")}
-              value={selectedAgent.createdAt}
-            />
-            <div className="flex flex-wrap gap-2 border-t border-border pt-5">
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => onOpenDm(selectedAgent.id)}
-              >
-                <MessageSquare className="size-4" />
-                {t("conversationView.messageAgent")}
-              </Button>
-            </div>
-          </div>
-        ) : selectedMember ? (
-          <div className="space-y-5 px-6 py-6">
-            <div className="flex items-start gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
-                <UserRound className="size-6" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-semibold text-foreground">
-                  {selectedMember.userId}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {selectedMember.status}
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <InfoTile
-                icon={<Shield className="size-4" />}
-                label={t("conversationView.colleagues.role")}
-                value={selectedMember.role}
-              />
-              <InfoTile
-                icon={<CalendarDays className="size-4" />}
-                label={t("conversationView.colleagues.joined")}
-                value={selectedMember.joinedAt}
-              />
-            </div>
-            <InfoTile
-              icon={<UserPlus className="size-4" />}
-              label={t("conversationView.colleagues.invitedBy")}
-              value={
-                selectedMember.invitedBy ||
-                t("conversationView.colleagues.emptyValue")
-              }
-            />
-            <div className="border-t border-border pt-5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onRemoveMember(selectedMember.id)}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="size-4" />
-                {t("conversationView.colleagues.removeMember")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center px-6 py-12 text-center text-sm text-muted-foreground">
-            {t("conversationView.colleagues.emptySelection")}
-          </div>
-        )}
-      </div>
-    </aside>
-  );
-}
-
-function InfoTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-md border border-border bg-background px-4 py-3">
-      <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-        {icon}
-        {label}
-      </p>
-      <p className="mt-2 break-all text-sm text-foreground">{value}</p>
-    </div>
-  );
-}
-
 export function ServerConversationPageClient({
   serverId,
   channelId,
@@ -1248,16 +654,6 @@ export function ServerConversationPageClient({
   const [channelAgents, setChannelAgents] = React.useState<ServerAgentItem[]>(
     [],
   );
-  const [serverAgents, setServerAgents] = React.useState<ServerAgentItem[]>(
-    [],
-  );
-  const [serverMembers, setServerMembers] = React.useState<ServerMemberItem[]>(
-    [],
-  );
-  const [serverInvites, setServerInvites] = React.useState<ServerInviteItem[]>(
-    [],
-  );
-  const [presets, setPresets] = React.useState<Preset[]>([]);
   const [channelMembers, setChannelMembers] = React.useState<
     ServerChannelMemberItem[]
   >([]);
@@ -1291,10 +687,48 @@ export function ServerConversationPageClient({
   const [agentPresetOpen, setAgentPresetOpen] = React.useState(false);
   const [colleagueDetailClosed, setColleagueDetailClosed] =
     React.useState(false);
-  const [isServerAccessWorking, setIsServerAccessWorking] =
-    React.useState(false);
-  const [isAgentCreating, setIsAgentCreating] = React.useState(false);
   const [isArchivingChannel, setIsArchivingChannel] = React.useState(false);
+
+  const switchServer = React.useCallback(
+    (nextServerId: string) => {
+      setSelectedServerId(nextServerId);
+      saveLastSelection({
+        mode: "search",
+        serverId: nextServerId,
+        channelId: null,
+      });
+      setServerAccessOpen(false);
+      router.push(`/${lng}/servers?mode=search&server=${nextServerId}`);
+    },
+    [lng, router],
+  );
+
+  const {
+    serverAgents,
+    serverMembers,
+    serverInvites,
+    presets,
+    isServerAccessWorking,
+    isAgentCreating,
+    createServer,
+    acceptInvite,
+    createInvite,
+    copyInvite,
+    createAgent,
+    removeMember,
+  } = useServerMembership({
+    selectedServerId,
+    onServersChanged: setServers,
+    onSwitchServer: switchServer,
+    onSelectAgent: (agent) => {
+      setDrawer({
+        type: "colleague",
+        selection: { kind: "agent", id: agent.id },
+      });
+      setAgentPresetOpen(false);
+    },
+    onClearSelection: () => setDrawer({ type: "colleague", selection: null }),
+  });
 
   const activeChannelId = channelId ?? null;
   const selectedServer =
@@ -1412,24 +846,12 @@ export function ServerConversationPageClient({
       if (!selectedServerId) {
         setChannels([]);
         setMessagesByChannel({});
-        setServerAgents([]);
-        setServerMembers([]);
-        setServerInvites([]);
         return;
       }
       setIsLoading(true);
       try {
-        const [nextChannels, nextServerAgents, nextServerMembers, nextInvites] =
-          await Promise.all([
-            serversApi.listChannels(selectedServerId),
-            serversApi.listAgents(selectedServerId),
-            serversApi.listMembers(selectedServerId),
-            serversApi.listInvites(selectedServerId),
-          ]);
+        const nextChannels = await serversApi.listChannels(selectedServerId);
         setChannels(nextChannels);
-        setServerAgents(nextServerAgents);
-        setServerMembers(nextServerMembers);
-        setServerInvites(nextInvites);
 
         const previews = await Promise.all(
           nextChannels.map(async (channel) => {
@@ -1466,17 +888,6 @@ export function ServerConversationPageClient({
 
     void loadServerContext();
   }, [activeChannelId, selectedServerId, t]);
-
-  React.useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        setPresets(await presetsService.listPresets({ revalidate: 0 }));
-      } catch (error) {
-        console.error("[ServersWorkspace] preset load failed", error);
-      }
-    };
-    void loadPresets();
-  }, []);
 
   React.useEffect(() => {
     if (mode !== "colleagues") {
@@ -1722,146 +1133,6 @@ export function ServerConversationPageClient({
     } catch (error) {
       console.error("[ServersWorkspace] create dm failed", error);
       toast.error(t("conversationView.toasts.dmFailed"));
-    }
-  };
-
-  const refreshServerAccess = async (serverIdToRefresh: string) => {
-    const [nextMembers, nextInvites] = await Promise.all([
-      serversApi.listMembers(serverIdToRefresh),
-      serversApi.listInvites(serverIdToRefresh),
-    ]);
-    setServerMembers(nextMembers);
-    setServerInvites(nextInvites);
-  };
-
-  const handleCreateServer = async (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      return;
-    }
-    setIsServerAccessWorking(true);
-    try {
-      const created = await serversApi.createServer({ name: trimmed });
-      const nextServers = await serversApi.listServers();
-      setServers(nextServers);
-      setSelectedServerId(created.id);
-      saveLastSelection({
-        mode: "search",
-        serverId: created.id,
-        channelId: null,
-      });
-      setServerAccessOpen(false);
-      router.push(`/${lng}/servers?mode=search&server=${created.id}`);
-      toast.success(t("conversationView.toasts.serverCreated"));
-    } catch (error) {
-      console.error("[ServersWorkspace] create server failed", error);
-      toast.error(t("conversationView.toasts.serverCreateFailed"));
-    } finally {
-      setIsServerAccessWorking(false);
-    }
-  };
-
-  const handleAcceptInvite = async (token: string) => {
-    const trimmed = token.trim();
-    if (!trimmed) {
-      return;
-    }
-    setIsServerAccessWorking(true);
-    try {
-      const member = await serversApi.acceptInvite({ token: trimmed });
-      const nextServers = await serversApi.listServers();
-      setServers(nextServers);
-      setSelectedServerId(member.serverId);
-      saveLastSelection({
-        mode: "search",
-        serverId: member.serverId,
-        channelId: null,
-      });
-      setServerAccessOpen(false);
-      router.push(`/${lng}/servers?mode=search&server=${member.serverId}`);
-      toast.success(t("conversationView.toasts.inviteAccepted"));
-    } catch (error) {
-      console.error("[ServersWorkspace] accept invite failed", error);
-      toast.error(t("conversationView.toasts.inviteAcceptFailed"));
-    } finally {
-      setIsServerAccessWorking(false);
-    }
-  };
-
-  const handleCreateInvite = async () => {
-    if (!selectedServerId) {
-      return;
-    }
-    setIsServerAccessWorking(true);
-    try {
-      const invite = await serversApi.createInvite(selectedServerId);
-      setServerInvites((current) => {
-        const withoutExisting = current.filter((item) => item.id !== invite.id);
-        return [invite, ...withoutExisting];
-      });
-      toast.success(t("conversationView.toasts.inviteCreated"));
-    } catch (error) {
-      console.error("[ServersWorkspace] create invite failed", error);
-      toast.error(t("conversationView.toasts.inviteCreateFailed"));
-    } finally {
-      setIsServerAccessWorking(false);
-    }
-  };
-
-  const handleCopyInvite = async (token: string) => {
-    try {
-      await navigator.clipboard.writeText(token);
-      toast.success(t("conversationView.toasts.inviteCopied"));
-    } catch (error) {
-      console.error("[ServersWorkspace] copy invite failed", error);
-      toast.error(t("conversationView.toasts.inviteCopyFailed"));
-    }
-  };
-
-  const handleCreateAgent = async (input: {
-    presetId: number;
-    displayName: string;
-    handle: string;
-    description: string;
-  }) => {
-    if (!selectedServerId || !input.presetId || !input.displayName.trim()) {
-      return;
-    }
-    setIsAgentCreating(true);
-    try {
-      const agent = await serversApi.createAgent(selectedServerId, {
-        presetId: input.presetId,
-        displayName: input.displayName.trim(),
-        handle: input.handle.trim() || null,
-        description: input.description.trim() || null,
-      });
-      setServerAgents((current) => [agent, ...current]);
-      setDrawer({
-        type: "colleague",
-        selection: { kind: "agent", id: agent.id },
-      });
-      setAgentPresetOpen(false);
-      toast.success(t("conversationView.toasts.agentCreated"));
-    } catch (error) {
-      console.error("[ServersWorkspace] create server agent failed", error);
-      toast.error(t("conversationView.toasts.agentCreateFailed"));
-    } finally {
-      setIsAgentCreating(false);
-    }
-  };
-
-  const handleRemoveServerMember = async (membershipId: number) => {
-    if (!selectedServerId) {
-      return;
-    }
-    try {
-      await serversApi.removeMember(selectedServerId, membershipId);
-      await refreshServerAccess(selectedServerId);
-      setDrawer({ type: "colleague", selection: null });
-      toast.success(t("conversationView.toasts.memberRemoved"));
-    } catch (error) {
-      console.error("[ServersWorkspace] remove server member failed", error);
-      toast.error(t("conversationView.toasts.memberRemoveFailed"));
     }
   };
 
@@ -2385,7 +1656,7 @@ export function ServerConversationPageClient({
           }}
           onOpenDm={handleOpenDm}
           onRemoveMember={(membershipId) =>
-            void handleRemoveServerMember(membershipId)
+            void removeMember(membershipId)
           }
         />
       ) : null}
@@ -2417,17 +1688,17 @@ export function ServerConversationPageClient({
         invites={serverInvites}
         isWorking={isServerAccessWorking}
         onOpenChange={setServerAccessOpen}
-        onCreateServer={(name) => void handleCreateServer(name)}
-        onAcceptInvite={(token) => void handleAcceptInvite(token)}
-        onCreateInvite={() => void handleCreateInvite()}
-        onCopyInvite={(token) => void handleCopyInvite(token)}
+        onCreateServer={(name) => void createServer(name)}
+        onAcceptInvite={(token) => void acceptInvite(token)}
+        onCreateInvite={() => void createInvite()}
+        onCopyInvite={(token) => void copyInvite(token)}
       />
       <AgentPresetDialog
         open={agentPresetOpen}
         presets={presets}
         isWorking={isAgentCreating}
         onOpenChange={setAgentPresetOpen}
-        onCreateAgent={(input) => void handleCreateAgent(input)}
+        onCreateAgent={(input) => void createAgent(input)}
       />
     </main>
   );
