@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.user_profile import UserPublicProfileResponse
+
 ServerChannelVisibility = Literal["public", "private"]
 ServerConversationType = Literal["channel", "direct_message"]
 
@@ -53,6 +55,7 @@ class ServerChannelMemberResponse(BaseModel):
     membership_id: int = Field(validation_alias="id")
     channel_id: UUID
     user_id: str
+    user: UserPublicProfileResponse | None = None
     role: str
     joined_at: datetime
     status: str

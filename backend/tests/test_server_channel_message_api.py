@@ -12,6 +12,7 @@ from app.schemas.server_channel_message import (
     ServerChannelMessageResponse,
     ServerChannelThreadResponse,
 )
+from app.schemas.user_profile import UserPublicProfileResponse
 
 
 def build_message_response(
@@ -24,6 +25,11 @@ def build_message_response(
         message_id=uuid.uuid4(),
         channel_id=channel_id,
         author_user_id="user-1",
+        author_user=UserPublicProfileResponse(
+            user_id="user-1",
+            display_name="Alice",
+            avatar_url="https://example.com/alice.png",
+        ),
         message_type="user",
         content={"text": "hello"},
         text_preview="hello",
@@ -67,6 +73,7 @@ class ServerChannelMessageApiTests(unittest.TestCase):
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"]["message_id"], str(message.message_id))
         self.assertEqual(body["data"]["message_type"], "user")
+        self.assertEqual(body["data"]["author_user"]["display_name"], "Alice")
         send_message.assert_called_once()
 
     @patch("app.api.v1.server_channel_messages.service.list_messages")
@@ -84,6 +91,7 @@ class ServerChannelMessageApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"][0]["message_id"], str(message.message_id))
+        self.assertEqual(body["data"][0]["author_user"]["avatar_url"], "https://example.com/alice.png")
         list_messages.assert_called_once()
 
     @patch("app.api.v1.server_channel_messages.service.get_thread")
@@ -106,6 +114,7 @@ class ServerChannelMessageApiTests(unittest.TestCase):
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"]["root"]["message_id"], str(root.message_id))
         self.assertEqual(body["data"]["replies"][0]["message_id"], str(reply.message_id))
+        self.assertEqual(body["data"]["root"]["author_user"]["display_name"], "Alice")
         get_thread.assert_called_once()
 
 

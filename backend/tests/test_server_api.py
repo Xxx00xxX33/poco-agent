@@ -12,6 +12,7 @@ from app.schemas.server import ServerResponse
 from app.schemas.server_channel import ServerChannelResponse
 from app.schemas.server_invite import ServerInviteResponse
 from app.schemas.server_member import ServerMemberResponse
+from app.schemas.user_profile import UserPublicProfileResponse
 
 
 def build_server_response() -> ServerResponse:
@@ -103,6 +104,11 @@ class ServerApiTests(unittest.TestCase):
             membership_id=1,
             server_id=server_id,
             user_id="user-2",
+            user=UserPublicProfileResponse(
+                user_id="user-2",
+                display_name="Bob",
+                avatar_url="https://example.com/bob.png",
+            ),
             role="member",
             joined_at=now,
             invited_by="user-1",
@@ -120,6 +126,7 @@ class ServerApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"]["server_id"], str(server_id))
+        self.assertEqual(body["data"]["user"]["display_name"], "Bob")
         accept_invite.assert_called_once()
 
     @patch("app.api.v1.server_invites.service.create_invite")

@@ -7,6 +7,7 @@ from app.models.server_channel import ServerChannel
 from app.models.server_channel_message import ServerChannelMessage
 from app.models.user import User
 from app.schemas.server_channel_message import ServerChannelMessageCreateRequest
+from app.schemas.user_profile import UserPublicProfileResponse
 from app.services.server_channel_message_service import ServerChannelMessageService
 
 
@@ -67,6 +68,8 @@ class ServerChannelMessageServiceTests(unittest.TestCase):
         self.assertIsNone(created.thread_root_message_id)
         self.db.commit.assert_called_once()
         self.assertEqual(result.text_preview, "hello")
+        self.assertEqual(result.author_user.user_id, "user-1")
+        self.assertEqual(result.author_user.display_name, "Alice")
 
     def test_send_thread_reply_requires_existing_root_message(self) -> None:
         service = ServerChannelMessageService()
@@ -116,6 +119,7 @@ class ServerChannelMessageServiceTests(unittest.TestCase):
         created = create_message.call_args.args[1]
         self.assertEqual(created.thread_root_message_id, root_message.id)
         self.assertEqual(result.thread_root_message_id, root_message.id)
+        self.assertEqual(result.author_user.user_id, "user-1")
 
     def test_get_thread_returns_root_and_replies(self) -> None:
         service = ServerChannelMessageService()
@@ -152,6 +156,21 @@ class ServerChannelMessageServiceTests(unittest.TestCase):
                 "app.services.server_channel_message_service.ServerChannelMessageRepository.list_replies",
                 return_value=[reply],
             ),
+            patch(
+                "app.services.server_channel_message_service.list_user_public_profiles_by_id",
+                return_value={
+                    "user-1": UserPublicProfileResponse(
+                        user_id="user-1",
+                        display_name="Alice",
+                        avatar_url="https://example.com/alice.png",
+                    ),
+                    "user-2": UserPublicProfileResponse(
+                        user_id="user-2",
+                        display_name="Bob",
+                        avatar_url="https://example.com/bob.png",
+                    ),
+                },
+            ),
         ):
             result = service.get_thread(
                 self.db,
@@ -163,6 +182,8 @@ class ServerChannelMessageServiceTests(unittest.TestCase):
 
         self.assertEqual(result.root.message_id, root.id)
         self.assertEqual(result.replies[0].message_id, reply.id)
+        self.assertEqual(result.root.author_user.display_name, "Alice")
+        self.assertEqual(result.replies[0].author_user.display_name, "Bob")
 
 
 if __name__ == "__main__":

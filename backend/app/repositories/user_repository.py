@@ -33,3 +33,9 @@ class UserRepository:
     @staticmethod
     def get_by_email(session_db: Session, email: str) -> User | None:
         return session_db.query(User).filter(User.primary_email == email).first()
+
+    @staticmethod
+    def list_by_ids(session_db: Session, user_ids: list[str]) -> list[User]:
+        if not user_ids:
+            return []
+        return session_db.query(User).filter(User.id.in_(user_ids)).all()

@@ -28,13 +28,25 @@ from app.schemas.server_channel import (
     ServerChannelResponse,
     ServerChannelUpdateRequest,
 )
+from app.schemas.user_profile import UserPublicProfileResponse
 from app.services.server_member_service import (
     require_server_admin,
     require_server_member,
 )
+from app.services.user_public_profile_service import list_user_public_profiles_by_id
 
 
 class ServerChannelService:
+    @staticmethod
+    def _build_channel_member_response(
+        membership: ServerChannelMember,
+        *,
+        user_profiles: dict[str, UserPublicProfileResponse],
+    ) -> ServerChannelMemberResponse:
+        return ServerChannelMemberResponse.model_validate(membership).model_copy(
+            update={"user": user_profiles.get(membership.user_id)}
+        )
+
     @staticmethod
     def _slugify(value: str) -> str:
         normalized = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
@@ -285,8 +297,15 @@ class ServerChannelService:
                     message="Private channel membership is required",
                 )
         memberships = ServerChannelMemberRepository.list_by_channel(db, channel_id)
+        user_profiles = list_user_public_profiles_by_id(
+            db,
+            [membership.user_id for membership in memberships],
+        )
         return [
-            ServerChannelMemberResponse.model_validate(membership)
+            self._build_channel_member_response(
+                membership,
+                user_profiles=user_profiles,
+            )
             for membership in memberships
         ]
 
@@ -343,7 +362,11 @@ class ServerChannelService:
             membership.status = "active"
         db.commit()
         db.refresh(membership)
-        return ServerChannelMemberResponse.model_validate(membership)
+        user_profiles = list_user_public_profiles_by_id(db, [membership.user_id])
+        return self._build_channel_member_response(
+            membership,
+            user_profiles=user_profiles,
+        )
 
     def join_channel(
         self,
@@ -383,7 +406,11 @@ class ServerChannelService:
             membership.status = "active"
         db.commit()
         db.refresh(membership)
-        return ServerChannelMemberResponse.model_validate(membership)
+        user_profiles = list_user_public_profiles_by_id(db, [membership.user_id])
+        return self._build_channel_member_response(
+            membership,
+            user_profiles=user_profiles,
+        )
 
     def leave_channel(
         self,

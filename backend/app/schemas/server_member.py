@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.user_profile import UserPublicProfileResponse
+
 ServerRole = Literal["owner", "admin", "member"]
 
 
@@ -15,6 +17,7 @@ class ServerMemberResponse(BaseModel):
     membership_id: int = Field(validation_alias="id")
     server_id: UUID
     user_id: str
+    user: UserPublicProfileResponse | None = None
     role: ServerRole
     joined_at: datetime
     invited_by: str | None = None

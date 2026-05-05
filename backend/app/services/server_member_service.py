@@ -10,6 +10,7 @@ from app.schemas.server_member import (
     ServerMemberResponse,
     ServerMemberRoleUpdateRequest,
 )
+from app.services.user_public_profile_service import list_user_public_profiles_by_id
 
 
 def _require_active_membership(db: Session, server_id: uuid.UUID, user_id: str):
@@ -59,7 +60,16 @@ class ServerMemberService:
     ) -> list[ServerMemberResponse]:
         require_server_member(db, server_id, current_user.id)
         members = ServerMemberRepository.list_by_server(db, server_id)
-        return [ServerMemberResponse.model_validate(item) for item in members]
+        user_profiles = list_user_public_profiles_by_id(
+            db,
+            [member.user_id for member in members],
+        )
+        return [
+            ServerMemberResponse.model_validate(item).model_copy(
+                update={"user": user_profiles.get(item.user_id)}
+            )
+            for item in members
+        ]
 
     def update_member_role(
         self,
@@ -83,7 +93,10 @@ class ServerMemberService:
             )
         membership.role = request.role
         db.commit()
-        return ServerMemberResponse.model_validate(membership)
+        user_profiles = list_user_public_profiles_by_id(db, [membership.user_id])
+        return ServerMemberResponse.model_validate(membership).model_copy(
+            update={"user": user_profiles.get(membership.user_id)}
+        )
 
     def remove_member(
         self,

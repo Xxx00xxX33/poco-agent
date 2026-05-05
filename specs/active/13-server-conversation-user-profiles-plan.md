@@ -13,9 +13,14 @@
 ## 实施阶段
 
 - [x] Phase 0: 固化公开用户资料设计与实施边界 (2026-05-05)
-- [ ] Phase 1: 扩展后端会话契约以返回公开用户资料
+- [x] Phase 1: 扩展后端会话契约以返回公开用户资料 (2026-05-05)
 - [ ] Phase 2: 接入前端成员、消息和头像展示
 - [ ] Phase 3: 完成验证并回写 spec 状态
+
+## 实现记录
+
+- 2026-05-05: 已新增 `UserPublicProfileResponse` 与 profile resolver，`server members / channel members / conversation messages / thread responses` 现可返回公开用户资料。
+- 2026-05-05: 已补 `backend` 定向用例，覆盖 server member、channel member 与 message author profile 的 API envelope 和 message service 返回结构。
 
 ---
 
@@ -142,8 +147,8 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] schema 仅暴露 `user_id / display_name / avatar_url`
-- [ ] schema 可从 `User` 模型稳定构造
+- [x] schema 仅暴露 `user_id / display_name / avatar_url`
+- [x] schema 可从 `User` 模型稳定构造
 
 #### 1.2 扩展 member 与 message 响应模型
 
@@ -161,8 +166,8 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] 三类响应都包含公开资料字段
-- [ ] system / task message 的 `author_user` 允许为空
+- [x] 三类响应都包含公开资料字段
+- [x] system / task message 的 `author_user` 允许为空
 
 #### 1.3 在 service 层补 profile 装配
 
@@ -177,9 +182,9 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] members 列表返回 user profile
-- [ ] messages / thread 返回 author profile
-- [ ] 不引入额外鉴权变化
+- [x] members 列表返回 user profile
+- [x] messages / thread 返回 author profile
+- [x] 不引入额外鉴权变化
 
 #### 1.4 更新后端测试
 
@@ -194,8 +199,8 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] 相关测试覆盖新增字段
-- [ ] 后端测试通过且无前端测试新增
+- [x] 相关测试覆盖新增字段
+- [x] 后端测试通过且无前端测试新增
 
 ---
 

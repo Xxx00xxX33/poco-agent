@@ -12,6 +12,7 @@ from app.schemas.server_channel import (
     ServerChannelMemberResponse,
     ServerChannelResponse,
 )
+from app.schemas.user_profile import UserPublicProfileResponse
 
 
 def build_channel_response(*, server_id: uuid.UUID) -> ServerChannelResponse:
@@ -39,6 +40,11 @@ def build_member_response(*, channel_id: uuid.UUID) -> ServerChannelMemberRespon
         membership_id=1,
         channel_id=channel_id,
         user_id="user-2",
+        user=UserPublicProfileResponse(
+            user_id="user-2",
+            display_name="Bob",
+            avatar_url="https://example.com/bob.png",
+        ),
         role="member",
         joined_at=now,
         status="active",
@@ -112,6 +118,7 @@ class ServerChannelApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"][0]["user_id"], "user-2")
+        self.assertEqual(body["data"][0]["user"]["display_name"], "Bob")
         list_channel_members.assert_called_once()
 
     @patch("app.api.v1.server_channels.service.add_channel_member")
@@ -130,6 +137,7 @@ class ServerChannelApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"]["user_id"], "user-2")
+        self.assertEqual(body["data"]["user"]["avatar_url"], "https://example.com/bob.png")
         add_channel_member.assert_called_once()
 
 

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.user_profile import UserPublicProfileResponse
+
 ServerChannelMessageType = Literal["user", "system", "task"]
 
 
@@ -18,6 +20,7 @@ class ServerChannelMessageResponse(BaseModel):
     message_id: UUID = Field(validation_alias="id")
     channel_id: UUID
     author_user_id: str | None
+    author_user: UserPublicProfileResponse | None = None
     message_type: ServerChannelMessageType
     content: dict[str, Any]
     text_preview: str | None = None

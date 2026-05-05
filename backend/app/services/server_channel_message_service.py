@@ -19,7 +19,12 @@ from app.schemas.server_channel_message import (
     ServerChannelMessageResponse,
     ServerChannelThreadResponse,
 )
+from app.schemas.user_profile import UserPublicProfileResponse
 from app.services.server_member_service import require_server_member
+from app.services.user_public_profile_service import (
+    build_user_public_profile,
+    list_user_public_profiles_by_id,
+)
 
 
 class ServerChannelMessageService:
@@ -28,10 +33,16 @@ class ServerChannelMessageService:
         message: ServerChannelMessage,
         *,
         reply_count: int = 0,
+        author_user: UserPublicProfileResponse | None = None,
     ) -> ServerChannelMessageResponse:
         return ServerChannelMessageResponse.model_validate(
             message,
-        ).model_copy(update={"reply_count": reply_count})
+        ).model_copy(
+            update={
+                "reply_count": reply_count,
+                "author_user": author_user,
+            }
+        )
 
     def _require_channel_access(
         self,
@@ -96,7 +107,12 @@ class ServerChannelMessageService:
         )
         db.commit()
         db.refresh(message)
-        return self._build_message_response(message)
+        return self._build_message_response(
+            message,
+            author_user=build_user_public_profile(current_user)
+            if author_user_id
+            else None,
+        )
 
     def list_messages(
         self,
@@ -116,12 +132,24 @@ class ServerChannelMessageService:
             before_message_id=before_message_id,
             limit=safe_limit,
         )
+        author_profiles = list_user_public_profiles_by_id(
+            db,
+            [
+                item.author_user_id
+                for item in messages
+                if item.author_user_id is not None
+            ],
+        )
         reply_counts = ServerChannelMessageRepository.count_replies_by_roots(
             db,
             [item.id for item in messages],
         )
         return [
-            self._build_message_response(item, reply_count=reply_counts.get(item.id, 0))
+            self._build_message_response(
+                item,
+                reply_count=reply_counts.get(item.id, 0),
+                author_user=author_profiles.get(item.author_user_id or ""),
+            )
             for item in messages
         ]
 
@@ -149,7 +177,27 @@ class ServerChannelMessageService:
                     message=f"Thread not found: {thread_root_message_id}",
                 )
         replies = ServerChannelMessageRepository.list_replies(db, root_id)
+        author_profiles = list_user_public_profiles_by_id(
+            db,
+            [
+                author_user_id
+                for author_user_id in [
+                    root.author_user_id,
+                    *[reply.author_user_id for reply in replies],
+                ]
+                if author_user_id is not None
+            ],
+        )
         return ServerChannelThreadResponse(
-            root=self._build_message_response(root),
-            replies=[self._build_message_response(item) for item in replies],
+            root=self._build_message_response(
+                root,
+                author_user=author_profiles.get(root.author_user_id or ""),
+            ),
+            replies=[
+                self._build_message_response(
+                    item,
+                    author_user=author_profiles.get(item.author_user_id or ""),
+                )
+                for item in replies
+            ],
         )
