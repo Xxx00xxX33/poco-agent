@@ -8,20 +8,21 @@
 | **预期改动范围** | backend auth / server member and message schemas / server conversation frontend / i18n-preserving UI wiring / backend tests / specs |
 | **改动类型** | feat |
 | **优先级** | P0 |
-| **状态** | in-progress |
+| **状态** | review |
 
 ## 实施阶段
 
 - [x] Phase 0: 固化公开用户资料设计与实施边界 (2026-05-05)
 - [x] Phase 1: 扩展后端会话契约以返回公开用户资料 (2026-05-05)
 - [x] Phase 2: 接入前端成员、消息和头像展示 (2026-05-05)
-- [ ] Phase 3: 完成验证并回写 spec 状态
+- [x] Phase 3: 完成验证并回写 spec 状态 (2026-05-05)
 
 ## 实现记录
 
 - 2026-05-05: 已新增 `UserPublicProfileResponse` 与 profile resolver，`server members / channel members / conversation messages / thread responses` 现可返回公开用户资料。
 - 2026-05-05: 已补 `backend` 定向用例，覆盖 server member、channel member 与 message author profile 的 API envelope 和 message service 返回结构。
 - 2026-05-05: 前端 `servers` 数据模型已接入公开资料；members 面板、colleague detail、message row、search/filter 和 human mention label 已统一优先显示昵称，并在有头像时显示第三方头像。
+- 2026-05-05: 最终验证已通过：`cd backend && uv run python -m unittest tests.test_server_api tests.test_server_channel_api tests.test_server_channel_message_api tests.test_server_channel_message_service` 与 `cd frontend && pnpm lint`。
 
 ---
 
@@ -286,8 +287,8 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] 后端相关测试通过
-- [ ] 前端 lint 通过或记录真实阻塞
+- [x] 后端相关测试通过
+- [x] 前端 lint 通过或记录真实阻塞
 
 #### 3.2 回写 spec 状态
 
@@ -299,8 +300,8 @@ human 成员展示时应优先显示昵称，但 message mention 检测与输入
 
 **验收标准：**
 
-- [ ] spec 反映真实完成情况
-- [ ] 不留下占位描述
+- [x] spec 反映真实完成情况
+- [x] 不留下占位描述
 
 ---
 
