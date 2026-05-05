@@ -72,6 +72,11 @@ class TaskConfig(BaseModel):
     agent_identity_id: UUID | None = None
     channel_task_id: UUID | None = None
     agent_runtime_mode: Literal["persistent", "temporary"] | None = None
+    server_id: UUID | None = None
+    channel_id: UUID | None = None
+    trigger_message_id: UUID | None = None
+    thread_root_message_id: UUID | None = None
+    trigger_type: str | None = None
     filesystem_mode: FilesystemMode = "sandbox"
     local_mounts: list[LocalMountConfig] = Field(default_factory=list)
     deployment_mode: DeploymentMode = "local"

@@ -15,7 +15,7 @@
 - [x] Phase 0: 固化共享边界与对象模型 (2026-05-06)
 - [x] Phase 1: 建立频道公共成果树的后端模型与授权 (2026-05-06)
 - [x] Phase 2: 建立右侧第四抽屉文件树与预览体验 (2026-05-06)
-- [ ] Phase 3: 把公共成果树接入 agent 可读上下文
+- [x] Phase 3: 把公共成果树接入 agent 可读上下文 (2026-05-06)
 - [ ] Phase 4: 补齐验证与风险收口
 
 ## 实现记录
@@ -26,6 +26,7 @@
 - 2026-05-06: Phase 3 的初始触发范围固定为频道 `@agent` 和 agent DM，不引入“所有频道消息都自动触发”。
 - 2026-05-06: 已新增 `channel_artifacts` 后端模型、迁移、repository、service 和频道读取 API；workspace export ready 后会自动把当前 session 的可见文件索引同步到频道公共成果树。
 - 2026-05-06: 前端频道页已新增 `Shared files` 第四抽屉，复用现有 `FileSidebar` 与 `DocumentViewer`，支持按 agent 分组浏览树形文件和预览公开材料。
+- 2026-05-06: 已新增 `ChannelSharedContextService` 与 `ServerAgentTriggerService`；频道 `@agent` 和 agent DM 现会以 `persistent` runtime 模式复用现有 task enqueue/session queue 链路触发，并把公共成果树中的文本材料纳入共享上下文 prompt。
 
 ---
 
@@ -299,8 +300,8 @@
 
 **验收标准：**
 
-- [ ] shared context 规则对 agent 可解释
-- [ ] 公开成果可被纳入后续运行上下文
+- [x] shared context 规则对 agent 可解释
+- [x] 公开成果可被纳入后续运行上下文
 
 #### 3.2 建立共享材料读取限制
 
@@ -317,8 +318,8 @@
 
 **验收标准：**
 
-- [ ] 不会因共享材料无限扩张上下文
-- [ ] 文本类文件优先可读，二进制类可回退为元信息
+- [x] 不会因共享材料无限扩张上下文
+- [x] 文本类文件优先可读，二进制类可回退为元信息
 
 #### 3.3 约束 local mount 和私有状态不可被共享读取
 
@@ -331,8 +332,8 @@
 
 **验收标准：**
 
-- [ ] 共享读取只发生在 published artifacts 边界内
-- [ ] private state 和 local mount 本体不会被跨 agent 直接读取
+- [x] 共享读取只发生在 published artifacts 边界内
+- [x] private state 和 local mount 本体不会被跨 agent 直接读取
 
 ---
 

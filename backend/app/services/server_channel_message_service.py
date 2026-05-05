@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from sqlalchemy.orm import Session
@@ -20,11 +21,14 @@ from app.schemas.server_channel_message import (
     ServerChannelThreadResponse,
 )
 from app.schemas.user_profile import UserPublicProfileResponse
+from app.services.server_agent_trigger_service import ServerAgentTriggerService
 from app.services.server_member_service import require_server_member
 from app.services.user_public_profile_service import (
     build_user_public_profile,
     list_user_public_profiles_by_id,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ServerChannelMessageService:
@@ -107,6 +111,24 @@ class ServerChannelMessageService:
         )
         db.commit()
         db.refresh(message)
+        if request.message_type == "user":
+            try:
+                ServerAgentTriggerService().trigger_for_channel_message(
+                    db,
+                    current_user=current_user,
+                    server_id=server_id,
+                    channel=channel,
+                    message=message,
+                )
+            except Exception:
+                logger.exception(
+                    "server_agent_trigger_failed",
+                    extra={
+                        "server_id": str(server_id),
+                        "channel_id": str(channel.id),
+                        "message_id": str(message.id),
+                    },
+                )
         return self._build_message_response(
             message,
             author_user=build_user_public_profile(current_user)
