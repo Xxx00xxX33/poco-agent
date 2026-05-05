@@ -45,6 +45,32 @@ export interface ServerItem {
   updatedAt: string;
 }
 
+export interface ServerMemberItem {
+  id: number;
+  serverId: string;
+  userId: string;
+  role: string;
+  joinedAt: string;
+  invitedBy?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServerInviteItem {
+  id: string;
+  serverId: string;
+  token: string;
+  role: string;
+  expiresAt: string;
+  createdBy: string;
+  maxUses: number;
+  usedCount: number;
+  revokedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ServerChannelItem {
   id: string;
   serverId: string;

@@ -6,8 +6,10 @@ import type {
   ServerChannelVisibility,
   ServerConversationMessage,
   ServerConversationType,
+  ServerInviteItem,
   ServerItem,
   ServerKind,
+  ServerMemberItem,
 } from "@/features/servers/model/types";
 
 interface ServerResponse {
@@ -76,6 +78,32 @@ interface ServerAgentResponse {
   created_by: string;
   updated_by?: string | null;
   persistent_state?: ServerAgentPersistentStateResponse | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ServerMemberResponse {
+  membership_id: number;
+  server_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+  invited_by?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ServerInviteResponse {
+  invite_id: string;
+  server_id: string;
+  token: string;
+  role: string;
+  expires_at: string;
+  created_by: string;
+  max_uses: number;
+  used_count: number;
+  revoked_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -178,6 +206,36 @@ function mapAgent(agent: ServerAgentResponse): ServerAgentItem {
   };
 }
 
+function mapServerMember(member: ServerMemberResponse): ServerMemberItem {
+  return {
+    id: member.membership_id,
+    serverId: member.server_id,
+    userId: member.user_id,
+    role: member.role,
+    joinedAt: member.joined_at,
+    invitedBy: member.invited_by,
+    status: member.status,
+    createdAt: member.created_at,
+    updatedAt: member.updated_at,
+  };
+}
+
+function mapServerInvite(invite: ServerInviteResponse): ServerInviteItem {
+  return {
+    id: invite.invite_id,
+    serverId: invite.server_id,
+    token: invite.token,
+    role: invite.role,
+    expiresAt: invite.expires_at,
+    createdBy: invite.created_by,
+    maxUses: invite.max_uses,
+    usedCount: invite.used_count,
+    revokedAt: invite.revoked_at,
+    createdAt: invite.created_at,
+    updatedAt: invite.updated_at,
+  };
+}
+
 function mapConversationMessage(
   message: ServerConversationMessageResponse,
 ): ServerConversationMessage {
@@ -201,6 +259,84 @@ export const serversApi = {
       API_ENDPOINTS.servers,
     );
     return servers.map(mapServer);
+  },
+
+  createServer: async (input: { name: string }): Promise<ServerItem> => {
+    const server = await apiClient.post<ServerResponse>(API_ENDPOINTS.servers, {
+      name: input.name,
+    });
+    return mapServer(server);
+  },
+
+  acceptInvite: async (input: { token: string }): Promise<ServerMemberItem> => {
+    const member = await apiClient.post<ServerMemberResponse>(
+      "/server-invites/accept",
+      {
+        token: input.token,
+      },
+    );
+    return mapServerMember(member);
+  },
+
+  listMembers: async (serverId: string): Promise<ServerMemberItem[]> => {
+    const members = await apiClient.get<ServerMemberResponse[]>(
+      `/servers/${serverId}/members`,
+    );
+    return members.map(mapServerMember);
+  },
+
+  removeMember: async (serverId: string, membershipId: number): Promise<void> => {
+    await apiClient.delete(`/servers/${serverId}/members/${membershipId}`);
+  },
+
+  listInvites: async (serverId: string): Promise<ServerInviteItem[]> => {
+    const invites = await apiClient.get<ServerInviteResponse[]>(
+      `/servers/${serverId}/invites`,
+    );
+    return invites.map(mapServerInvite);
+  },
+
+  createInvite: async (
+    serverId: string,
+    input: {
+      role?: string;
+      expiresInDays?: number;
+      maxUses?: number;
+    } = {},
+  ): Promise<ServerInviteItem> => {
+    const invite = await apiClient.post<ServerInviteResponse>(
+      `/servers/${serverId}/invites`,
+      {
+        role: input.role ?? "member",
+        expires_in_days: input.expiresInDays ?? 30,
+        max_uses: input.maxUses ?? 100,
+      },
+    );
+    return mapServerInvite(invite);
+  },
+
+  createAgent: async (
+    serverId: string,
+    input: {
+      displayName: string;
+      handle?: string | null;
+      description?: string | null;
+      presetId: number;
+      visualKey?: string | null;
+    },
+  ): Promise<ServerAgentItem> => {
+    const agent = await apiClient.post<ServerAgentResponse>(
+      `/servers/${serverId}/agents`,
+      {
+        display_name: input.displayName,
+        handle: input.handle ?? null,
+        description: input.description ?? null,
+        preset_id: input.presetId,
+        visual_key: input.visualKey ?? null,
+        visibility: "server",
+      },
+    );
+    return mapAgent(agent);
   },
 
   listChannels: async (serverId: string): Promise<ServerChannelItem[]> => {
