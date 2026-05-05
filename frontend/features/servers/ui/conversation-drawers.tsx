@@ -15,6 +15,7 @@ import type {
 } from "@/features/servers/model/types";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
+import { SharedArtifactsDrawer } from "@/features/servers/ui/shared-artifacts-drawer";
 
 import { MessageRow } from "./conversation-message-row";
 
@@ -274,3 +275,5 @@ export function TaskDrawer({
     </aside>
   );
 }
+
+export { SharedArtifactsDrawer };

@@ -216,6 +216,12 @@
     "unread": "Непрочитанные",
     "noInbox": "Во входящих пока ничего нет",
     "noSaved": "Сохранённых элементов пока нет",
+    "sharedArtifacts": {
+      "title": "Shared files",
+      "description": "Published artifacts grouped by agent",
+      "preview": "Preview",
+      "empty": "No published files yet"
+    },
     "threadTitle": "Тред",
     "threadDescription": "Ответы остаются привязанными к текущему контексту беседы.",
     "threadPlaceholder": "Сообщение в тред",

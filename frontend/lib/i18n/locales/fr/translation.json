@@ -216,6 +216,12 @@
     "unread": "Non lus",
     "noInbox": "Aucun élément dans la boîte de réception",
     "noSaved": "Aucun élément enregistré",
+    "sharedArtifacts": {
+      "title": "Shared files",
+      "description": "Published artifacts grouped by agent",
+      "preview": "Preview",
+      "empty": "No published files yet"
+    },
     "threadTitle": "Fil",
     "threadDescription": "Les réponses restent attachées au contexte de conversation actuel.",
     "threadPlaceholder": "Message du fil",

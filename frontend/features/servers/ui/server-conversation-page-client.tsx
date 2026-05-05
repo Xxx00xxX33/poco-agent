@@ -6,6 +6,7 @@ import {
   Bot,
   Check,
   ChevronLeft,
+  Files,
   Hash,
   Lock,
   Plus,
@@ -40,6 +41,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import type { FileNode } from "@/features/chat/types";
 import { channelTasksApi } from "@/features/channel-tasks/api/channel-tasks-api";
 import { resolveChannelTaskView } from "@/features/channel-tasks/lib/channel-task-board";
 import type {
@@ -71,6 +73,7 @@ import { ColleagueDetail } from "@/features/servers/ui/colleague-detail";
 import { ColleaguesPanel } from "@/features/servers/ui/colleagues-panel";
 import {
   AgentDrawer,
+  SharedArtifactsDrawer,
   TaskDrawer,
   ThreadDrawer,
 } from "@/features/servers/ui/conversation-drawers";
@@ -125,12 +128,16 @@ function isDrawerCompatibleWithMode(
     return drawer.type === "thread";
   }
   if (mode === "tasks") {
-    return drawer.type === "task";
+    return drawer.type === "task" || drawer.type === "artifacts";
   }
   if (mode === "colleagues") {
     return drawer.type === "colleague";
   }
-  return drawer.type === "thread" || drawer.type === "agent";
+  return (
+    drawer.type === "thread" ||
+    drawer.type === "agent" ||
+    drawer.type === "artifacts"
+  );
 }
 
 function loadSavedMessageIds(): Set<string> {
@@ -213,6 +220,7 @@ function ConversationContent({
   onOpenThread,
   onOpenSettings,
   onOpenMembers,
+  onOpenArtifacts,
   onOpenLeaveConfirm,
   onToggleSaved,
   isSending,
@@ -232,6 +240,7 @@ function ConversationContent({
   onOpenThread: (message: ServerConversationMessage) => void;
   onOpenSettings: () => void;
   onOpenMembers: () => void;
+  onOpenArtifacts: () => void;
   onOpenLeaveConfirm: () => void;
   onToggleSaved: (messageId: string) => void;
   isSending: boolean;
@@ -302,6 +311,15 @@ function ConversationContent({
               disabled={!channel}
             >
               {t("conversationView.leave")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onOpenArtifacts}
+              disabled={!channel}
+            >
+              <Files className="size-4" />
             </Button>
             <Button
               type="button"
@@ -930,6 +948,7 @@ export function ServerConversationPageClient({
   const [threadMessages, setThreadMessages] = React.useState<
     ServerConversationMessage[]
   >([]);
+  const [channelArtifacts, setChannelArtifacts] = React.useState<FileNode[]>([]);
   const [taskActivity, setTaskActivity] = React.useState<
     ChannelTaskActivityMessage[]
   >([]);
@@ -1175,6 +1194,7 @@ export function ServerConversationPageClient({
       if (!selectedServerId) {
         setChannels([]);
         setMessagesByChannel({});
+        setChannelArtifacts([]);
         return;
       }
       setIsLoading(true);
@@ -1194,18 +1214,21 @@ export function ServerConversationPageClient({
         setMessagesByChannel(Object.fromEntries(previews));
 
         if (activeChannelId) {
-          const [nextTasks, nextAgents, nextMembers] = await Promise.all([
+          const [nextTasks, nextAgents, nextMembers, nextArtifacts] = await Promise.all([
             channelTasksApi.listTasks(selectedServerId, activeChannelId),
             serversApi.listChannelAgents(selectedServerId, activeChannelId),
             serversApi.listChannelMembers(selectedServerId, activeChannelId),
+            serversApi.listChannelArtifacts(selectedServerId, activeChannelId),
           ]);
           setTasks(nextTasks);
           setChannelAgents(nextAgents);
           setChannelMembers(nextMembers);
+          setChannelArtifacts(nextArtifacts);
         } else {
           setTasks([]);
           setChannelAgents([]);
           setChannelMembers([]);
+          setChannelArtifacts([]);
         }
       } catch (error) {
         console.error("[ServersWorkspace] load failed", error);
@@ -1831,6 +1854,7 @@ export function ServerConversationPageClient({
               }
               onOpenSettings={() => setSettingsOpen(true)}
               onOpenMembers={() => setMembersOpen(true)}
+              onOpenArtifacts={() => setDrawer({ type: "artifacts" })}
               onOpenLeaveConfirm={() => setLeaveChannelOpen(true)}
               onToggleSaved={toggleSaved}
               isSending={isSending}
@@ -1860,6 +1884,12 @@ export function ServerConversationPageClient({
               onSelectAgent={(id) => setDrawer({ type: "agent", agentId: id })}
               onClose={() => setDrawer({ type: "none" })}
               onOpenDm={handleOpenDm}
+            />
+          ) : drawer.type === "artifacts" ? (
+            <SharedArtifactsDrawer
+              files={channelArtifacts}
+              isLoading={isLoading}
+              onClose={() => setDrawer({ type: "none" })}
             />
           ) : drawer.type === "colleague" ? (
             <ColleagueDetail

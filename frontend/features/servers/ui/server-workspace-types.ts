@@ -15,6 +15,7 @@ export type DrawerState =
   | { type: "none" }
   | { type: "thread"; channelId: string; rootMessageId: string }
   | { type: "task"; taskId: string }
+  | { type: "artifacts" }
   | { type: "agent"; agentId?: string | null }
   | { type: "colleague"; selection?: ColleagueSelection | null };
 

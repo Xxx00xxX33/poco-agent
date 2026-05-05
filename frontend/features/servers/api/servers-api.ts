@@ -1,4 +1,5 @@
 import { apiClient, API_ENDPOINTS } from "@/services/api-client";
+import type { FileNode } from "@/features/chat/types";
 import type {
   ServerAgentItem,
   ServerChannelItem,
@@ -320,6 +321,15 @@ export const serversApi = {
       `/servers/${serverId}/invites`,
     );
     return invites.map(mapServerInvite);
+  },
+
+  listChannelArtifacts: async (
+    serverId: string,
+    channelId: string,
+  ): Promise<FileNode[]> => {
+    return apiClient.get<FileNode[]>(
+      `/servers/${serverId}/channels/${channelId}/artifacts`,
+    );
   },
 
   createInvite: async (

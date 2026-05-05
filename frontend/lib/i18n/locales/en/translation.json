@@ -216,6 +216,12 @@
     "unread": "Unread",
     "noInbox": "No inbox items yet",
     "noSaved": "No saved items yet",
+    "sharedArtifacts": {
+      "title": "Shared files",
+      "description": "Published artifacts grouped by agent",
+      "preview": "Preview",
+      "empty": "No published files yet"
+    },
     "threadTitle": "Thread",
     "threadDescription": "Replies stay attached to the current conversation context.",
     "threadPlaceholder": "Message thread",

@@ -216,6 +216,12 @@
     "unread": "未读",
     "noInbox": "收件箱暂无内容",
     "noSaved": "暂无已保存内容",
+    "sharedArtifacts": {
+      "title": "共享文件",
+      "description": "按 Agent 分组展示的公开成果",
+      "preview": "预览",
+      "empty": "还没有公开材料"
+    },
     "threadTitle": "会话串",
     "threadDescription": "回复会保留在当前 conversation 语境里。",
     "threadPlaceholder": "回复会话串",

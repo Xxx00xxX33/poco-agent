@@ -216,6 +216,12 @@
     "unread": "Ungelesen",
     "noInbox": "Noch keine Einträge im Posteingang",
     "noSaved": "Noch keine gespeicherten Einträge",
+    "sharedArtifacts": {
+      "title": "Shared files",
+      "description": "Published artifacts grouped by agent",
+      "preview": "Preview",
+      "empty": "No published files yet"
+    },
     "threadTitle": "Thread",
     "threadDescription": "Antworten bleiben im aktuellen Unterhaltungskontext.",
     "threadPlaceholder": "Thread-Nachricht",
