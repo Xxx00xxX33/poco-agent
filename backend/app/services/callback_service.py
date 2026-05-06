@@ -8,9 +8,14 @@ from sqlalchemy.orm import Session
 from app.models.agent_run import AgentRun
 from app.models.agent_session import AgentSession
 from app.models.agent_message import AgentMessage
+from app.models.server_channel_message import ServerChannelMessage
+from app.repositories.agent_identity_repository import AgentIdentityRepository
 from app.repositories.message_repository import MessageRepository
 from app.repositories.run_repository import RunRepository
 from app.repositories.session_repository import SessionRepository
+from app.repositories.server_channel_message_repository import (
+    ServerChannelMessageRepository,
+)
 from app.repositories.tool_execution_repository import ToolExecutionRepository
 from app.repositories.usage_log_repository import UsageLogRepository
 from app.schemas.callback import (
@@ -333,6 +338,84 @@ class CallbackService:
             usage_json=usage_data,
         )
 
+    def _mirror_assistant_message_to_server_channel(
+        self,
+        db: Session,
+        *,
+        db_session: AgentSession,
+        db_message: AgentMessage,
+    ) -> None:
+        if db_message.role != "assistant":
+            return
+
+        text = (db_message.text_preview or "").strip()
+        if not text:
+            content_text = db_message.content.get("text")
+            if isinstance(content_text, str):
+                text = content_text.strip()
+        if not text:
+            return
+
+        config_snapshot = db_session.config_snapshot or {}
+        channel_id_raw = config_snapshot.get("channel_id")
+        if not channel_id_raw:
+            return
+
+        try:
+            channel_id = uuid.UUID(str(channel_id_raw))
+        except (TypeError, ValueError):
+            logger.warning(
+                "invalid_server_channel_context",
+                extra={
+                    "session_id": str(db_session.id),
+                    "channel_id": channel_id_raw,
+                },
+            )
+            return
+
+        trigger_message_id_raw = config_snapshot.get("trigger_message_id")
+
+        actor_label = "Agent"
+        agent_identity_raw = config_snapshot.get("agent_identity_id")
+        if agent_identity_raw:
+            try:
+                agent = AgentIdentityRepository.get_by_id(
+                    db,
+                    uuid.UUID(str(agent_identity_raw)),
+                )
+            except (TypeError, ValueError):
+                agent = None
+            if agent is not None:
+                actor_label = (
+                    (agent.display_name or "").strip()
+                    or (agent.handle or "").strip()
+                    or actor_label
+                )
+
+        ServerChannelMessageRepository.create(
+            db,
+            ServerChannelMessage(
+                channel_id=channel_id,
+                author_user_id=None,
+                message_type="system",
+                text_preview=text,
+                content={
+                    "text": text,
+                    "actor_label": actor_label,
+                    "source": "agent_session",
+                    "session_id": str(db_session.id),
+                    "agent_message_id": db_message.id,
+                    "trigger_message_id": (
+                        str(trigger_message_id_raw).strip()
+                        if trigger_message_id_raw
+                        else None
+                    ),
+                },
+                thread_root_message_id=None,
+            ),
+        )
+        db.flush()
+
     def _should_skip_duplicate_result_message(
         self,
         db: Session,
@@ -519,6 +602,21 @@ class CallbackService:
             and callback.new_message
             and isinstance(callback.new_message, dict)
         ):
+            try:
+                self._mirror_assistant_message_to_server_channel(
+                    db,
+                    db_session=db_session,
+                    db_message=persisted_message,
+                )
+            except Exception:
+                logger.exception(
+                    "server_channel_message_mirror_failed",
+                    extra={
+                        "session_id": str(db_session.id),
+                        "run_id": str(db_run.id) if db_run is not None else None,
+                        "message_id": persisted_message.id,
+                    },
+                )
             try:
                 self._im_events.enqueue_assistant_message_created(
                     db,

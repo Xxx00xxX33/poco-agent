@@ -10,6 +10,7 @@ import {
 } from "@/features/servers/lib/server-conversation-view";
 import type { ServerConversationMessage } from "@/features/servers/model/types";
 import { useT } from "@/lib/i18n/client";
+import { ServerMessageContent } from "./server-message-content";
 
 export function formatTime(value: string): string {
   const date = new Date(value);
@@ -87,23 +88,6 @@ export function getMessageAuthor(message: ServerConversationMessage): string {
   return getUserDisplayName(message.authorUser, message.authorUserId);
 }
 
-function renderMentions(text: string) {
-  const tokens = text.split(/(@[A-Za-z0-9._-]+)/g);
-  return tokens.map((token, index) => {
-    if (token.startsWith("@")) {
-      return (
-        <span
-          key={`${token}-${index}`}
-          className="cursor-text select-text rounded-md border border-border bg-primary/10 px-1.5 py-0.5 text-sm font-semibold text-foreground"
-        >
-          {token}
-        </span>
-      );
-    }
-    return <React.Fragment key={`${token}-${index}`}>{token}</React.Fragment>;
-  });
-}
-
 export function MessageRow({
   message,
   channelLabel,
@@ -175,7 +159,9 @@ export function MessageRow({
           </div>
         </div>
         <div className="cursor-text select-text text-base leading-7 text-foreground">
-          {renderMentions(text || t("conversationView.emptyMessage"))}
+          <ServerMessageContent
+            content={text || t("conversationView.emptyMessage")}
+          />
         </div>
       </div>
     </article>

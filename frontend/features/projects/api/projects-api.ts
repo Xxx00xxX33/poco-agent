@@ -80,6 +80,27 @@ function mapSessionToTask(session: SessionResponse): TaskHistoryItem {
   };
 }
 
+function isServerScopedSession(session: SessionResponse): boolean {
+  const config = session.config_snapshot;
+  if (!config || typeof config !== "object") {
+    return false;
+  }
+
+  const serverId =
+    typeof config.server_id === "string" ? config.server_id.trim() : "";
+  const channelId =
+    typeof config.channel_id === "string" ? config.channel_id.trim() : "";
+  const triggerType =
+    typeof config.trigger_type === "string" ? config.trigger_type.trim() : "";
+
+  return Boolean(
+    serverId ||
+      channelId ||
+      triggerType === "channel_mention" ||
+      triggerType === "agent_dm",
+  );
+}
+
 export const projectsService = {
   listProjects: async (options?: {
     revalidate?: number;
@@ -196,10 +217,12 @@ export const tasksService = {
         }
       }
 
-      return sessionsResult.value.map((session) => ({
-        ...mapSessionToTask(session),
-        hasPendingUserInput: pendingSessionIds.has(session.session_id),
-      }));
+      return sessionsResult.value
+        .filter((session) => !isServerScopedSession(session))
+        .map((session) => ({
+          ...mapSessionToTask(session),
+          hasPendingUserInput: pendingSessionIds.has(session.session_id),
+        }));
     } catch (error) {
       console.warn(
         "[Tasks] Failed to fetch task history, using empty list",

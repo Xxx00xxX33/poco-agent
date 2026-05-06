@@ -523,7 +523,10 @@ class TaskService:
         if task_config is not None:
             # Only merge fields explicitly provided by the caller to avoid
             # overriding existing session config with schema defaults.
-            request_config = task_config.model_dump(exclude_unset=True)
+            request_config = task_config.model_dump(
+                mode="json",
+                exclude_unset=True,
+            )
             # input_files are per-run and should not be merged into session config.
             request_config.pop("input_files", None)
             # Extract mcp_config toggles before merging (don't merge as dict)

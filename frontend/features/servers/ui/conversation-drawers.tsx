@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { SharedArtifactsDrawer } from "@/features/servers/ui/shared-artifacts-drawer";
 
 import { MessageRow } from "./conversation-message-row";
+import { ServerMessageContent } from "./server-message-content";
 
 const overlayDrawerClassName =
   "absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-border bg-card md:left-[17rem] md:w-auto lg:left-[18rem] xl:static xl:w-[24rem] xl:shrink-0";
@@ -260,7 +261,9 @@ export function TaskDrawer({
                     key={item.messageId}
                     className="rounded-md border border-border px-3 py-3 text-sm text-foreground"
                   >
-                    {item.textPreview || t("conversationView.emptyMessage")}
+                    <ServerMessageContent
+                      content={item.textPreview || t("conversationView.emptyMessage")}
+                    />
                   </div>
                 ))
               ) : (

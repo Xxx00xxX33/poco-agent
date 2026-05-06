@@ -121,6 +121,7 @@ class ServerChannelMessageService:
                     message=message,
                 )
             except Exception:
+                db.rollback()
                 logger.exception(
                     "server_agent_trigger_failed",
                     extra={
