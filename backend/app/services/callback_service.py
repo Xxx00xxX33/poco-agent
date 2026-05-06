@@ -376,6 +376,8 @@ class CallbackService:
         trigger_message_id_raw = config_snapshot.get("trigger_message_id")
 
         actor_label = "Agent"
+        agent_handle = None
+        agent_visual_key = None
         agent_identity_raw = config_snapshot.get("agent_identity_id")
         if agent_identity_raw:
             try:
@@ -391,6 +393,8 @@ class CallbackService:
                     or (agent.handle or "").strip()
                     or actor_label
                 )
+                agent_handle = (agent.handle or "").strip() or None
+                agent_visual_key = (agent.visual_key or "").strip() or None
 
         ServerChannelMessageRepository.create(
             db,
@@ -405,6 +409,8 @@ class CallbackService:
                     "source": "agent_session",
                     "session_id": str(db_session.id),
                     "agent_message_id": db_message.id,
+                    "agent_handle": agent_handle,
+                    "agent_visual_key": agent_visual_key,
                     "trigger_message_id": (
                         str(trigger_message_id_raw).strip()
                         if trigger_message_id_raw

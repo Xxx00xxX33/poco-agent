@@ -8,9 +8,14 @@ import {
   getUserAvatarUrl,
   getUserDisplayName,
 } from "@/features/servers/lib/server-conversation-view";
-import type { ServerConversationMessage } from "@/features/servers/model/types";
+import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
+import type {
+  ServerAgentItem,
+  ServerConversationMessage,
+} from "@/features/servers/model/types";
 import { useT } from "@/lib/i18n/client";
 import { ServerMessageContent } from "./server-message-content";
+import { ServerAgentAvatar } from "./server-agent-avatar";
 
 export function formatTime(value: string): string {
   const date = new Date(value);
@@ -90,12 +95,16 @@ export function getMessageAuthor(message: ServerConversationMessage): string {
 
 export function MessageRow({
   message,
+  agents = [],
+  presets = [],
   channelLabel,
   isSaved = false,
   onOpenThread,
   onToggleSaved,
 }: {
   message: ServerConversationMessage;
+  agents?: ServerAgentItem[];
+  presets?: Preset[];
   channelLabel?: string;
   isSaved?: boolean;
   onOpenThread: () => void;
@@ -105,15 +114,42 @@ export function MessageRow({
   const author = getMessageAuthor(message);
   const text = getMessageText(message);
   const avatarUrl = getUserAvatarUrl(message.authorUser);
+  const matchingAgent =
+    message.messageType === "system"
+      ? agents.find((agent) => {
+          const contentHandle =
+            typeof message.content.agent_handle === "string"
+              ? message.content.agent_handle.trim().toLowerCase()
+              : "";
+          const contentActor =
+            typeof message.content.actor_label === "string"
+              ? message.content.actor_label.trim().toLowerCase()
+              : "";
+          return (
+            (contentHandle && agent.handle.trim().toLowerCase() === contentHandle) ||
+            (contentActor &&
+              agent.displayName.trim().toLowerCase() === contentActor)
+          );
+        }) ?? null
+      : null;
 
   return (
     <article className="group flex gap-4 border-b border-border px-6 py-5 last:border-b-0">
-      <Avatar className="size-11 shrink-0 rounded-md border border-border">
-        {avatarUrl ? <AvatarImage src={avatarUrl} alt={author} /> : null}
-        <AvatarFallback className="rounded-md bg-muted text-sm font-semibold text-foreground">
-          {getInitials(author)}
-        </AvatarFallback>
-      </Avatar>
+      {matchingAgent ? (
+        <ServerAgentAvatar
+          agent={matchingAgent}
+          presets={presets}
+          className="size-11 shrink-0"
+          fallbackClassName="text-sm"
+        />
+      ) : (
+        <Avatar className="size-11 shrink-0 rounded-md border border-border">
+          {avatarUrl ? <AvatarImage src={avatarUrl} alt={author} /> : null}
+          <AvatarFallback className="rounded-md bg-muted text-sm font-semibold text-foreground">
+            {getInitials(author)}
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div className="relative min-w-0 flex-1 space-y-1.5">
         <div className="flex items-start justify-between gap-3 text-sm">
           <div className="min-w-0 flex flex-wrap items-center gap-3">

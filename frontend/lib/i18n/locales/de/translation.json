@@ -323,10 +323,23 @@
       "role": "Rolle",
       "joined": "Beigetreten",
       "invitedBy": "Eingeladen von",
+      "persistentFiles": "Persistente Dateien",
+      "profilePath": "Profildatei",
+      "notesPath": "Notizen-Verzeichnis",
+      "statePath": "Status-Verzeichnis",
+      "artifactsPath": "Artefakte-Verzeichnis",
+      "agentEmptyDescription": "Noch keine Beschreibung.",
+      "runtimeStates": {
+        "active": "Aktiv",
+        "idle": "Leerlauf",
+        "failed": "Fehlgeschlagen",
+        "unknown": "Status nicht verfügbar"
+      },
       "emptyValue": "Nicht verfügbar",
       "emptySelection": "Wähle einen Kollegen aus, um Details anzuzeigen.",
       "removeMember": "Mitglied entfernen"
     },
+    "threadMentionHint": "Antworten in diesem Thread richten sich an",
     "toasts": {
       "loadFailed": "Unterhaltung konnte nicht geladen werden",
       "sendFailed": "Nachricht konnte nicht gesendet werden",

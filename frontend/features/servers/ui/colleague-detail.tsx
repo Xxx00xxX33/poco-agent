@@ -1,9 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
-  Bot,
   CalendarDays,
   Clipboard,
   MessageSquare,
@@ -14,28 +12,40 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import {
   getUserAvatarUrl,
   getUserDisplayName,
 } from "@/features/servers/lib/server-conversation-view";
+import {
+  getAgentRuntimeDotClassName,
+  getAgentRuntimeStatus,
+} from "@/features/servers/lib/agent-runtime-status";
 import type {
   ServerAgentItem,
   ServerMemberItem,
 } from "@/features/servers/model/types";
 import type { ColleagueSelection } from "@/features/servers/ui/server-workspace-types";
 import { useT } from "@/lib/i18n/client";
+import { cn } from "@/lib/utils";
+import { ServerAgentAvatar } from "./server-agent-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function ColleagueDetail({
   selection,
   agents,
+  presets,
   members,
+  canInspectPersistentFiles,
   onClose,
   onOpenDm,
   onRemoveMember,
 }: {
   selection: ColleagueSelection | null;
   agents: ServerAgentItem[];
+  presets: Preset[];
   members: ServerMemberItem[];
+  canInspectPersistentFiles?: boolean;
   onClose: () => void;
   onOpenDm: (agentId: string) => void;
   onRemoveMember: (membershipId: number) => void;
@@ -49,6 +59,9 @@ export function ColleagueDetail({
     selection?.kind === "human"
       ? (members.find((member) => member.id === selection.id) ?? null)
       : null;
+  const selectedRuntimeStatus = selectedAgent
+    ? getAgentRuntimeStatus(selectedAgent)
+    : null;
 
   return (
     <aside className="absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-border bg-card md:left-[17rem] md:w-auto lg:left-[18rem] xl:static xl:min-w-0 xl:flex-1">
@@ -77,13 +90,29 @@ export function ColleagueDetail({
         {selectedAgent ? (
           <div className="space-y-5 px-6 py-6">
             <div className="flex items-start gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-md border border-border bg-primary/10 text-foreground">
-                <Bot className="size-6" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-semibold text-foreground">
-                  {selectedAgent.displayName}
-                </p>
+              <ServerAgentAvatar
+                agent={selectedAgent}
+                presets={presets}
+                className="size-14 shrink-0"
+                fallbackClassName="text-lg"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="truncate text-lg font-semibold text-foreground">
+                    {selectedAgent.displayName}
+                  </p>
+                  {selectedRuntimeStatus ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          getAgentRuntimeDotClassName(selectedRuntimeStatus.tone),
+                        )}
+                      />
+                      {t(selectedRuntimeStatus.labelKey)}
+                    </span>
+                  ) : null}
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   @{selectedAgent.handle}
                 </p>
@@ -95,7 +124,7 @@ export function ColleagueDetail({
               </p>
               <p className="mt-3 text-sm leading-6 text-foreground">
                 {selectedAgent.description ||
-                  t("servers.agents.emptyDescription")}
+                  t("conversationView.colleagues.agentEmptyDescription")}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -117,6 +146,43 @@ export function ColleagueDetail({
               label={t("conversationView.colleagues.created")}
               value={selectedAgent.createdAt}
             />
+            {canInspectPersistentFiles && selectedAgent.persistentState ? (
+              <div className="space-y-3 rounded-md border border-border bg-background px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("conversationView.colleagues.persistentFiles")}
+                </p>
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("servers.agents.stateRoot")}
+                  value={selectedAgent.persistentState.stateRootPath}
+                />
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("conversationView.colleagues.profilePath")}
+                  value={selectedAgent.persistentState.profilePath}
+                />
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("servers.agents.memoryFile")}
+                  value={selectedAgent.persistentState.memoryPath}
+                />
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("conversationView.colleagues.notesPath")}
+                  value={selectedAgent.persistentState.notesDirPath}
+                />
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("conversationView.colleagues.statePath")}
+                  value={selectedAgent.persistentState.stateDirPath}
+                />
+                <InfoTile
+                  icon={<Clipboard className="size-4" />}
+                  label={t("conversationView.colleagues.artifactsPath")}
+                  value={selectedAgent.persistentState.artifactsDirPath}
+                />
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2 border-t border-border pt-5">
               <Button
                 type="button"

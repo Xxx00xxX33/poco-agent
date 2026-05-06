@@ -49,6 +49,7 @@ import type {
   ChannelTaskActivityMessage,
   ChannelTaskView,
 } from "@/features/channel-tasks/model/types";
+import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import { serversApi } from "@/features/servers";
 import type {
   ServerAgentItem,
@@ -205,9 +206,57 @@ function getMentionTrigger(
   };
 }
 
+function getExplicitMentionHandles(value: string): string[] {
+  return [...value.matchAll(/(?:^|\s)@([A-Za-z0-9._-]+)(?=$|[\s,.!?;:])/g)].map(
+    (match) => match[1].trim().toLowerCase(),
+  );
+}
+
+function inferThreadMentionHandle(
+  thread: ServerConversationMessage[],
+  agents: ServerAgentItem[],
+): string | null {
+  const agentHandleSet = new Set(
+    agents.map((agent) => agent.handle.trim().toLowerCase()),
+  );
+
+  for (const message of thread) {
+    const contentHandle =
+      typeof message.content.agent_handle === "string"
+        ? message.content.agent_handle.trim().toLowerCase()
+        : "";
+    if (contentHandle && agentHandleSet.has(contentHandle)) {
+      return contentHandle;
+    }
+
+    const text = getMessageText(message);
+    for (const handle of getExplicitMentionHandles(text)) {
+      if (agentHandleSet.has(handle)) {
+        return handle;
+      }
+    }
+
+    const actorLabel =
+      typeof message.content.actor_label === "string"
+        ? message.content.actor_label.trim().toLowerCase()
+        : "";
+    if (actorLabel) {
+      const matchedAgent = agents.find(
+        (agent) => agent.displayName.trim().toLowerCase() === actorLabel,
+      );
+      if (matchedAgent) {
+        return matchedAgent.handle.trim().toLowerCase();
+      }
+    }
+  }
+
+  return null;
+}
+
 function ConversationContent({
   channel,
   agents,
+  presets,
   members,
   messages,
   savedMessageIds,
@@ -228,6 +277,7 @@ function ConversationContent({
 }: {
   channel: ServerChannelItem | null;
   agents: ServerAgentItem[];
+  presets: Preset[];
   members: ServerChannelMemberItem[];
   messages: ServerConversationMessage[];
   savedMessageIds: Set<string>;
@@ -347,6 +397,8 @@ function ConversationContent({
               <MessageRow
                 key={message.id}
                 message={message}
+                agents={agents}
+                presets={presets}
                 onOpenThread={() => onOpenThread(message)}
                 isSaved={savedMessageIds.has(message.id)}
                 onToggleSaved={() => onToggleSaved(message.id)}
@@ -1047,6 +1099,10 @@ export function ServerConversationPageClient({
         : [],
     [activeChannelId, messagesByChannel],
   );
+  const threadMentionHandle = React.useMemo(
+    () => inferThreadMentionHandle(threadMessages, channelAgents),
+    [channelAgents, threadMessages],
+  );
   const selectedTask = React.useMemo(
     () =>
       drawer.type === "task"
@@ -1466,8 +1522,14 @@ export function ServerConversationPageClient({
     }
     setIsSending(true);
     try {
+      const trimmedDraft = threadDraft.trim();
+      const explicitMentions = getExplicitMentionHandles(trimmedDraft);
+      const replyText =
+        threadMentionHandle && !explicitMentions.includes(threadMentionHandle)
+          ? `@${threadMentionHandle} ${trimmedDraft}`
+          : trimmedDraft;
       await serversApi.sendMessage(selectedServerId, drawer.channelId, {
-        text: threadDraft.trim(),
+        text: replyText,
         threadRootMessageId: drawer.rootMessageId,
       });
       setThreadDraft("");
@@ -1809,6 +1871,7 @@ export function ServerConversationPageClient({
           ) : colleaguesModeActive ? (
             <ColleaguesPanel
               agents={serverAgents}
+              presets={presets}
               members={serverMembers}
               selection={colleagueSelection}
               onSelect={(selection) => {
@@ -1836,6 +1899,7 @@ export function ServerConversationPageClient({
             <ConversationContent
               channel={selectedChannel}
               agents={channelAgents}
+              presets={presets}
               members={channelMembers}
               messages={currentMessages}
               savedMessageIds={savedMessageIds}
@@ -1865,7 +1929,18 @@ export function ServerConversationPageClient({
           {drawer.type === "thread" ? (
             <ThreadDrawer
               thread={threadMessages}
+              agents={channelAgents}
+              presets={presets}
               draft={threadDraft}
+              suggestedMentionHandle={threadMentionHandle}
+              onInsertMention={() =>
+                setThreadDraft((current) =>
+                  threadMentionHandle &&
+                  !getExplicitMentionHandles(current).includes(threadMentionHandle)
+                    ? `@${threadMentionHandle} ${current}`.trim()
+                    : current,
+                )
+              }
               onDraftChange={setThreadDraft}
               onSend={() => void handleReply()}
               onClose={() => setDrawer({ type: "none" })}
@@ -1880,7 +1955,9 @@ export function ServerConversationPageClient({
           ) : drawer.type === "agent" ? (
             <AgentDrawer
               agents={channelAgents}
+              presets={presets}
               selectedAgentId={drawer.agentId}
+              canInspectPersistentFiles={selectedServer?.ownerUserId === profile?.id}
               onSelectAgent={(id) => setDrawer({ type: "agent", agentId: id })}
               onClose={() => setDrawer({ type: "none" })}
               onOpenDm={handleOpenDm}
@@ -1895,7 +1972,9 @@ export function ServerConversationPageClient({
             <ColleagueDetail
               selection={colleagueSelection}
               agents={serverAgents}
+              presets={presets}
               members={serverMembers}
+              canInspectPersistentFiles={selectedServer?.ownerUserId === profile?.id}
               onClose={() => {
                 setColleagueDetailClosed(true);
                 setDrawer({ type: "none" });

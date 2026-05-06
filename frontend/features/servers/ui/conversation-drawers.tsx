@@ -5,6 +5,7 @@ import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import type {
   ChannelTask,
   ChannelTaskActivityMessage,
@@ -18,21 +19,34 @@ import { cn } from "@/lib/utils";
 import { SharedArtifactsDrawer } from "@/features/servers/ui/shared-artifacts-drawer";
 
 import { MessageRow } from "./conversation-message-row";
+import {
+  getAgentRuntimeDotClassName,
+  getAgentRuntimeStatus,
+} from "../lib/agent-runtime-status";
 import { ServerMessageContent } from "./server-message-content";
+import { ServerAgentAvatar } from "./server-agent-avatar";
 
 const overlayDrawerClassName =
   "absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-border bg-card md:left-[17rem] md:w-auto lg:left-[18rem] xl:static xl:w-[24rem] xl:shrink-0";
 
 export function ThreadDrawer({
   thread,
+  agents,
+  presets,
   draft,
+  suggestedMentionHandle,
+  onInsertMention,
   onDraftChange,
   onSend,
   onClose,
   isSending,
 }: {
   thread: ServerConversationMessage[];
+  agents: ServerAgentItem[];
+  presets: Preset[];
   draft: string;
+  suggestedMentionHandle?: string | null;
+  onInsertMention?: () => void;
   onDraftChange: (value: string) => void;
   onSend: () => void;
   onClose: () => void;
@@ -66,12 +80,32 @@ export function ThreadDrawer({
           <MessageRow
             key={message.id}
             message={message}
+            agents={agents}
+            presets={presets}
             onOpenThread={() => undefined}
             onToggleSaved={() => undefined}
           />
         ))}
       </div>
       <div className="border-t border-border px-6 py-5">
+        {suggestedMentionHandle ? (
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              {t("conversationView.threadMentionHint")}{" "}
+              <span className="font-medium text-foreground">
+                @{suggestedMentionHandle}
+              </span>
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onInsertMention}
+            >
+              @{suggestedMentionHandle}
+            </Button>
+          </div>
+        ) : null}
         <Textarea
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
@@ -96,13 +130,17 @@ export function ThreadDrawer({
 
 export function AgentDrawer({
   agents,
+  presets,
   selectedAgentId,
+  canInspectPersistentFiles,
   onSelectAgent,
   onClose,
   onOpenDm,
 }: {
   agents: ServerAgentItem[];
+  presets: Preset[];
   selectedAgentId: string | null | undefined;
+  canInspectPersistentFiles?: boolean;
   onSelectAgent: (id: string) => void;
   onClose: () => void;
   onOpenDm: (agentId: string) => void;
@@ -110,6 +148,9 @@ export function AgentDrawer({
   const { t } = useT("translation");
   const selectedAgent =
     agents.find((agent) => agent.id === selectedAgentId) ?? agents[0] ?? null;
+  const selectedRuntimeStatus = selectedAgent
+    ? getAgentRuntimeStatus(selectedAgent)
+    : null;
   return (
     <aside className={overlayDrawerClassName}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
@@ -146,9 +187,25 @@ export function AgentDrawer({
                   : "border-border bg-card hover:bg-muted/20",
               )}
             >
-              <p className="text-base font-semibold text-foreground">
-                {agent.displayName}
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-base font-semibold text-foreground">
+                  {agent.displayName}
+                </p>
+                {(() => {
+                  const runtimeStatus = getAgentRuntimeStatus(agent);
+                  return (
+                    <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          getAgentRuntimeDotClassName(runtimeStatus.tone),
+                        )}
+                      />
+                      {t(runtimeStatus.labelKey)}
+                    </span>
+                  );
+                })()}
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 @{agent.handle}
               </p>
@@ -157,14 +214,38 @@ export function AgentDrawer({
         </div>
         {selectedAgent ? (
           <div className="mt-6 space-y-4 border-t border-border pt-6">
-            <div className="space-y-2">
-              <p className="text-lg font-semibold text-foreground">
-                {selectedAgent.displayName}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {selectedAgent.description ||
-                  t("servers.agents.emptyDescription")}
-              </p>
+            <div className="flex items-start gap-4">
+              <ServerAgentAvatar
+                agent={selectedAgent}
+                presets={presets}
+                className="size-14 shrink-0"
+                fallbackClassName="text-lg"
+              />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <p className="text-lg font-semibold text-foreground">
+                    {selectedAgent.displayName}
+                  </p>
+                  {selectedRuntimeStatus ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          getAgentRuntimeDotClassName(selectedRuntimeStatus.tone),
+                        )}
+                      />
+                      {t(selectedRuntimeStatus.labelKey)}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  @{selectedAgent.handle}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedAgent.description ||
+                    t("conversationView.colleagues.agentEmptyDescription")}
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">
@@ -193,6 +274,29 @@ export function AgentDrawer({
                 </p>
               </div>
             </div>
+            {canInspectPersistentFiles && selectedAgent.persistentState ? (
+              <div className="space-y-3 rounded-md border border-border bg-background px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("conversationView.colleagues.persistentFiles")}
+                </p>
+                <PathItem
+                  label={t("conversationView.colleagues.profilePath")}
+                  value={selectedAgent.persistentState.profilePath}
+                />
+                <PathItem
+                  label={t("conversationView.colleagues.notesPath")}
+                  value={selectedAgent.persistentState.notesDirPath}
+                />
+                <PathItem
+                  label={t("conversationView.colleagues.statePath")}
+                  value={selectedAgent.persistentState.stateDirPath}
+                />
+                <PathItem
+                  label={t("conversationView.colleagues.artifactsPath")}
+                  value={selectedAgent.persistentState.artifactsDirPath}
+                />
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -207,6 +311,15 @@ export function AgentDrawer({
         ) : null}
       </div>
     </aside>
+  );
+}
+
+function PathItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border px-3 py-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-2 break-all text-sm text-foreground">{value}</p>
+    </div>
   );
 }
 

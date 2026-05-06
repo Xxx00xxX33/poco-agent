@@ -323,10 +323,23 @@
       "role": "ロール",
       "joined": "参加日時",
       "invitedBy": "招待者",
+      "persistentFiles": "永続ファイル",
+      "profilePath": "プロファイルファイル",
+      "notesPath": "ノートディレクトリ",
+      "statePath": "状態ディレクトリ",
+      "artifactsPath": "成果物ディレクトリ",
+      "agentEmptyDescription": "説明はまだありません。",
+      "runtimeStates": {
+        "active": "実行中",
+        "idle": "待機中",
+        "failed": "失敗",
+        "unknown": "ステータス不明"
+      },
       "emptyValue": "利用不可",
       "emptySelection": "詳細を見る同僚を選択してください。",
       "removeMember": "メンバーを削除"
     },
+    "threadMentionHint": "このスレッドの返信は次宛てになります",
     "toasts": {
       "loadFailed": "会話の読み込みに失敗しました",
       "sendFailed": "メッセージの送信に失敗しました",

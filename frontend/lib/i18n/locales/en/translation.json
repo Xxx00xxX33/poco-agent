@@ -323,10 +323,23 @@
       "role": "Role",
       "joined": "Joined",
       "invitedBy": "Invited by",
+      "persistentFiles": "Persistent files",
+      "profilePath": "Profile file",
+      "notesPath": "Notes directory",
+      "statePath": "State directory",
+      "artifactsPath": "Artifacts directory",
+      "agentEmptyDescription": "No description yet.",
+      "runtimeStates": {
+        "active": "Active",
+        "idle": "Idle",
+        "failed": "Failed",
+        "unknown": "Status unavailable"
+      },
       "emptyValue": "Not available",
       "emptySelection": "Select a colleague to inspect their profile.",
       "removeMember": "Remove member"
     },
+    "threadMentionHint": "Replies in this thread will target",
     "toasts": {
       "loadFailed": "Failed to load conversation",
       "sendFailed": "Failed to send message",

@@ -323,10 +323,23 @@
       "role": "Rôle",
       "joined": "A rejoint",
       "invitedBy": "Invité par",
+      "persistentFiles": "Fichiers persistants",
+      "profilePath": "Fichier de profil",
+      "notesPath": "Répertoire des notes",
+      "statePath": "Répertoire d'état",
+      "artifactsPath": "Répertoire des artefacts",
+      "agentEmptyDescription": "Pas encore de description.",
+      "runtimeStates": {
+        "active": "Actif",
+        "idle": "Inactif",
+        "failed": "Échoué",
+        "unknown": "Statut indisponible"
+      },
       "emptyValue": "Non disponible",
       "emptySelection": "Sélectionnez un collègue pour voir ses détails.",
       "removeMember": "Retirer le membre"
     },
+    "threadMentionHint": "Les réponses dans ce fil cibleront",
     "toasts": {
       "loadFailed": "Impossible de charger la conversation",
       "sendFailed": "Impossible d’envoyer le message",

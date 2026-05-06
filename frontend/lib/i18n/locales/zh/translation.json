@@ -323,10 +323,23 @@
       "role": "角色",
       "joined": "加入时间",
       "invitedBy": "邀请人",
+      "persistentFiles": "持久化文件",
+      "profilePath": "档案文件",
+      "notesPath": "笔记目录",
+      "statePath": "状态目录",
+      "artifactsPath": "产物目录",
+      "agentEmptyDescription": "暂无描述。",
+      "runtimeStates": {
+        "active": "运行中",
+        "idle": "空闲",
+        "failed": "异常",
+        "unknown": "状态暂不可用"
+      },
       "emptyValue": "暂无",
       "emptySelection": "选择一个同事查看资料。",
       "removeMember": "移除成员"
     },
+    "threadMentionHint": "当前 thread 默认会回复给",
     "toasts": {
       "loadFailed": "加载会话失败",
       "sendFailed": "发送消息失败",

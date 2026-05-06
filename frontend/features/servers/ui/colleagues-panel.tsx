@@ -1,13 +1,18 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Plus, UserRound } from "lucide-react";
+import { Plus, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import {
   getUserAvatarUrl,
   getUserDisplayName,
 } from "@/features/servers/lib/server-conversation-view";
+import {
+  getAgentRuntimeDotClassName,
+  getAgentRuntimeStatus,
+} from "@/features/servers/lib/agent-runtime-status";
 import type {
   ServerAgentItem,
   ServerMemberItem,
@@ -15,9 +20,11 @@ import type {
 import type { ColleagueSelection } from "@/features/servers/ui/server-workspace-types";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
+import { ServerAgentAvatar } from "@/features/servers/ui/server-agent-avatar";
 
 export function ColleaguesPanel({
   agents,
+  presets,
   members,
   selection,
   onSelect,
@@ -25,6 +32,7 @@ export function ColleaguesPanel({
   onInviteMember,
 }: {
   agents: ServerAgentItem[];
+  presets: Preset[];
   members: ServerMemberItem[];
   selection: ColleagueSelection | null;
   onSelect: (selection: ColleagueSelection) => void;
@@ -65,15 +73,31 @@ export function ColleaguesPanel({
                       : "border-transparent hover:bg-muted/20",
                   )}
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
-                    <Bot className="size-4" />
-                  </span>
-                  <span className="min-w-0">
+                  <ServerAgentAvatar
+                    agent={agent}
+                    presets={presets}
+                    className="size-8 shrink-0"
+                  />
+                  <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-foreground">
                       {agent.displayName}
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      @{agent.handle}
+                    <span className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>@{agent.handle}</span>
+                      {(() => {
+                        const runtimeStatus = getAgentRuntimeStatus(agent);
+                        return (
+                          <>
+                            <span
+                              className={cn(
+                                "size-1.5 rounded-full",
+                                getAgentRuntimeDotClassName(runtimeStatus.tone),
+                              )}
+                            />
+                            <span>{t(runtimeStatus.labelKey)}</span>
+                          </>
+                        );
+                      })()}
                     </span>
                   </span>
                 </button>

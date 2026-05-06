@@ -323,10 +323,23 @@
       "role": "Роль",
       "joined": "Присоединился",
       "invitedBy": "Пригласил",
+      "persistentFiles": "Постоянные файлы",
+      "profilePath": "Файл профиля",
+      "notesPath": "Каталог заметок",
+      "statePath": "Каталог состояния",
+      "artifactsPath": "Каталог артефактов",
+      "agentEmptyDescription": "Описания пока нет.",
+      "runtimeStates": {
+        "active": "Активен",
+        "idle": "Ожидает",
+        "failed": "Ошибка",
+        "unknown": "Статус недоступен"
+      },
       "emptyValue": "Недоступно",
       "emptySelection": "Выберите коллегу, чтобы посмотреть детали.",
       "removeMember": "Удалить участника"
     },
+    "threadMentionHint": "Ответы в этой ветке будут направлены",
     "toasts": {
       "loadFailed": "Не удалось загрузить беседу",
       "sendFailed": "Не удалось отправить сообщение",
