@@ -356,16 +356,16 @@ class CallbackService:
         *,
         db_session: AgentSession,
         callback: AgentCallbackRequest,
-    ) -> None:
+    ) -> bool:
         config_snapshot = db_session.config_snapshot or {}
         channel_id_raw = config_snapshot.get("channel_id")
         if not channel_id_raw:
-            return
+            return False
 
         try:
             channel_id = uuid.UUID(str(channel_id_raw))
         except (TypeError, ValueError):
-            return
+            return False
 
         placeholder = ServerChannelMessageRepository.get_oldest_open_execution_placeholder(
             db,
@@ -373,7 +373,7 @@ class CallbackService:
             session_id=db_session.id,
         )
         if placeholder is None:
-            return
+            return False
 
         content = dict(placeholder.content or {})
         state_patch = callback.state_patch
@@ -402,8 +402,23 @@ class CallbackService:
         elif callback.status == CallbackStatus.FAILED:
             content["summary"] = summary or "Execution failed."
 
+        if callback.status == CallbackStatus.COMPLETED and summary:
+            agent_label = str(content.get("actor_label") or content.get("agent_label") or "Agent")
+            placeholder.text_preview = summary
+            placeholder.content = {
+                "text": summary,
+                "actor_label": agent_label,
+                "source": "agent_session",
+                "session_id": str(db_session.id),
+                "agent_handle": content.get("agent_handle"),
+                "agent_visual_key": content.get("agent_visual_key"),
+                "trigger_message_id": content.get("trigger_message_id"),
+            }
+            return True
+
         placeholder.content = content
         placeholder.text_preview = str(content.get("summary") or "").strip() or None
+        return False
 
     def _mirror_assistant_message_to_server_channel(
         self,
@@ -441,6 +456,7 @@ class CallbackService:
             return
 
         trigger_message_id_raw = config_snapshot.get("trigger_message_id")
+        thread_root_message_id_raw = config_snapshot.get("thread_root_message_id")
 
         actor_label = "Agent"
         agent_handle = None
@@ -463,6 +479,13 @@ class CallbackService:
                 agent_handle = (agent.handle or "").strip() or None
                 agent_visual_key = (agent.visual_key or "").strip() or None
 
+        thread_root_message_id = None
+        if thread_root_message_id_raw:
+            try:
+                thread_root_message_id = uuid.UUID(str(thread_root_message_id_raw))
+            except (TypeError, ValueError):
+                thread_root_message_id = None
+
         ServerChannelMessageRepository.create(
             db,
             ServerChannelMessage(
@@ -484,7 +507,7 @@ class CallbackService:
                         else None
                     ),
                 },
-                thread_root_message_id=None,
+                thread_root_message_id=thread_root_message_id,
             ),
         )
         db.flush()
@@ -607,12 +630,13 @@ class CallbackService:
 
         if callback.state_patch is not None:
             db_session.state_patch = callback.state_patch.model_dump(mode="json")
+        placeholder_replaced_with_final_message = False
         if callback.status in {
             CallbackStatus.RUNNING,
             CallbackStatus.COMPLETED,
             CallbackStatus.FAILED,
         }:
-            self._sync_execution_placeholder_to_server_channel(
+            placeholder_replaced_with_final_message = self._sync_execution_placeholder_to_server_channel(
                 db,
                 db_session=db_session,
                 callback=callback,
@@ -685,6 +709,7 @@ class CallbackService:
             and callback.new_message
             and isinstance(callback.new_message, dict)
             and callback.status == CallbackStatus.COMPLETED
+            and not placeholder_replaced_with_final_message
         ):
             try:
                 self._mirror_assistant_message_to_server_channel(

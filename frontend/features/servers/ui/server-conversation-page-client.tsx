@@ -103,6 +103,7 @@ import { cn } from "@/lib/utils";
 
 const LAST_SELECTION_KEY = "poco-servers-last-selection-v1";
 const SAVED_MESSAGES_KEY = "poco-saved-messages-v1";
+const READ_MESSAGES_KEY = "poco-read-messages-v1";
 
 function resolveWorkspaceMode(value: string | null): WorkspaceMode | null {
   if (value === "saved") {
@@ -171,6 +172,32 @@ function saveSavedMessageIds(ids: Set<string>) {
     return;
   }
   window.localStorage.setItem(SAVED_MESSAGES_KEY, JSON.stringify([...ids]));
+}
+
+function loadReadMessageIds(): Set<string> {
+  if (typeof window === "undefined") {
+    return new Set();
+  }
+  try {
+    const raw = window.localStorage.getItem(READ_MESSAGES_KEY);
+    if (!raw) {
+      return new Set();
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return new Set();
+    }
+    return new Set(parsed.filter((item) => typeof item === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadMessageIds(ids: Set<string>) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(READ_MESSAGES_KEY, JSON.stringify([...ids]));
 }
 
 function saveLastSelection(selection: Record<string, string | null>) {
@@ -1022,6 +1049,9 @@ export function ServerConversationPageClient({
   const [savedMessageIds, setSavedMessageIds] = React.useState<Set<string>>(
     new Set(),
   );
+  const [readMessageIds, setReadMessageIds] = React.useState<Set<string>>(
+    new Set(),
+  );
   const [mode, setMode] = React.useState<WorkspaceMode>(
     resolveWorkspaceMode(searchParams.get("mode")) ??
       (channelId ? "conversation" : "search"),
@@ -1187,6 +1217,11 @@ export function ServerConversationPageClient({
       ),
     [allFeedItems, profile?.id],
   );
+  const unreadInboxItems = React.useMemo(
+    () =>
+      inboxItems.filter((item) => !readMessageIds.has(item.message.id)),
+    [inboxItems, readMessageIds],
+  );
   const savedItems = React.useMemo(
     () => allFeedItems.filter((item) => savedMessageIds.has(item.message.id)),
     [allFeedItems, savedMessageIds],
@@ -1223,8 +1258,30 @@ export function ServerConversationPageClient({
 
   React.useEffect(() => {
     setSavedMessageIds(loadSavedMessageIds());
+    setReadMessageIds(loadReadMessageIds());
     void loadServers();
   }, [loadServers]);
+
+  const markMessagesRead = React.useCallback((messageIds: string[]) => {
+    if (messageIds.length === 0) {
+      return;
+    }
+    setReadMessageIds((current) => {
+      const next = new Set(current);
+      let changed = false;
+      for (const messageId of messageIds) {
+        if (!messageId || next.has(messageId)) {
+          continue;
+        }
+        next.add(messageId);
+        changed = true;
+      }
+      if (changed) {
+        saveReadMessageIds(next);
+      }
+      return changed ? next : current;
+    });
+  }, []);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -1382,6 +1439,20 @@ export function ServerConversationPageClient({
 
     void loadThread();
   }, [drawer, selectedServerId, t]);
+
+  React.useEffect(() => {
+    if (currentMessages.length === 0 || mode === "inbox" || mode === "search") {
+      return;
+    }
+    markMessagesRead(currentMessages.map((message) => message.id));
+  }, [currentMessages, markMessagesRead, mode]);
+
+  React.useEffect(() => {
+    if (drawer.type !== "thread" || threadMessages.length === 0) {
+      return;
+    }
+    markMessagesRead(threadMessages.map((message) => message.id));
+  }, [drawer, markMessagesRead, threadMessages]);
 
   React.useEffect(() => {
     const loadTaskActivity = async () => {
@@ -1910,7 +1981,7 @@ export function ServerConversationPageClient({
     servers,
     selectedServerId,
     mode,
-    inboxCount: inboxItems.length,
+    inboxCount: unreadInboxItems.length,
     topLevelChannels,
     directMessages,
     activeChannelId,
@@ -1983,7 +2054,7 @@ export function ServerConversationPageClient({
             )}
           >
           {feedModeActive ? (
-            <section className="flex min-w-0 flex-1 flex-col">
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               {mode === "search" ? (
                 <SearchPanel
                   search={searchValue}
@@ -1991,16 +2062,26 @@ export function ServerConversationPageClient({
                   items={filteredSearchItems}
                   savedMessageIds={savedMessageIds}
                   currentUserId={profile?.id}
-                  onOpenThread={(item) =>
-                    setDrawer({
+                  onOpenThread={(item) => {
+                    markMessagesRead([item.message.id]);
+                    return setDrawer({
                       type: "thread",
                       channelId: item.channel.id,
-                      rootMessageId: item.message.id,
-                    })
-                  }
-                  onOpenExecution={(sessionId) =>
-                    setDrawer({ type: "execution", sessionId })
-                  }
+                      rootMessageId:
+                        item.message.threadRootMessageId ?? item.message.id,
+                    });
+                  }}
+                  onOpenExecution={(sessionId) => {
+                    const matchedItem = filteredSearchItems.find(
+                      (item) =>
+                        item.message.content.source === "agent_execution" &&
+                        item.message.content.session_id === sessionId,
+                    );
+                    if (matchedItem) {
+                      markMessagesRead([matchedItem.message.id]);
+                    }
+                    setDrawer({ type: "execution", sessionId });
+                  }}
                   onToggleSaved={toggleSaved}
                 />
               ) : (
@@ -2008,17 +2089,28 @@ export function ServerConversationPageClient({
                   inboxItems={inboxItems}
                   savedItems={savedItems}
                   savedMessageIds={savedMessageIds}
+                  readMessageIds={readMessageIds}
                   currentUserId={profile?.id}
-                  onOpenThread={(item) =>
-                    setDrawer({
+                  onOpenThread={(item) => {
+                    markMessagesRead([item.message.id]);
+                    return setDrawer({
                       type: "thread",
                       channelId: item.channel.id,
-                      rootMessageId: item.message.id,
-                    })
-                  }
-                  onOpenExecution={(sessionId) =>
-                    setDrawer({ type: "execution", sessionId })
-                  }
+                      rootMessageId:
+                        item.message.threadRootMessageId ?? item.message.id,
+                    });
+                  }}
+                  onOpenExecution={(sessionId) => {
+                    const matchedItem = inboxItems.find(
+                      (item) =>
+                        item.message.content.source === "agent_execution" &&
+                        item.message.content.session_id === sessionId,
+                    );
+                    if (matchedItem) {
+                      markMessagesRead([matchedItem.message.id]);
+                    }
+                    setDrawer({ type: "execution", sessionId });
+                  }}
                   onToggleSaved={toggleSaved}
                 />
               )}

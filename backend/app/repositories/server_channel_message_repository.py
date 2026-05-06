@@ -123,3 +123,32 @@ class ServerChannelMessageRepository:
                 continue
             return candidate
         return None
+
+    @staticmethod
+    def get_latest_execution_placeholder(
+        session_db: Session,
+        *,
+        channel_id: uuid.UUID,
+        session_id: uuid.UUID,
+    ) -> ServerChannelMessage | None:
+        candidates = (
+            session_db.query(ServerChannelMessage)
+            .filter(
+                ServerChannelMessage.channel_id == channel_id,
+                ServerChannelMessage.message_type == "system",
+            )
+            .order_by(
+                ServerChannelMessage.created_at.desc(),
+                ServerChannelMessage.id.desc(),
+            )
+            .all()
+        )
+        session_id_text = str(session_id)
+        for candidate in candidates:
+            content = candidate.content or {}
+            if content.get("source") != "agent_execution":
+                continue
+            if str(content.get("session_id") or "").strip() != session_id_text:
+                continue
+            return candidate
+        return None

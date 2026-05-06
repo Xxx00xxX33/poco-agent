@@ -100,6 +100,7 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
         self.assertEqual(
             placeholder.content["trigger_message_id"], str(message.id)
         )
+        self.assertEqual(placeholder.thread_root_message_id, None)
 
     def test_callback_updates_execution_placeholder_summary(self) -> None:
         service = CallbackService.__new__(CallbackService)
@@ -172,6 +173,69 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
             placeholder.content["todo_progress"],
             {"completed": 1, "total": 2},
         )
+
+    def test_completed_callback_replaces_placeholder_with_final_agent_message(self) -> None:
+        service = CallbackService.__new__(CallbackService)
+        thread_root_message_id = uuid.uuid4()
+        placeholder = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "execution_status": "running",
+                "summary": "working",
+                "actor_label": "API Specialist",
+                "agent_label": "API Specialist",
+                "agent_handle": "api-specialist",
+                "agent_visual_key": "preset-visual-01",
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(thread_root_message_id),
+                "todo_progress": {"completed": 0, "total": 0},
+            },
+            text_preview="working",
+            thread_root_message_id=thread_root_message_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        db_session = SimpleNamespace(
+            id=self.session_id,
+            config_snapshot={
+                "channel_id": str(self.channel_id),
+                "agent_identity_id": str(self.agent_id),
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(thread_root_message_id),
+            },
+            state_patch=None,
+        )
+        callback = AgentCallbackRequest(
+            session_id=str(self.session_id),
+            time=datetime.now(UTC),
+            status=CallbackStatus.COMPLETED,
+            progress=100,
+            new_message={
+                "_type": "AssistantMessage",
+                "content": [{"_type": "TextBlock", "text": "Final answer"}],
+            },
+        )
+
+        with patch(
+            "app.services.callback_service.ServerChannelMessageRepository.get_oldest_open_execution_placeholder",
+            return_value=placeholder,
+        ):
+            replaced = service._sync_execution_placeholder_to_server_channel(
+                self.db,
+                db_session=db_session,
+                callback=callback,
+            )
+
+        self.assertTrue(replaced)
+        self.assertEqual(placeholder.content["source"], "agent_session")
+        self.assertEqual(placeholder.content["text"], "Final answer")
+        self.assertEqual(placeholder.content["actor_label"], "API Specialist")
+        self.assertEqual(placeholder.thread_root_message_id, thread_root_message_id)
 
 
 if __name__ == "__main__":

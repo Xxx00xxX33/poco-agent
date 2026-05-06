@@ -137,6 +137,7 @@ export function MessageRow({
   presets = [],
   channelLabel,
   isSaved = false,
+  compact = false,
   onOpenThread,
   onOpenExecution,
   onToggleSaved,
@@ -146,6 +147,7 @@ export function MessageRow({
   presets?: Preset[];
   channelLabel?: string;
   isSaved?: boolean;
+  compact?: boolean;
   onOpenThread: () => void;
   onOpenExecution?: ((sessionId: string) => void) | undefined;
   onToggleSaved: () => void;
@@ -179,7 +181,12 @@ export function MessageRow({
       : null;
 
   return (
-    <article className="group flex gap-4 border-b border-border px-6 py-5 last:border-b-0">
+    <article
+      className={cn(
+        "group flex gap-4 border-b border-border px-6 py-5 last:border-b-0",
+        compact && "max-h-[26rem] overflow-hidden",
+      )}
+    >
       {matchingAgent ? (
         <ServerAgentAvatar
           agent={matchingAgent}
@@ -269,7 +276,8 @@ export function MessageRow({
                   ),
                 )}
               </span>
-              {executionMessage.content.todo_progress ? (
+              {executionMessage.content.todo_progress &&
+              executionMessage.content.todo_progress.total > 0 ? (
                 <span className="text-xs text-muted-foreground">
                   {t("conversationView.execution.todoProgress", {
                     completed:
@@ -296,7 +304,12 @@ export function MessageRow({
             ) : null}
           </button>
         ) : (
-          <div className="cursor-text select-text text-base leading-7 text-foreground">
+          <div
+            className={cn(
+              "cursor-text select-text text-base leading-7 text-foreground",
+              compact && "max-h-[15rem] overflow-hidden",
+            )}
+          >
             <ServerMessageContent
               content={text || t("conversationView.emptyMessage")}
             />

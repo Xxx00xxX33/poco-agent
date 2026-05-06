@@ -47,11 +47,8 @@ class ServerAgentTriggerService:
             execution_status = "queued"
 
         trigger_message_id = getattr(message, "id", None)
-        thread_root_message_id = getattr(message, "thread_root_message_id", None) or getattr(
-            message,
-            "id",
-            None,
-        )
+        thread_root_message_id = getattr(message, "thread_root_message_id", None)
+        logical_thread_root_message_id = thread_root_message_id or getattr(message, "id", None)
         summary = (
             f"@{agent.handle} is preparing a response."
             if execution_status == "queued"
@@ -73,20 +70,21 @@ class ServerAgentTriggerService:
                     else None,
                     "agent_identity_id": str(agent.id),
                     "agent_handle": agent.handle,
+                    "actor_label": agent.display_name,
                     "agent_label": agent.display_name,
                     "agent_visual_key": getattr(agent, "visual_key", None),
                     "trigger_message_id": str(trigger_message_id)
                     if trigger_message_id
                     else None,
-                    "thread_root_message_id": str(thread_root_message_id)
-                    if thread_root_message_id
+                    "thread_root_message_id": str(logical_thread_root_message_id)
+                    if logical_thread_root_message_id
                     else None,
                     "execution_status": execution_status,
                     "summary": summary,
                     "current_step": None,
                     "todo_progress": {"completed": 0, "total": 0},
                 },
-                thread_root_message_id=None,
+                thread_root_message_id=thread_root_message_id,
             ),
         )
         db.commit()

@@ -58,7 +58,7 @@ export function SearchPanel({
   }, [currentUserId, items, mineOnly, timeFilter]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       <div className="border-b border-border px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-md border border-border bg-muted text-foreground">
@@ -113,6 +113,7 @@ export function SearchPanel({
               message={item.message}
               channelLabel={item.channel.name}
               isSaved={savedMessageIds.has(item.message.id)}
+              compact
               onOpenThread={() => onOpenThread(item)}
               onOpenExecution={onOpenExecution}
               onToggleSaved={() => onToggleSaved(item.message.id)}
@@ -140,6 +141,7 @@ export function FeedPanel({
   inboxItems,
   savedItems,
   savedMessageIds,
+  readMessageIds,
   currentUserId,
   onOpenThread,
   onOpenExecution,
@@ -148,6 +150,7 @@ export function FeedPanel({
   inboxItems: FeedItem[];
   savedItems: FeedItem[];
   savedMessageIds: Set<string>;
+  readMessageIds: Set<string>;
   currentUserId?: string | null;
   onOpenThread: (item: FeedItem) => void;
   onOpenExecution?: (sessionId: string) => void;
@@ -161,10 +164,11 @@ export function FeedPanel({
     () =>
       inboxItems.filter(
         (item) =>
-          item.message.messageType !== "user" ||
-          item.message.authorUserId !== currentUserId,
+          !readMessageIds.has(item.message.id) &&
+          (item.message.messageType !== "user" ||
+            item.message.authorUserId !== currentUserId),
       ),
-    [currentUserId, inboxItems],
+    [currentUserId, inboxItems, readMessageIds],
   );
   const items =
     filter === "saved"
@@ -180,7 +184,7 @@ export function FeedPanel({
   ] as const;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       <div className="border-b border-border px-6 py-4">
         <div className="flex gap-2">
           {filters.map(([value, Icon, label, count]) => {
@@ -215,6 +219,7 @@ export function FeedPanel({
               message={item.message}
               channelLabel={item.channel.name}
               isSaved={savedMessageIds.has(item.message.id)}
+              compact
               onOpenThread={() => onOpenThread(item)}
               onOpenExecution={onOpenExecution}
               onToggleSaved={() => onToggleSaved(item.message.id)}
