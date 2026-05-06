@@ -338,6 +338,73 @@ class CallbackService:
             usage_json=usage_data,
         )
 
+    def _build_execution_summary_from_callback(
+        self,
+        callback: AgentCallbackRequest,
+    ) -> str | None:
+        if callback.new_message and isinstance(callback.new_message, dict):
+            text = _extract_visible_message_text(callback.new_message)
+            if text:
+                return text[:280]
+        if callback.error_message:
+            return callback.error_message[:280]
+        return None
+
+    def _sync_execution_placeholder_to_server_channel(
+        self,
+        db: Session,
+        *,
+        db_session: AgentSession,
+        callback: AgentCallbackRequest,
+    ) -> None:
+        config_snapshot = db_session.config_snapshot or {}
+        channel_id_raw = config_snapshot.get("channel_id")
+        if not channel_id_raw:
+            return
+
+        try:
+            channel_id = uuid.UUID(str(channel_id_raw))
+        except (TypeError, ValueError):
+            return
+
+        placeholder = ServerChannelMessageRepository.get_oldest_open_execution_placeholder(
+            db,
+            channel_id=channel_id,
+            session_id=db_session.id,
+        )
+        if placeholder is None:
+            return
+
+        content = dict(placeholder.content or {})
+        state_patch = callback.state_patch
+        todos = list(state_patch.todos) if state_patch is not None else []
+        completed_todos = sum(
+            1 for item in todos if (item.status or "").strip().lower() == "completed"
+        )
+        current_step = state_patch.current_step if state_patch is not None else None
+        summary = self._build_execution_summary_from_callback(callback) or content.get(
+            "summary"
+        )
+
+        content.update(
+            {
+                "execution_status": callback.status.value,
+                "summary": summary,
+                "current_step": current_step or content.get("current_step"),
+                "todo_progress": {
+                    "completed": completed_todos,
+                    "total": len(todos),
+                },
+            }
+        )
+        if callback.status == CallbackStatus.COMPLETED:
+            content["summary"] = summary or "Execution completed."
+        elif callback.status == CallbackStatus.FAILED:
+            content["summary"] = summary or "Execution failed."
+
+        placeholder.content = content
+        placeholder.text_preview = str(content.get("summary") or "").strip() or None
+
     def _mirror_assistant_message_to_server_channel(
         self,
         db: Session,
@@ -540,6 +607,16 @@ class CallbackService:
 
         if callback.state_patch is not None:
             db_session.state_patch = callback.state_patch.model_dump(mode="json")
+        if callback.status in {
+            CallbackStatus.RUNNING,
+            CallbackStatus.COMPLETED,
+            CallbackStatus.FAILED,
+        }:
+            self._sync_execution_placeholder_to_server_channel(
+                db,
+                db_session=db_session,
+                callback=callback,
+            )
         should_apply_workspace_export = self._should_apply_workspace_export(
             db,
             db_session,

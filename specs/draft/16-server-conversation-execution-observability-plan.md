@@ -8,12 +8,12 @@
 | **预期改动范围** | backend server channel message lifecycle / callback-to-channel execution projection / frontend server conversation drawer system / session execution reuse / polling or refresh strategy / tests |
 | **改动类型** | feat |
 | **优先级** | P0 |
-| **状态** | drafting |
+| **状态** | in-progress |
 
 ## 实施阶段
 
-- [ ] Phase 0: 收敛 execution 可观测性产品模型与非目标
-- [ ] Phase 1: 建立 channel 内 execution placeholder message 契约
+- [x] Phase 0: 收敛 execution 可观测性产品模型与非目标
+- [x] Phase 1: 建立 channel 内 execution placeholder message 契约
 - [ ] Phase 2: 建立右侧 execution drawer 与 session 详情复用
 - [ ] Phase 3: 收敛增量刷新策略与最终验证
 
@@ -79,8 +79,8 @@
 
 **验收标准：**
 
-- [ ] execution item 的最小字段集被明确定义
-- [ ] execution item 与普通 system message、task message 的语义差异被明确定义
+- [x] execution item 的最小字段集被明确定义
+- [x] execution item 与普通 system message、task message 的语义差异被明确定义
 
 #### 0.2 定义 execution drawer 的边界
 
@@ -93,7 +93,7 @@
 
 **验收标准：**
 
-- [ ] execution drawer 和 shared artifacts drawer、thread drawer 的职责边界清晰
+- [x] execution drawer 和 shared artifacts drawer、thread drawer 的职责边界清晰
 
 #### 0.3 明确非目标
 
@@ -105,7 +105,7 @@
 
 **验收标准：**
 
-- [ ] 非目标写清楚，避免 scope 膨胀
+- [x] 非目标写清楚，避免 scope 膨胀
 
 ---
 
@@ -129,8 +129,8 @@
 
 **验收标准：**
 
-- [ ] mention 成功触发后，频道里立即可见 execution item
-- [ ] execution item 至少包含 `session_id`、`agent_handle`、`trigger_message_id`、`thread_root_message_id`
+- [x] mention 成功触发后，频道里立即可见 execution item
+- [x] execution item 至少包含 `session_id`、`agent_handle`、`trigger_message_id`、`thread_root_message_id`
 
 #### 1.2 在 callback RUNNING 阶段增量更新 execution item
 
@@ -143,8 +143,8 @@
 
 **验收标准：**
 
-- [ ] RUNNING callback 会更新 execution item 摘要
-- [ ] COMPLETED / FAILED callback 会把 execution item 收口到终态
+- [x] RUNNING callback 会更新 execution item 摘要
+- [x] COMPLETED / FAILED callback 会把 execution item 收口到终态
 
 #### 1.3 保留完成态结果摘要
 
@@ -157,8 +157,14 @@
 
 **验收标准：**
 
-- [ ] 完成态结果仍可回到频道流
-- [ ] execution item 和完成态结果摘要不会互相覆盖语义
+- [x] 完成态结果仍可回到频道流
+- [x] execution item 和完成态结果摘要不会互相覆盖语义
+
+### Phase 1 implementation notes
+
+- trigger 成功 enqueue 后会立即创建 `source = "agent_execution"` 的 compact system message，占位字段当前包含 `session_id`、`run_id / queue_item_id`、`agent_identity_id`、`agent_handle`、`agent_label`、`trigger_message_id`、`thread_root_message_id`、`execution_status`、`summary`、`current_step`、`todo_progress`。
+- callback 在 `RUNNING / COMPLETED / FAILED` 三个阶段会回查该 session 最早的未终态 execution item，并增量更新 `summary`、`current_step`、`todo_progress` 与终态状态。
+- 现有完成态 assistant 镜像消息仍然保留，execution item 只承担“执行过程投影”，不替代最终结果消息。
 
 ---
 

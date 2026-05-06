@@ -4,9 +4,13 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.repositories.agent_identity_repository import AgentIdentityRepository
+from app.repositories.server_channel_message_repository import (
+    ServerChannelMessageRepository,
+)
 from app.repositories.server_channel_agent_member_repository import (
     ServerChannelAgentMemberRepository,
 )
+from app.models.server_channel_message import ServerChannelMessage
 from app.schemas.session import TaskConfig
 from app.schemas.task import TaskEnqueueRequest, TaskEnqueueResponse
 from app.services.channel_shared_context_service import ChannelSharedContextService
@@ -26,6 +30,66 @@ class ServerAgentTriggerService:
         self._shared_context_service = (
             shared_context_service or ChannelSharedContextService()
         )
+
+    def _create_execution_placeholder(
+        self,
+        db: Session,
+        *,
+        channel_id: uuid.UUID,
+        message,
+        agent,
+        result: TaskEnqueueResponse,
+    ) -> None:
+        execution_status = "queued"
+        if result.status in {"running", "completed", "failed"}:
+            execution_status = result.status
+        elif result.accepted_type == "queued_query":
+            execution_status = "queued"
+
+        trigger_message_id = getattr(message, "id", None)
+        thread_root_message_id = getattr(message, "thread_root_message_id", None) or getattr(
+            message,
+            "id",
+            None,
+        )
+        summary = (
+            f"@{agent.handle} is preparing a response."
+            if execution_status == "queued"
+            else f"@{agent.handle} is working."
+        )
+        ServerChannelMessageRepository.create(
+            db,
+            ServerChannelMessage(
+                channel_id=channel_id,
+                author_user_id=None,
+                message_type="system",
+                text_preview=summary,
+                content={
+                    "source": "agent_execution",
+                    "session_id": str(result.session_id),
+                    "run_id": str(result.run_id) if result.run_id else None,
+                    "queue_item_id": str(result.queue_item_id)
+                    if result.queue_item_id
+                    else None,
+                    "agent_identity_id": str(agent.id),
+                    "agent_handle": agent.handle,
+                    "agent_label": agent.display_name,
+                    "agent_visual_key": getattr(agent, "visual_key", None),
+                    "trigger_message_id": str(trigger_message_id)
+                    if trigger_message_id
+                    else None,
+                    "thread_root_message_id": str(thread_root_message_id)
+                    if thread_root_message_id
+                    else None,
+                    "execution_status": execution_status,
+                    "summary": summary,
+                    "current_step": None,
+                    "todo_progress": {"completed": 0, "total": 0},
+                },
+                thread_root_message_id=None,
+            ),
+        )
+        db.commit()
 
     def _collect_target_agents(
         self,
@@ -137,5 +201,12 @@ class ServerAgentTriggerService:
                     agent.created_by,
                     request,
                 )
+            )
+            self._create_execution_placeholder(
+                db,
+                channel_id=channel.id,
+                message=message,
+                agent=agent,
+                result=results[-1],
             )
         return results

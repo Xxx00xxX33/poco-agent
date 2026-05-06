@@ -1,0 +1,178 @@
+import unittest
+import uuid
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
+
+from app.models.server_channel_message import ServerChannelMessage
+from app.models.user import User
+from app.schemas.callback import AgentCallbackRequest, CallbackStatus
+from app.schemas.task import TaskEnqueueResponse
+from app.services.callback_service import CallbackService
+from app.services.server_agent_trigger_service import ServerAgentTriggerService
+
+
+class ServerExecutionObservabilityTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.db = MagicMock()
+        self.server_id = uuid.uuid4()
+        self.channel_id = uuid.uuid4()
+        self.agent_id = uuid.uuid4()
+        self.session_id = uuid.uuid4()
+        self.current_user = User(
+            id="user-1",
+            primary_email="alice@example.com",
+            display_name="Alice",
+            avatar_url=None,
+            status="active",
+        )
+
+    def test_trigger_creates_execution_placeholder_after_enqueue(self) -> None:
+        task_service = MagicMock()
+        context_service = MagicMock()
+        service = ServerAgentTriggerService(
+            task_service=task_service,
+            shared_context_service=context_service,
+        )
+        message = SimpleNamespace(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id="user-1",
+            text_preview="Please review @api-specialist",
+            content={"text": "Please review @api-specialist"},
+            thread_root_message_id=None,
+        )
+        channel = SimpleNamespace(
+            id=self.channel_id,
+            server_id=self.server_id,
+            conversation_type="channel",
+            direct_agent_identity_id=None,
+            name="backend",
+        )
+        agent = SimpleNamespace(
+            id=self.agent_id,
+            server_id=self.server_id,
+            preset_id=8,
+            handle="api-specialist",
+            display_name="API Specialist",
+            visual_key="preset-visual-01",
+            lifecycle_state="active",
+            created_by="owner-user",
+            persistent_state=SimpleNamespace(active_session_id=None),
+        )
+        membership = SimpleNamespace(agent_identity_id=self.agent_id)
+        context_service.build_message_trigger_prompt.return_value = "shared prompt"
+        task_service.enqueue_task.return_value = TaskEnqueueResponse(
+            session_id=self.session_id,
+            accepted_type="run",
+            run_id=uuid.uuid4(),
+            status="queued",
+            queued_query_count=0,
+        )
+
+        with (
+            patch(
+                "app.services.server_agent_trigger_service.ServerChannelAgentMemberRepository.list_by_channel",
+                return_value=[membership],
+            ),
+            patch(
+                "app.services.server_agent_trigger_service.AgentIdentityRepository.get_by_id",
+                return_value=agent,
+            ),
+            patch(
+                "app.services.server_agent_trigger_service.ServerChannelMessageRepository.create"
+            ) as create_message,
+        ):
+            service.trigger_for_channel_message(
+                self.db,
+                current_user=self.current_user,
+                server_id=self.server_id,
+                channel=channel,
+                message=message,
+            )
+
+        placeholder = create_message.call_args.args[1]
+        self.assertEqual(placeholder.message_type, "system")
+        self.assertEqual(placeholder.channel_id, self.channel_id)
+        self.assertEqual(placeholder.content["source"], "agent_execution")
+        self.assertEqual(placeholder.content["session_id"], str(self.session_id))
+        self.assertEqual(placeholder.content["agent_handle"], "api-specialist")
+        self.assertEqual(
+            placeholder.content["trigger_message_id"], str(message.id)
+        )
+
+    def test_callback_updates_execution_placeholder_summary(self) -> None:
+        service = CallbackService.__new__(CallbackService)
+        placeholder = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "execution_status": "queued",
+                "summary": None,
+                "current_step": None,
+                "todo_progress": {"completed": 0, "total": 0},
+            },
+            text_preview="queued",
+            thread_root_message_id=None,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        db_session = SimpleNamespace(
+            id=self.session_id,
+            config_snapshot={
+                "channel_id": str(self.channel_id),
+                "agent_identity_id": str(self.agent_id),
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(uuid.uuid4()),
+            },
+            state_patch=None,
+        )
+        callback = AgentCallbackRequest(
+            session_id=str(self.session_id),
+            time=datetime.now(UTC),
+            status=CallbackStatus.RUNNING,
+            progress=33,
+            state_patch={
+                "current_step": "Inspecting retry behavior",
+                "todos": [
+                    {"content": "inspect", "status": "completed"},
+                    {"content": "patch", "status": "in_progress"},
+                ],
+            },
+            new_message={
+                "_type": "AssistantMessage",
+                "content": [
+                    {"_type": "TextBlock", "text": "Working on the retry path."}
+                ],
+            },
+        )
+
+        with patch(
+            "app.services.callback_service.ServerChannelMessageRepository.get_oldest_open_execution_placeholder",
+            return_value=placeholder,
+        ):
+            service._sync_execution_placeholder_to_server_channel(
+                self.db,
+                db_session=db_session,
+                callback=callback,
+            )
+
+        self.assertEqual(placeholder.content["execution_status"], "running")
+        self.assertEqual(
+            placeholder.content["current_step"], "Inspecting retry behavior"
+        )
+        self.assertEqual(
+            placeholder.content["summary"], "Working on the retry path."
+        )
+        self.assertEqual(
+            placeholder.content["todo_progress"],
+            {"completed": 1, "total": 2},
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
