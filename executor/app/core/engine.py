@@ -130,21 +130,7 @@ class AgentExecutor:
             # recognize them as commands.
             is_slash_command = prompt.lstrip().startswith("/")
             if not is_slash_command:
-                input_hint = self._build_input_hint(config)
-                if input_hint:
-                    prompt = f"{input_hint}\n\n{prompt}"
-
-                prompt_appendix = build_prompt_appendix(
-                    browser_enabled=config.browser_enabled,
-                    memory_enabled=bool(self.memory_mcp_server),
-                )
-                if prompt_appendix:
-                    prompt = f"{prompt}\n\n{prompt_appendix}"
-
-                prompt = f"{prompt}\n\nPlease reply in the same language as the user's input unless explicitly requested otherwise."
-                prompt = (
-                    f"{prompt}\n\n{self._build_workspace_scope_hint(ctx.cwd, config)}"
-                )
+                prompt = self._compose_user_prompt(prompt, config, cwd=ctx.cwd)
 
             async def dummy_hook(
                 input_data: HookInput, tool_use_id: str | None, context: HookContext
@@ -464,6 +450,48 @@ class AgentExecutor:
             )
 
         return "\n".join(lines) if lines else None
+
+    @staticmethod
+    def _build_persistent_state_hint(config: TaskConfig) -> str | None:
+        if config.agent_runtime_mode != "persistent":
+            return None
+
+        return "\n".join(
+            [
+                "Persistent state contract:",
+                "- /agent_state is your private long-term state directory.",
+                "- Use /agent_state/MEMORY.md for durable facts, preferences, and collaboration constraints that should survive future sessions.",
+                "- Use /agent_state/state/*.json for structured runtime state such as active task bookkeeping.",
+                "- Use /agent_state/notes/ for working notes that may evolve during ongoing tasks.",
+                "- Do not overwrite system-owned fields in /agent_state/profile.json.",
+                "- Do not store short-lived task chatter or noisy scratch notes in long-term memory.",
+                "- Private state is not the same as published artifacts; share deliverables through workspace export or published artifacts instead.",
+            ]
+        )
+
+    def _compose_user_prompt(self, prompt: str, config: TaskConfig, *, cwd: str) -> str:
+        sections = [prompt]
+
+        input_hint = self._build_input_hint(config)
+        if input_hint:
+            sections.insert(0, input_hint)
+
+        persistent_state_hint = self._build_persistent_state_hint(config)
+        if persistent_state_hint:
+            sections.append(persistent_state_hint)
+
+        prompt_appendix = build_prompt_appendix(
+            browser_enabled=config.browser_enabled,
+            memory_enabled=bool(getattr(self, "memory_mcp_server", None)),
+        )
+        if prompt_appendix:
+            sections.append(prompt_appendix)
+
+        sections.append(
+            "Please reply in the same language as the user's input unless explicitly requested otherwise."
+        )
+        sections.append(self._build_workspace_scope_hint(cwd, config))
+        return "\n\n".join(section for section in sections if section)
 
     @staticmethod
     def _build_workspace_scope_hint(cwd: str, config: TaskConfig) -> str:

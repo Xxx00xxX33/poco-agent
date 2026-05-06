@@ -14,7 +14,7 @@
 
 - [x] Phase 0: 收敛持久状态 bootstrap 边界与非目标
 - [x] Phase 1: 建立非空持久状态骨架与幂等 backfill
-- [ ] Phase 2: 建立 persistent runtime 下的维护提示词与写入约束
+- [x] Phase 2: 建立 persistent runtime 下的维护提示词与写入约束
 - [ ] Phase 3: 补齐 owner 侧可见性、语义收口与验证
 
 ---
@@ -202,8 +202,8 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] persistent runtime 会收到 `/agent_state` 的维护提示
-- [ ] temporary runtime 不会收到鼓励写长期状态的提示
+- [x] persistent runtime 会收到 `/agent_state` 的维护提示
+- [x] temporary runtime 不会收到鼓励写长期状态的提示
 
 #### 2.2 约束长期状态写入内容
 
@@ -222,8 +222,8 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] 提示词覆盖写什么、不写什么、哪些字段不能动
-- [ ] 提示词不和 channel shared context prompt 互相冲突
+- [x] 提示词覆盖写什么、不写什么、哪些字段不能动
+- [x] 提示词不和 channel shared context prompt 互相冲突
 
 #### 2.3 为 task 能力和长期状态建立最小衔接
 
@@ -236,7 +236,13 @@ agents/<agent_id>/
 
 **验收标准：**
 
-- [ ] private state 与 published artifacts 的边界在执行层被明确说明
+- [x] private state 与 published artifacts 的边界在执行层被明确说明
+
+### Phase 2 implementation notes
+
+- executor 抽出了 `_compose_user_prompt()`，把输入提示、persistent-state contract、通用 prompt appendix 和 workspace scope hint 收敛到一处组装。
+- `agent_runtime_mode=persistent` 时会额外注入 `/agent_state` 维护契约，覆盖 `MEMORY.md`、`state/*.json`、`notes/`、`profile.json` 和 published artifacts 的边界。
+- `agent_runtime_mode=temporary` 时不会收到鼓励写长期状态的提示，保持 snapshot read-only 心智。
 
 ---
 
