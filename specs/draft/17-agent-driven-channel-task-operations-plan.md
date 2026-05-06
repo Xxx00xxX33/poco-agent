@@ -8,12 +8,12 @@
 | **预期改动范围** | backend channel task service adapters / agent-facing structured task tools or internal APIs / executor prompt and tool contract / task-thread linkage / tests |
 | **改动类型** | feat |
 | **优先级** | P0 |
-| **状态** | drafting |
+| **状态** | in-progress |
 
 ## 实施阶段
 
-- [ ] Phase 0: 收敛 agent task 操作边界与非目标
-- [ ] Phase 1: 定义结构化 task tool 或专用接口契约
+- [x] Phase 0: 收敛 agent task 操作边界与非目标
+- [x] Phase 1: 定义结构化 task tool 或专用接口契约
 - [ ] Phase 2: 建立 backend task adapter 与消息回流闭环
 - [ ] Phase 3: 把 task 自主协作接入 executor 提示词与验证
 
@@ -81,8 +81,8 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] agent 侧 task 能力集被明确定义
-- [ ] 第一版能力与用户侧 task API 边界清晰
+- [x] agent 侧 task 能力集被明确定义
+- [x] 第一版能力与用户侧 task API 边界清晰
 
 #### 0.2 定义和 session todos 的关系
 
@@ -95,7 +95,7 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] session todos 和 channel tasks 的语义边界清晰
+- [x] session todos 和 channel tasks 的语义边界清晰
 
 #### 0.3 明确非目标
 
@@ -107,7 +107,7 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] 非目标写清楚，避免隐式 scope 膨胀
+- [x] 非目标写清楚，避免隐式 scope 膨胀
 
 ---
 
@@ -138,8 +138,8 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] 每个操作有明确结构化 payload
-- [ ] payload 能从 session config 解析默认上下文
+- [x] 每个操作有明确结构化 payload
+- [x] payload 能从 session config 解析默认上下文
 
 #### 1.2 约束上下文来源
 
@@ -153,8 +153,8 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] task 操作的上下文绑定当前会话
-- [ ] 不能跨频道误写 task
+- [x] task 操作的上下文绑定当前会话
+- [x] 不能跨频道误写 task
 
 #### 1.3 明确错误返回与拒绝策略
 
@@ -167,8 +167,14 @@ agent 在 persistent runtime 中可能跨多次会话工作，但 task 写入必
 
 **验收标准：**
 
-- [ ] 错误返回结构化、可观察
-- [ ] agent 可以据此在会话中做出合理解释
+- [x] 错误返回结构化、可观察
+- [x] agent 可以据此在会话中做出合理解释
+
+### Phase 1 implementation notes
+
+- backend 新增了 `server_channel_task_agent` schema，第一版结构化能力集收敛为 `create / update_status / claim_self / comment` 四个操作。
+- 新增 `ServerChannelTaskAgentService.resolve_context()`，从当前 `session.config_snapshot` 强制解析 `server_id / channel_id / agent_identity_id / thread_root_message_id`，作为后续 agent task 写入的唯一默认上下文来源。
+- 当前 contract 明确区分了 session todos 与 channel tasks：todo 不会自动提升为 channel task，只有显式调用结构化 task 能力才会进入 channel task 子域。
 
 ---
 
