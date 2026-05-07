@@ -153,12 +153,13 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
         )
 
         with patch(
-            "app.services.callback_service.ServerChannelMessageRepository.get_oldest_open_execution_placeholder",
+            "app.services.callback_service.ServerChannelMessageRepository.find_execution_placeholder",
             return_value=placeholder,
         ):
             service._sync_execution_placeholder_to_server_channel(
                 self.db,
                 db_session=db_session,
+                db_run=None,
                 callback=callback,
             )
 
@@ -222,12 +223,13 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
         )
 
         with patch(
-            "app.services.callback_service.ServerChannelMessageRepository.get_oldest_open_execution_placeholder",
+            "app.services.callback_service.ServerChannelMessageRepository.find_execution_placeholder",
             return_value=placeholder,
         ):
             replaced = service._sync_execution_placeholder_to_server_channel(
                 self.db,
                 db_session=db_session,
+                db_run=None,
                 callback=callback,
             )
 
@@ -236,6 +238,201 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
         self.assertEqual(placeholder.content["text"], "Final answer")
         self.assertEqual(placeholder.content["actor_label"], "API Specialist")
         self.assertEqual(placeholder.thread_root_message_id, thread_root_message_id)
+
+    def test_completed_callback_can_replace_already_completed_placeholder(self) -> None:
+        service = CallbackService.__new__(CallbackService)
+        thread_root_message_id = uuid.uuid4()
+        placeholder = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "execution_status": "completed",
+                "summary": "old summary",
+                "actor_label": "API Specialist",
+                "agent_label": "API Specialist",
+                "agent_handle": "api-specialist",
+                "agent_visual_key": "preset-visual-01",
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(thread_root_message_id),
+                "todo_progress": {"completed": 0, "total": 0},
+            },
+            text_preview="old summary",
+            thread_root_message_id=thread_root_message_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        db_session = SimpleNamespace(
+            id=self.session_id,
+            config_snapshot={
+                "channel_id": str(self.channel_id),
+                "agent_identity_id": str(self.agent_id),
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(thread_root_message_id),
+            },
+            state_patch=None,
+        )
+        callback = AgentCallbackRequest(
+            session_id=str(self.session_id),
+            time=datetime.now(UTC),
+            status=CallbackStatus.COMPLETED,
+            progress=100,
+            new_message={
+                "_type": "AssistantMessage",
+                "content": [{"_type": "TextBlock", "text": "Final answer after replay"}],
+            },
+        )
+
+        with patch(
+            "app.services.callback_service.ServerChannelMessageRepository.find_execution_placeholder",
+            return_value=placeholder,
+        ):
+            replaced = service._sync_execution_placeholder_to_server_channel(
+                self.db,
+                db_session=db_session,
+                db_run=None,
+                callback=callback,
+            )
+
+        self.assertTrue(replaced)
+        self.assertEqual(placeholder.content["source"], "agent_session")
+        self.assertEqual(placeholder.content["text"], "Final answer after replay")
+
+    def test_mirror_assistant_message_reuses_existing_placeholder(self) -> None:
+        service = CallbackService.__new__(CallbackService)
+        thread_root_message_id = uuid.uuid4()
+        trigger_message_id = uuid.uuid4()
+        placeholder = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "execution_status": "completed",
+                "summary": "summary",
+                "agent_handle": "api-specialist",
+                "agent_visual_key": "preset-visual-01",
+                "trigger_message_id": str(trigger_message_id),
+            },
+            text_preview="summary",
+            thread_root_message_id=thread_root_message_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        db_session = SimpleNamespace(
+            id=self.session_id,
+            config_snapshot={
+                "channel_id": str(self.channel_id),
+                "agent_identity_id": str(self.agent_id),
+                "trigger_message_id": str(trigger_message_id),
+                "thread_root_message_id": str(thread_root_message_id),
+            },
+        )
+        db_message = SimpleNamespace(
+            id=123,
+            role="assistant",
+            text_preview="Final answer preview",
+            content={
+                "_type": "AssistantMessage",
+                "content": [{"_type": "TextBlock", "text": "Final answer full"}],
+            },
+        )
+        agent = SimpleNamespace(
+            id=self.agent_id,
+            display_name="API Specialist",
+            handle="api-specialist",
+            visual_key="preset-visual-01",
+        )
+
+        with (
+            patch(
+                "app.services.callback_service.ServerChannelMessageRepository.find_execution_placeholder",
+                return_value=placeholder,
+            ),
+            patch(
+                "app.services.callback_service.AgentIdentityRepository.get_by_id",
+                return_value=agent,
+            ),
+            patch(
+                "app.services.callback_service.ServerChannelMessageRepository.create"
+            ) as create_message,
+        ):
+            service._mirror_assistant_message_to_server_channel(
+                self.db,
+                db_session=db_session,
+                db_run=None,
+                db_message=db_message,
+            )
+
+        create_message.assert_not_called()
+        self.assertEqual(placeholder.content["source"], "agent_session")
+        self.assertEqual(placeholder.content["text"], "Final answer full")
+        self.assertEqual(placeholder.text_preview, "Final answer full")
+
+    def test_find_execution_placeholder_prefers_run_id_over_session_only(self) -> None:
+        run_id_target = uuid.uuid4()
+        trigger_message_id = uuid.uuid4()
+        thread_root_message_id = uuid.uuid4()
+        newer_wrong = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "run_id": str(uuid.uuid4()),
+                "trigger_message_id": str(uuid.uuid4()),
+                "thread_root_message_id": str(uuid.uuid4()),
+            },
+            text_preview="wrong",
+            thread_root_message_id=thread_root_message_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        correct = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_execution",
+                "session_id": str(self.session_id),
+                "run_id": str(run_id_target),
+                "trigger_message_id": str(trigger_message_id),
+                "thread_root_message_id": str(thread_root_message_id),
+            },
+            text_preview="correct",
+            thread_root_message_id=thread_root_message_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+
+        query = MagicMock()
+        query.filter.return_value = query
+        query.order_by.return_value = query
+        query.all.return_value = [newer_wrong, correct]
+        self.db.query.return_value = query
+
+        from app.repositories.server_channel_message_repository import (
+            ServerChannelMessageRepository,
+        )
+
+        found = ServerChannelMessageRepository.find_execution_placeholder(
+            self.db,
+            channel_id=self.channel_id,
+            session_id=self.session_id,
+            run_id=run_id_target,
+            trigger_message_id=trigger_message_id,
+            thread_root_message_id=thread_root_message_id,
+        )
+
+        self.assertIs(found, correct)
 
 
 if __name__ == "__main__":

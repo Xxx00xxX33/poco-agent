@@ -350,27 +350,76 @@ class CallbackService:
             return callback.error_message[:280]
         return None
 
+    def _build_full_visible_text_from_callback(
+        self,
+        callback: AgentCallbackRequest,
+    ) -> str | None:
+        if callback.new_message and isinstance(callback.new_message, dict):
+            text = _extract_visible_message_text(callback.new_message)
+            if text:
+                return text
+        if callback.error_message:
+            return callback.error_message
+        return None
+
+    def _resolve_server_channel_projection_context(
+        self,
+        *,
+        db_session: AgentSession,
+        db_run: AgentRun | None = None,
+    ) -> dict[str, uuid.UUID | None]:
+        snapshot = (
+            db_run.config_snapshot
+            if db_run is not None and isinstance(db_run.config_snapshot, dict)
+            else db_session.config_snapshot
+        ) or {}
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+
+        def parse_uuid(value) -> uuid.UUID | None:
+            if value is None:
+                return None
+            try:
+                return uuid.UUID(str(value))
+            except (TypeError, ValueError):
+                return None
+
+        return {
+            "channel_id": parse_uuid(snapshot.get("channel_id")),
+            "trigger_message_id": parse_uuid(snapshot.get("trigger_message_id")),
+            "thread_root_message_id": parse_uuid(snapshot.get("thread_root_message_id")),
+            "agent_identity_id": parse_uuid(snapshot.get("agent_identity_id")),
+        }
+
     def _sync_execution_placeholder_to_server_channel(
         self,
         db: Session,
         *,
         db_session: AgentSession,
+        db_run: AgentRun | None,
         callback: AgentCallbackRequest,
     ) -> bool:
-        config_snapshot = db_session.config_snapshot or {}
-        channel_id_raw = config_snapshot.get("channel_id")
-        if not channel_id_raw:
+        projection_context = self._resolve_server_channel_projection_context(
+            db_session=db_session,
+            db_run=db_run,
+        )
+        channel_id = projection_context["channel_id"]
+        if channel_id is None:
             return False
 
-        try:
-            channel_id = uuid.UUID(str(channel_id_raw))
-        except (TypeError, ValueError):
-            return False
+        full_text = self._build_full_visible_text_from_callback(callback)
+        should_require_open_placeholder = not (
+            callback.status == CallbackStatus.COMPLETED and full_text
+        )
 
-        placeholder = ServerChannelMessageRepository.get_oldest_open_execution_placeholder(
+        placeholder = ServerChannelMessageRepository.find_execution_placeholder(
             db,
             channel_id=channel_id,
             session_id=db_session.id,
+            run_id=db_run.id if db_run is not None else None,
+            trigger_message_id=projection_context["trigger_message_id"],
+            thread_root_message_id=projection_context["thread_root_message_id"],
+            open_only=should_require_open_placeholder,
         )
         if placeholder is None:
             return False
@@ -388,6 +437,7 @@ class CallbackService:
 
         content.update(
             {
+                "run_id": str(db_run.id) if db_run is not None else content.get("run_id"),
                 "execution_status": callback.status.value,
                 "summary": summary,
                 "current_step": current_step or content.get("current_step"),
@@ -402,11 +452,12 @@ class CallbackService:
         elif callback.status == CallbackStatus.FAILED:
             content["summary"] = summary or "Execution failed."
 
-        if callback.status == CallbackStatus.COMPLETED and summary:
+        replacement_text = full_text or summary
+        if callback.status == CallbackStatus.COMPLETED and replacement_text:
             agent_label = str(content.get("actor_label") or content.get("agent_label") or "Agent")
-            placeholder.text_preview = summary
+            placeholder.text_preview = replacement_text
             placeholder.content = {
-                "text": summary,
+                "text": replacement_text,
                 "actor_label": agent_label,
                 "source": "agent_session",
                 "session_id": str(db_session.id),
@@ -425,51 +476,34 @@ class CallbackService:
         db: Session,
         *,
         db_session: AgentSession,
+        db_run: AgentRun | None,
         db_message: AgentMessage,
     ) -> None:
         if db_message.role != "assistant":
             return
 
-        text = (db_message.text_preview or "").strip()
+        text = _extract_visible_message_text(db_message.content) or ""
         if not text:
-            content_text = db_message.content.get("text")
-            if isinstance(content_text, str):
-                text = content_text.strip()
+            text = (db_message.text_preview or "").strip()
         if not text:
             return
 
-        config_snapshot = db_session.config_snapshot or {}
-        channel_id_raw = config_snapshot.get("channel_id")
-        if not channel_id_raw:
+        projection_context = self._resolve_server_channel_projection_context(
+            db_session=db_session,
+            db_run=db_run,
+        )
+        channel_id = projection_context["channel_id"]
+        if channel_id is None:
             return
-
-        try:
-            channel_id = uuid.UUID(str(channel_id_raw))
-        except (TypeError, ValueError):
-            logger.warning(
-                "invalid_server_channel_context",
-                extra={
-                    "session_id": str(db_session.id),
-                    "channel_id": channel_id_raw,
-                },
-            )
-            return
-
-        trigger_message_id_raw = config_snapshot.get("trigger_message_id")
-        thread_root_message_id_raw = config_snapshot.get("thread_root_message_id")
+        trigger_message_id = projection_context["trigger_message_id"]
+        thread_root_message_id = projection_context["thread_root_message_id"]
 
         actor_label = "Agent"
         agent_handle = None
         agent_visual_key = None
-        agent_identity_raw = config_snapshot.get("agent_identity_id")
+        agent_identity_raw = projection_context["agent_identity_id"]
         if agent_identity_raw:
-            try:
-                agent = AgentIdentityRepository.get_by_id(
-                    db,
-                    uuid.UUID(str(agent_identity_raw)),
-                )
-            except (TypeError, ValueError):
-                agent = None
+            agent = AgentIdentityRepository.get_by_id(db, agent_identity_raw)
             if agent is not None:
                 actor_label = (
                     (agent.display_name or "").strip()
@@ -479,12 +513,31 @@ class CallbackService:
                 agent_handle = (agent.handle or "").strip() or None
                 agent_visual_key = (agent.visual_key or "").strip() or None
 
-        thread_root_message_id = None
-        if thread_root_message_id_raw:
-            try:
-                thread_root_message_id = uuid.UUID(str(thread_root_message_id_raw))
-            except (TypeError, ValueError):
-                thread_root_message_id = None
+        existing_placeholder = ServerChannelMessageRepository.find_execution_placeholder(
+            db,
+            channel_id=channel_id,
+            session_id=db_session.id,
+            run_id=db_run.id if db_run is not None else None,
+            trigger_message_id=trigger_message_id,
+            thread_root_message_id=thread_root_message_id,
+        )
+        if existing_placeholder is not None:
+            existing_placeholder.text_preview = text
+            existing_placeholder.content = {
+                "text": text,
+                "actor_label": actor_label,
+                "source": "agent_session",
+                "session_id": str(db_session.id),
+                "agent_message_id": db_message.id,
+                "agent_handle": agent_handle,
+                "agent_visual_key": agent_visual_key,
+                "trigger_message_id": str(trigger_message_id)
+                if trigger_message_id
+                else None,
+            }
+            existing_placeholder.thread_root_message_id = thread_root_message_id
+            db.flush()
+            return
 
         ServerChannelMessageRepository.create(
             db,
@@ -501,11 +554,9 @@ class CallbackService:
                     "agent_message_id": db_message.id,
                     "agent_handle": agent_handle,
                     "agent_visual_key": agent_visual_key,
-                    "trigger_message_id": (
-                        str(trigger_message_id_raw).strip()
-                        if trigger_message_id_raw
-                        else None
-                    ),
+                    "trigger_message_id": str(trigger_message_id)
+                    if trigger_message_id
+                    else None,
                 },
                 thread_root_message_id=thread_root_message_id,
             ),
@@ -639,6 +690,7 @@ class CallbackService:
             placeholder_replaced_with_final_message = self._sync_execution_placeholder_to_server_channel(
                 db,
                 db_session=db_session,
+                db_run=db_run,
                 callback=callback,
             )
         should_apply_workspace_export = self._should_apply_workspace_export(
@@ -715,6 +767,7 @@ class CallbackService:
                 self._mirror_assistant_message_to_server_channel(
                     db,
                     db_session=db_session,
+                    db_run=db_run,
                     db_message=persisted_message,
                 )
             except Exception:

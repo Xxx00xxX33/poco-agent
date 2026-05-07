@@ -47,6 +47,19 @@ export function sortMessagesChronologically(
   });
 }
 
+export function getMentionTrigger(
+  value: string,
+): { start: number; query: string } | null {
+  const match = value.match(/(?:^|\s)@([A-Za-z0-9._-]*)$/);
+  if (!match || match.index === undefined) {
+    return null;
+  }
+  return {
+    start: match.index + match[0].lastIndexOf("@"),
+    query: match[1].toLowerCase(),
+  };
+}
+
 export function buildHumanMentionCandidates(
   members: ServerChannelMemberItem[],
   currentUserId?: string | null,

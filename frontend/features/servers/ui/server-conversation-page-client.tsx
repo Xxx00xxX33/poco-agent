@@ -66,6 +66,7 @@ import {
   hasInboxSignal,
   sortMessagesChronologically,
   type MentionCandidate,
+  getMentionTrigger,
 } from "@/features/servers/lib/server-conversation-view";
 import { shouldShowServerMobileDetail } from "@/features/servers/lib/server-mobile-navigation";
 import { AgentPresetDialog } from "@/features/servers/ui/agent-preset-dialog";
@@ -226,19 +227,6 @@ function loadLastSelection(): Record<string, string | null> | null {
   }
 }
 
-function getMentionTrigger(
-  value: string,
-): { start: number; query: string } | null {
-  const match = value.match(/(?:^|\s)@([A-Za-z0-9._-]*)$/);
-  if (!match || match.index === undefined) {
-    return null;
-  }
-  return {
-    start: match.index + match[0].lastIndexOf("@"),
-    query: match[1].toLowerCase(),
-  };
-}
-
 function getExplicitMentionHandles(value: string): string[] {
   return [...value.matchAll(/(?:^|\s)@([A-Za-z0-9._-]+)(?=$|[\s,.!?;:])/g)].map(
     (match) => match[1].trim().toLowerCase(),
@@ -332,6 +320,7 @@ function ConversationContent({
   currentUserId?: string | null;
 }) {
   const { t } = useT("translation");
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const Icon = channel?.conversationType === "direct_message" ? Lock : Hash;
   const mentionTrigger = React.useMemo(() => getMentionTrigger(draft), [draft]);
   const mentionCandidates = React.useMemo<MentionCandidate[]>(() => {
@@ -355,6 +344,12 @@ function ConversationContent({
       .slice(0, 8);
   }, [agents, currentUserId, mentionTrigger, members]);
 
+  const mentionActive = mentionTrigger !== null && mentionCandidates.length > 0;
+  const [mentionIndex, setMentionIndex] = React.useState(0);
+  React.useEffect(() => {
+    setMentionIndex(0);
+  }, [mentionCandidates]);
+
   const insertMention = (candidate: MentionCandidate) => {
     if (!mentionTrigger) {
       return;
@@ -363,6 +358,21 @@ function ConversationContent({
     onDraftChange(
       `${draft.slice(0, mentionTrigger.start)}${mention}${draft.slice(mentionTrigger.start + mentionTrigger.query.length + 1)}`,
     );
+    textareaRef.current?.focus();
+  };
+
+  const handleTextareaKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!mentionActive) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setMentionIndex((i) => (i + 1) % mentionCandidates.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setMentionIndex((i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      insertMention(mentionCandidates[mentionIndex]);
+    }
   };
 
   return (
@@ -452,7 +462,7 @@ function ConversationContent({
                 {t("conversationView.mentionCandidates")}
               </div>
               <div className="space-y-1">
-                {mentionCandidates.map((candidate) => {
+                {mentionCandidates.map((candidate, index) => {
                   const CandidateIcon =
                     candidate.kind === "agent" ? Bot : UserRound;
                   return (
@@ -460,7 +470,12 @@ function ConversationContent({
                       key={`${candidate.kind}-${candidate.id}`}
                       type="button"
                       onClick={() => insertMention(candidate)}
-                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted/30"
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
+                        index === mentionIndex
+                          ? "bg-primary/15"
+                          : "hover:bg-muted/30",
+                      )}
                     >
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
                         <CandidateIcon className="size-4" />
@@ -481,8 +496,10 @@ function ConversationContent({
             </div>
           ) : null}
           <Textarea
+            ref={textareaRef}
             value={draft}
             onChange={(event) => onDraftChange(event.target.value)}
+            onKeyDown={handleTextareaKeyDown}
             rows={4}
             placeholder={t("conversationView.messagePlaceholder", {
               name: channel?.name ?? "",
@@ -1154,6 +1171,7 @@ export function ServerConversationPageClient({
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSending, setIsSending] = React.useState(false);
   const [asTask, setAsTask] = React.useState(false);
+  const [threadAsTask, setThreadAsTask] = React.useState(false);
   const [savedMessageIds, setSavedMessageIds] = React.useState<Set<string>>(
     new Set(),
   );
@@ -1807,29 +1825,44 @@ export function ServerConversationPageClient({
     setIsSending(true);
     try {
       const trimmedDraft = threadDraft.trim();
-      const explicitMentions = getExplicitMentionHandles(trimmedDraft);
-      const replyText =
-        threadMentionHandle && !explicitMentions.includes(threadMentionHandle)
-          ? `@${threadMentionHandle} ${trimmedDraft}`
-          : trimmedDraft;
-      await serversApi.sendMessage(selectedServerId, drawer.channelId, {
-        text: replyText,
-        threadRootMessageId: drawer.rootMessageId,
-      });
-      setThreadDraft("");
-      const [messages, thread] = await Promise.all([
-        serversApi.listMessages(selectedServerId, drawer.channelId),
-        serversApi.getThread(
-          selectedServerId,
-          drawer.channelId,
-          drawer.rootMessageId,
-        ),
-      ]);
-      setMessagesByChannel((current) => ({
-        ...current,
-        [drawer.channelId]: messages,
-      }));
-      setThreadMessages(thread);
+      if (threadAsTask) {
+        const title =
+          trimmedDraft.split("\n")[0]?.trim().slice(0, 80) || trimmedDraft.slice(0, 80);
+        await channelTasksApi.createTask(selectedServerId, drawer.channelId, {
+          title,
+          description: trimmedDraft,
+        });
+        setThreadDraft("");
+        setThreadAsTask(false);
+        setTasks(
+          await channelTasksApi.listTasks(selectedServerId, drawer.channelId),
+        );
+        toast.success(t("conversationView.toasts.taskCreated"));
+      } else {
+        const explicitMentions = getExplicitMentionHandles(trimmedDraft);
+        const replyText =
+          threadMentionHandle && !explicitMentions.includes(threadMentionHandle)
+            ? `@${threadMentionHandle} ${trimmedDraft}`
+            : trimmedDraft;
+        await serversApi.sendMessage(selectedServerId, drawer.channelId, {
+          text: replyText,
+          threadRootMessageId: drawer.rootMessageId,
+        });
+        setThreadDraft("");
+        const [messages, thread] = await Promise.all([
+          serversApi.listMessages(selectedServerId, drawer.channelId),
+          serversApi.getThread(
+            selectedServerId,
+            drawer.channelId,
+            drawer.rootMessageId,
+          ),
+        ]);
+        setMessagesByChannel((current) => ({
+          ...current,
+          [drawer.channelId]: messages,
+        }));
+        setThreadMessages(thread);
+      }
     } catch (error) {
       console.error("[ServersWorkspace] reply failed", error);
       toast.error(t("conversationView.toasts.replyFailed"));
@@ -2331,9 +2364,13 @@ export function ServerConversationPageClient({
                     thread={threadMessages}
                     agents={channelAgents}
                     presets={presets}
+                    members={channelMembers}
+                    currentUserId={profile?.id}
                     draft={threadDraft}
                     suggestedMentionHandle={threadMentionHandle}
+                    asTask={threadAsTask}
                     onDraftChange={setThreadDraft}
+                    onAsTaskChange={setThreadAsTask}
                     onSend={() => void handleReply()}
                     onClose={() => setDrawer({ type: "none" })}
                     isSending={isSending}

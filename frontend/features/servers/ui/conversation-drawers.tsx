@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, Info, MessageSquare } from "lucide-react";
+import React from "react";
+import { ArrowLeft, Bot, Info, MessageSquare, UserRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,14 @@ import type {
 import { TaskHistoryProvider } from "@/features/projects/contexts/task-history-context";
 import type {
   ServerAgentItem,
+  ServerChannelMemberItem,
   ServerConversationMessage,
 } from "@/features/servers/model/types";
+import {
+  buildHumanMentionCandidates,
+  getMentionTrigger,
+  type MentionCandidate,
+} from "@/features/servers/lib/server-conversation-view";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 import { SharedArtifactsDrawer } from "@/features/servers/ui/shared-artifacts-drawer";
@@ -35,9 +42,13 @@ export function ThreadDrawer({
   thread,
   agents,
   presets,
+  members,
+  currentUserId,
   draft,
   suggestedMentionHandle,
+  asTask,
   onDraftChange,
+  onAsTaskChange,
   onSend,
   onClose,
   isSending,
@@ -45,14 +56,67 @@ export function ThreadDrawer({
   thread: ServerConversationMessage[];
   agents: ServerAgentItem[];
   presets: Preset[];
+  members: ServerChannelMemberItem[];
+  currentUserId?: string | null;
   draft: string;
   suggestedMentionHandle?: string | null;
+  asTask: boolean;
   onDraftChange: (value: string) => void;
+  onAsTaskChange: (value: boolean) => void;
   onSend: () => void;
   onClose: () => void;
   isSending: boolean;
 }) {
   const { t } = useT("translation");
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const mentionTrigger = React.useMemo(() => getMentionTrigger(draft), [draft]);
+  const mentionCandidates = React.useMemo<MentionCandidate[]>(() => {
+    if (!mentionTrigger) return [];
+    const humans = buildHumanMentionCandidates(members, currentUserId);
+    const agentCandidates = agents.map((agent) => ({
+      id: agent.id,
+      label: agent.displayName,
+      handle: agent.handle,
+      kind: "agent" as const,
+      description: agent.description,
+    }));
+    return [...agentCandidates, ...humans]
+      .filter((c) =>
+        `${c.label} ${c.handle}`.toLowerCase().includes(mentionTrigger.query),
+      )
+      .slice(0, 8);
+  }, [agents, currentUserId, mentionTrigger, members]);
+
+  const mentionActive = mentionTrigger !== null && mentionCandidates.length > 0;
+  const [mentionIndex, setMentionIndex] = React.useState(0);
+  React.useEffect(() => {
+    setMentionIndex(0);
+  }, [mentionCandidates]);
+
+  const insertMention = (candidate: MentionCandidate) => {
+    if (!mentionTrigger) return;
+    const mention = `@${candidate.handle} `;
+    onDraftChange(
+      `${draft.slice(0, mentionTrigger.start)}${mention}${draft.slice(mentionTrigger.start + mentionTrigger.query.length + 1)}`,
+    );
+    textareaRef.current?.focus();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!mentionActive) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setMentionIndex((i) => (i + 1) % mentionCandidates.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setMentionIndex((i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      insertMention(mentionCandidates[mentionIndex]);
+    }
+  };
+
   return (
     <aside className={overlayDrawerClassName}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
@@ -99,14 +163,63 @@ export function ThreadDrawer({
             </span>
           </div>
         ) : null}
-        <Textarea
-          value={draft}
-          onChange={(event) => onDraftChange(event.target.value)}
-          rows={6}
-          placeholder={t("conversationView.threadPlaceholder")}
-          className="rounded-md border-border bg-background text-sm shadow-none"
-        />
-        <div className="mt-4 flex justify-end">
+        <div className="relative">
+          {mentionActive ? (
+            <div className="absolute bottom-full left-0 z-20 mb-2 w-full max-w-md rounded-md border border-border bg-popover p-2 shadow-[var(--shadow-lg)]">
+              <div className="px-2 pb-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                {t("conversationView.mentionCandidates")}
+              </div>
+              <div className="space-y-1">
+                {mentionCandidates.map((candidate, index) => {
+                  const CandidateIcon = candidate.kind === "agent" ? Bot : UserRound;
+                  return (
+                    <button
+                      key={`${candidate.kind}-${candidate.id}`}
+                      type="button"
+                      onClick={() => insertMention(candidate)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
+                        index === mentionIndex ? "bg-primary/15" : "hover:bg-muted/30",
+                      )}
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                        <CandidateIcon className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-foreground">
+                          {candidate.label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          @{candidate.handle} /{" "}
+                          {t(`conversationView.mentionKinds.${candidate.kind}`)}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+          <Textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(event) => onDraftChange(event.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={6}
+            placeholder={t("conversationView.threadPlaceholder")}
+            className="rounded-md border-border bg-background text-sm shadow-none"
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center gap-3 text-base text-foreground">
+            <input
+              type="checkbox"
+              checked={asTask}
+              onChange={(event) => onAsTaskChange(event.target.checked)}
+              className="size-5 rounded-none border-foreground"
+            />
+            {t("conversationView.asTask")}
+          </label>
           <Button
             type="button"
             size="sm"

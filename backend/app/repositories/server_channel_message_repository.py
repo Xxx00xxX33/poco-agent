@@ -152,3 +152,70 @@ class ServerChannelMessageRepository:
                 continue
             return candidate
         return None
+
+    @staticmethod
+    def find_execution_placeholder(
+        session_db: Session,
+        *,
+        channel_id: uuid.UUID,
+        session_id: uuid.UUID,
+        run_id: uuid.UUID | None = None,
+        trigger_message_id: uuid.UUID | None = None,
+        thread_root_message_id: uuid.UUID | None = None,
+        open_only: bool = False,
+    ) -> ServerChannelMessage | None:
+        candidates = (
+            session_db.query(ServerChannelMessage)
+            .filter(
+                ServerChannelMessage.channel_id == channel_id,
+                ServerChannelMessage.message_type == "system",
+            )
+            .order_by(
+                ServerChannelMessage.created_at.desc(),
+                ServerChannelMessage.id.desc(),
+            )
+            .all()
+        )
+        session_id_text = str(session_id)
+        run_id_text = str(run_id) if run_id else None
+        trigger_message_id_text = (
+            str(trigger_message_id) if trigger_message_id else None
+        )
+        thread_root_message_id_text = (
+            str(thread_root_message_id) if thread_root_message_id else None
+        )
+
+        def matches_open(candidate: ServerChannelMessage) -> bool:
+            content = candidate.content or {}
+            status = str(content.get("execution_status") or "").strip().lower()
+            return status not in {"completed", "failed", "canceled", "cancelled"}
+
+        filtered: list[ServerChannelMessage] = []
+        for candidate in candidates:
+            content = candidate.content or {}
+            if content.get("source") != "agent_execution":
+                continue
+            if str(content.get("session_id") or "").strip() != session_id_text:
+                continue
+            if open_only and not matches_open(candidate):
+                continue
+            filtered.append(candidate)
+
+        if run_id_text:
+            for candidate in filtered:
+                content = candidate.content or {}
+                if str(content.get("run_id") or "").strip() == run_id_text:
+                    return candidate
+
+        if trigger_message_id_text or thread_root_message_id_text:
+            for candidate in filtered:
+                content = candidate.content or {}
+                candidate_trigger = str(content.get("trigger_message_id") or "").strip()
+                candidate_thread = str(content.get("thread_root_message_id") or "").strip()
+                if trigger_message_id_text and candidate_trigger != trigger_message_id_text:
+                    continue
+                if thread_root_message_id_text and candidate_thread != thread_root_message_id_text:
+                    continue
+                return candidate
+
+        return filtered[0] if filtered else None
