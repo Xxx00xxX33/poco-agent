@@ -131,6 +131,59 @@ Poco 在频道协作的下一阶段先引入“两层共享”而不是“共享
 
 这三类能力共同构成“公共成果树的运行时访问面”。prompt 只负责告诉 agent 当前处于哪个 channel、有哪些高价值上下文，以及共享材料必须通过 tool 读取；真正的文件发现与内容获取发生在运行时 tool 调用中。
 
+### Agent 读取公开文件内容流程
+
+当频道中的 agent 需要读取公共成果树里的文件时，它不直接访问 `/workspace`、`/agent_state` 或 raw local mount。正确流程是：先由 trigger prompt 告诉 agent 当前存在共享材料和 tool 使用规则，再由 agent 通过 executor 注入的只读 MCP tools 发起 `list/search/read` 调用。tool 调用会自动携带当前 session 上下文，经过 executor-manager 代理到 backend 内部 API，由 backend 基于当前 session 解析 `server_id`、`channel_id`、`agent_identity_id`，校验频道成员身份后，只从 `channel_artifacts` 读取已发布材料。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Human as Human in channel
+    participant Trigger as ServerAgentTriggerService
+    participant Agent as Channel agent runtime
+    participant Tool as Channel artifact MCP tools
+    participant Manager as Executor Manager proxy
+    participant Backend as Backend internal artifact API
+    participant Store as channel_artifacts + object storage
+
+    Human->>Trigger: @agent asks to use shared material
+    Trigger->>Agent: prompt with channel context, artifact index, and tool rules
+    Note over Agent: logical_path is a shared artifact identifier<br/>not a /workspace file path
+
+    Agent->>Tool: list_channel_artifacts()
+    Tool->>Manager: POST /agent-channel-artifacts/list<br/>session_id bound by executor
+    Manager->>Backend: GET /internal/channel-artifacts/list<br/>X-Internal-Token + session_id
+    Backend->>Backend: resolve server/channel/agent from session config
+    Backend->>Backend: verify agent is channel member
+    Backend->>Store: list published artifacts for channel
+    Store-->>Backend: artifact metadata
+    Backend-->>Agent: artifact_id, logical_path, mime_type, size, source
+
+    Agent->>Tool: search_channel_artifacts(query) or choose from list
+    Tool->>Manager: POST /agent-channel-artifacts/search
+    Manager->>Backend: POST /internal/channel-artifacts/search
+    Backend->>Store: match name, logical_path, source, optional text
+    Store-->>Backend: matching artifact metadata
+    Backend-->>Agent: ranked metadata
+
+    Agent->>Tool: read_channel_artifact(artifact_id or logical_path)
+    Tool->>Manager: POST /agent-channel-artifacts/read
+    Manager->>Backend: POST /internal/channel-artifacts/read
+    Backend->>Store: load published artifact object
+    Store-->>Backend: text content or binary metadata
+    Backend-->>Agent: content, truncated flag, metadata_only reason
+
+    Note over Backend,Store: No fallback to session workspace, private agent state,<br/>or raw local mount is allowed.
+```
+
+这个流程有几个稳定约束：
+
+- `artifact_id` 和 `logical_path` 是读取共享材料的受控入口；`/workspace/...` 不是共享材料读取入口。
+- executor 注入的 tool 只在具备 `server_id`、`channel_id`、`agent_identity_id` 的 channel-scoped run 中启用。
+- executor 不直接持有 backend internal token；tool 请求先到 executor-manager，再由 manager 转发到 backend 内部 API。
+- backend 只从 `channel_artifacts` 和对应对象存储读取已发布材料，不从 session workspace、agent 私有状态或 local mount 兜底。
+- 文本 artifact 返回受控大小内的内容和截断标记；二进制或过大文件返回 metadata-only 语义。
+
 ### 关键数据流
 
 ```mermaid
