@@ -22,6 +22,11 @@ from claude_agent_sdk.types import (
 )
 from dotenv import load_dotenv
 
+from app.core.channel_artifacts import (
+    CHANNEL_ARTIFACTS_MCP_SERVER_KEY,
+    ChannelArtifactClient,
+    create_channel_artifacts_mcp_server,
+)
 from app.core.channel_tasks import (
     CHANNEL_TASKS_MCP_SERVER_KEY,
     ChannelTaskClient,
@@ -83,6 +88,7 @@ class AgentExecutor:
         user_input_client: UserInputClient | None = None,
         memory_client: MemoryClient | None = None,
         channel_task_client: ChannelTaskClient | None = None,
+        channel_artifact_client: ChannelArtifactClient | None = None,
         request_id: str | None = None,
         trace_id: str | None = None,
     ):
@@ -99,6 +105,12 @@ class AgentExecutor:
         self.channel_tasks_mcp_server = (
             create_channel_tasks_mcp_server(channel_task_client)
             if channel_task_client
+            else None
+        )
+        self.channel_artifact_client = channel_artifact_client
+        self.channel_artifacts_mcp_server = (
+            create_channel_artifacts_mcp_server(channel_artifact_client)
+            if channel_artifact_client
             else None
         )
         self._request_id = request_id
@@ -279,6 +291,7 @@ class AgentExecutor:
             mcp_servers = dict(config.mcp_config or {})
             mcp_servers = self._inject_memory_mcp(mcp_servers)
             mcp_servers = self._inject_channel_tasks_mcp(mcp_servers)
+            mcp_servers = self._inject_channel_artifacts_mcp(mcp_servers)
             if config.browser_enabled:
                 mcp_servers = self._inject_playwright_mcp(mcp_servers)
 
@@ -498,6 +511,27 @@ class AgentExecutor:
             ]
         )
 
+    @staticmethod
+    def _build_channel_artifact_hint(config: TaskConfig) -> str | None:
+        if not (config.server_id and config.channel_id and config.agent_identity_id):
+            return None
+
+        return "\n".join(
+            [
+                "Channel artifact access contract:",
+                "- Published channel artifacts are shared read-only resources for this channel.",
+                "- Artifact logical_path values are controlled identifiers, not "
+                "/workspace filesystem paths.",
+                "- When you need shared files, first use list_channel_artifacts "
+                "or search_channel_artifacts, then read_channel_artifact by "
+                "artifact_id or logical_path.",
+                "- Do not guess that a published artifact exists under "
+                "/workspace, /agent_state, or a local mount path.",
+                "- These artifact tools are scoped to the current server and "
+                "channel context and never provide write access.",
+            ]
+        )
+
     def _compose_user_prompt(self, prompt: str, config: TaskConfig, *, cwd: str) -> str:
         sections = [prompt]
 
@@ -512,6 +546,10 @@ class AgentExecutor:
         channel_task_hint = self._build_channel_task_hint(config)
         if channel_task_hint:
             sections.append(channel_task_hint)
+
+        channel_artifact_hint = self._build_channel_artifact_hint(config)
+        if channel_artifact_hint:
+            sections.append(channel_artifact_hint)
 
         prompt_appendix = build_prompt_appendix(
             browser_enabled=config.browser_enabled,
@@ -653,4 +691,15 @@ PY
 
         injected = dict(mcp_servers)
         injected[CHANNEL_TASKS_MCP_SERVER_KEY] = self.channel_tasks_mcp_server
+        return injected
+
+    def _inject_channel_artifacts_mcp(self, mcp_servers: dict) -> dict:
+        """Inject built-in channel artifact MCP server for channel-scoped agent runs."""
+        if not self.channel_artifacts_mcp_server:
+            return mcp_servers
+        if CHANNEL_ARTIFACTS_MCP_SERVER_KEY in mcp_servers:
+            return mcp_servers
+
+        injected = dict(mcp_servers)
+        injected[CHANNEL_ARTIFACTS_MCP_SERVER_KEY] = self.channel_artifacts_mcp_server
         return injected

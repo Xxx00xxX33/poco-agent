@@ -574,6 +574,55 @@ class BackendClient:
             response.raise_for_status()
             return response.json().get("data")
 
+    async def list_agent_channel_artifacts(self, session_id: str) -> Any:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}/api/v1/internal/channel-artifacts/list",
+                params={"session_id": session_id},
+                headers={
+                    "X-Internal-Token": self.settings.internal_api_token,
+                    **self._trace_headers(),
+                },
+            )
+            response.raise_for_status()
+            return response.json().get("data")
+
+    async def read_agent_channel_artifact(
+        self,
+        session_id: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/api/v1/internal/channel-artifacts/read",
+                params={"session_id": session_id},
+                json=payload,
+                headers={
+                    "X-Internal-Token": self.settings.internal_api_token,
+                    **self._trace_headers(),
+                },
+            )
+            response.raise_for_status()
+            return response.json().get("data")
+
+    async def search_agent_channel_artifacts(
+        self,
+        session_id: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/api/v1/internal/channel-artifacts/search",
+                params={"session_id": session_id},
+                json=payload,
+                headers={
+                    "X-Internal-Token": self.settings.internal_api_token,
+                    **self._trace_headers(),
+                },
+            )
+            response.raise_for_status()
+            return response.json().get("data")
+
     async def update_agent_channel_task_status(
         self,
         session_id: str,

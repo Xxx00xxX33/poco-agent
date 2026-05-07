@@ -54,11 +54,13 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
 
         with (
             patch(
-                "app.services.channel_shared_context_service.ServerChannelMessageRepository.list_by_channel",
+                "app.services.channel_shared_context_service."
+                "ServerChannelMessageRepository.list_by_channel",
                 return_value=recent_messages,
             ),
             patch(
-                "app.services.channel_shared_context_service.ChannelArtifactRepository.list_by_channel",
+                "app.services.channel_shared_context_service."
+                "ChannelArtifactRepository.list_by_channel",
                 return_value=artifacts,
             ),
             patch.object(
@@ -81,6 +83,9 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
         self.assertIn("Rate limit plan updated", prompt)
         self.assertIn("rate-limit-plan.md", prompt)
         self.assertIn("Use per-user rate limits.", prompt)
+        self.assertIn("list_channel_artifacts", prompt)
+        self.assertIn("read_channel_artifact", prompt)
+        self.assertIn("not /workspace paths", prompt)
 
 
 if __name__ == "__main__":

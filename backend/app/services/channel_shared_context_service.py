@@ -19,8 +19,8 @@ from app.services.storage_service import S3StorageService
 
 class ChannelSharedContextService:
     MAX_RECENT_MESSAGES = 8
-    MAX_ARTIFACTS = 4
-    MAX_TEXT_ARTIFACT_BYTES = 64 * 1024
+    MAX_ARTIFACTS = 6
+    MAX_TEXT_ARTIFACT_BYTES = 4 * 1024
     TEXT_EXTENSIONS = {
         ".md",
         ".txt",
@@ -78,9 +78,14 @@ class ChannelSharedContextService:
         return suffix in cls.TEXT_EXTENSIONS
 
     def _artifact_block(self, artifact: Any) -> str:
+        display_name = getattr(artifact, "display_name", "artifact")
+        logical_path = getattr(artifact, "logical_path", "")
         lines = [
-            f"- {getattr(artifact, 'display_name', 'artifact')} ({getattr(artifact, 'logical_path', '')})"
+            f"- {display_name} ({logical_path})",
         ]
+        artifact_id = getattr(artifact, "id", None)
+        if artifact_id is not None:
+            lines.append(f"  artifact_id: {artifact_id}")
         size_bytes = getattr(artifact, "size_bytes", None)
         if isinstance(size_bytes, int) and size_bytes > self.MAX_TEXT_ARTIFACT_BYTES:
             lines.append("  [metadata only: file too large to inline]")
@@ -97,7 +102,7 @@ class ChannelSharedContextService:
         if not trimmed:
             lines.append("  [empty file]")
             return "\n".join(lines)
-        lines.append("  -----")
+        lines.append("  preview:")
         lines.append(trimmed[: self.MAX_TEXT_ARTIFACT_BYTES])
         return "\n".join(lines)
 
@@ -212,7 +217,7 @@ class ChannelSharedContextService:
             lines.append("- [no recent visible messages]")
 
         lines.append("")
-        lines.append("Published channel artifacts you can read:")
+        lines.append("Published channel artifacts available through runtime tools:")
         if artifacts:
             for artifact in artifacts:
                 lines.append(self._artifact_block(artifact))
@@ -220,7 +225,18 @@ class ChannelSharedContextService:
             lines.append("- [no published artifacts yet]")
 
         lines.append("")
-        lines.append(
-            "Act on the trigger message and the shared channel context above. Do not assume access to private agent state or raw local mount paths unless they appear in the published artifacts section."
+        lines.extend(
+            [
+                "Shared artifact rules:",
+                "- Published artifact logical_path values are not /workspace paths.",
+                "- Use list_channel_artifacts or search_channel_artifacts before "
+                "reading shared files.",
+                "- Use read_channel_artifact with artifact_id or logical_path "
+                "when you need more content.",
+                "- Do not assume access to private agent state, raw local mount "
+                "paths, or unpublished session workspace files.",
+                "",
+                "Act on the trigger message and the shared channel context above.",
+            ]
         )
         return "\n".join(lines)
