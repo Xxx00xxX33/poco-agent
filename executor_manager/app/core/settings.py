@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     )
     worker_id: str = Field(default_factory=socket.gethostname, alias="WORKER_ID")
     task_pull_enabled: bool = Field(default=True, alias="TASK_PULL_ENABLED")
+    task_pull_notify_enabled: bool = Field(
+        default=True, alias="TASK_PULL_NOTIFY_ENABLED"
+    )
     # Backward compatible default pull interval (used when per-queue intervals are unset)
     task_pull_interval_seconds: int = Field(
         default=2, alias="TASK_PULL_INTERVAL_SECONDS"

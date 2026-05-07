@@ -67,6 +67,12 @@ class Settings(BaseSettings):
     executor_manager_url: str = Field(
         default="http://localhost:8001", alias="EXECUTOR_MANAGER_URL"
     )
+    executor_manager_run_notify_enabled: bool = Field(
+        default=True, alias="EXECUTOR_MANAGER_RUN_NOTIFY_ENABLED"
+    )
+    executor_manager_run_notify_timeout_seconds: float = Field(
+        default=1.0, alias="EXECUTOR_MANAGER_RUN_NOTIFY_TIMEOUT_SECONDS"
+    )
     im_event_dispatch_enabled: bool = Field(
         default=False, alias="IM_EVENT_DISPATCH_ENABLED"
     )

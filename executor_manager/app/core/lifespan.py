@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI):
 
         logger.info("Starting run pull service...")
         pull_service = RunPullService()
+        app.state.run_pull_service = pull_service
         schedule_config = load_pull_schedule_config(settings.schedule_config_path)
         if not schedule_config:
             schedule_config = default_pull_schedule_config_from_settings(settings)
@@ -95,6 +96,8 @@ async def lifespan(app: FastAPI):
         with suppress(Exception):
             unregister_pull_jobs(scheduler, pull_job_ids)
         await pull_service.shutdown()
+        if getattr(app.state, "run_pull_service", None) is pull_service:
+            app.state.run_pull_service = None
         logger.info("Run pull service stopped")
 
     logger.info("Shutting down APScheduler...")

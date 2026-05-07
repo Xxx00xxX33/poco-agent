@@ -6,6 +6,7 @@ from app.api.v1 import (
     callback,
     computer,
     executor,
+    internal_runs,
     memories,
     schedules,
     skills_upload,
@@ -26,6 +27,7 @@ api_v1_router.include_router(schedules.router)
 api_v1_router.include_router(callback.router)
 api_v1_router.include_router(computer.router)
 api_v1_router.include_router(executor.router)
+api_v1_router.include_router(internal_runs.router)
 api_v1_router.include_router(skills_upload.router)
 api_v1_router.include_router(workspace.router)
 api_v1_router.include_router(user_input_requests.router)
