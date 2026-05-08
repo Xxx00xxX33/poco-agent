@@ -344,6 +344,20 @@
       "removeMember": "Удалить участника"
     },
     "threadMentionHint": "Ответы в этой ветке будут направлены",
+    "execution": {
+      "title": "Выполнение",
+      "openDrawer": "Открыть полные детали выполнения",
+      "emptySummary": "Выполнение начато.",
+      "todoProgress": "{{completed}} / {{total}} задач",
+      "status": {
+        "queued": "В очереди",
+        "running": "Выполняется",
+        "canceling": "Отмена",
+        "canceled": "Отменено",
+        "completed": "Завершено",
+        "failed": "Ошибка"
+      }
+    },
     "toasts": {
       "loadFailed": "Не удалось загрузить беседу",
       "sendFailed": "Не удалось отправить сообщение",
@@ -904,6 +918,7 @@
     "expand": "Развернуть",
     "collapse": "Свернуть",
     "copyMessage": "Копировать сообщение",
+    "copyFailed": "Не удалось скопировать",
     "likeResponse": "Оценить ответ",
     "createBranch": "Создать ветку",
     "editMessageFailed": "Не удалось изменить сообщение",

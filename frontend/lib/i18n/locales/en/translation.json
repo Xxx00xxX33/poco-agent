@@ -355,6 +355,8 @@
       "status": {
         "queued": "Queued",
         "running": "Running",
+        "canceling": "Canceling",
+        "canceled": "Canceled",
         "completed": "Completed",
         "failed": "Failed"
       }
@@ -2637,7 +2639,8 @@
   },
   "chatInput": {
     "connect": "Connect",
-    "cancelTask": "Cancel task"
+    "cancelTask": "Cancel task",
+    "cancelFailed": "Failed to cancel task"
   },
   "chatContainer": {
     "loading": "Loading..."

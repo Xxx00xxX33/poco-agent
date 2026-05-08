@@ -344,6 +344,20 @@
       "removeMember": "Retirer le membre"
     },
     "threadMentionHint": "Les réponses dans ce fil cibleront",
+    "execution": {
+      "title": "Exécution",
+      "openDrawer": "Ouvrir les détails complets de l'exécution",
+      "emptySummary": "Exécution démarrée.",
+      "todoProgress": "{{completed}} / {{total}} tâches",
+      "status": {
+        "queued": "En attente",
+        "running": "En cours",
+        "canceling": "Annulation en cours",
+        "canceled": "Annulé",
+        "completed": "Terminé",
+        "failed": "Échoué"
+      }
+    },
     "toasts": {
       "loadFailed": "Impossible de charger la conversation",
       "sendFailed": "Impossible d’envoyer le message",
@@ -904,6 +918,7 @@
     "expand": "Développer",
     "collapse": "Réduire",
     "copyMessage": "Copier le message",
+    "copyFailed": "Échec de la copie",
     "likeResponse": "Aimer la réponse",
     "createBranch": "Créer une branche",
     "editMessageFailed": "Échec de la modification du message",

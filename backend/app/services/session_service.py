@@ -17,6 +17,9 @@ from app.repositories.message_repository import MessageRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.run_repository import RunRepository
 from app.repositories.scheduled_task_repository import ScheduledTaskRepository
+from app.repositories.server_channel_message_repository import (
+    ServerChannelMessageRepository,
+)
 from app.repositories.session_queue_item_repository import SessionQueueItemRepository
 from app.repositories.session_repository import SessionRepository
 from app.repositories.tool_execution_repository import ToolExecutionRepository
@@ -32,6 +35,7 @@ from app.schemas.session import (
     SessionUpdateRequest,
 )
 from app.schemas.task import TaskEnqueueResponse
+from app.services.agent_runtime_service import AgentRuntimeService
 from app.services.session_queue_service import SessionQueueService
 from app.services.task_service import TaskService
 
@@ -137,6 +141,63 @@ class SessionService:
         has_active_runs: bool,
     ) -> str:
         return "pending" if has_active_runs else "not_required"
+
+    @staticmethod
+    def _sync_channel_execution_cancellation(
+        db: Session,
+        *,
+        db_session: AgentSession,
+        execution_status: str,
+    ) -> None:
+        config_snapshot = db_session.config_snapshot or {}
+        if not isinstance(config_snapshot, dict):
+            return
+        raw_channel_id = config_snapshot.get("channel_id")
+        if raw_channel_id is None:
+            return
+        try:
+            channel_id = uuid.UUID(str(raw_channel_id))
+        except (TypeError, ValueError):
+            return
+
+        placeholder = ServerChannelMessageRepository.get_latest_execution_placeholder(
+            db,
+            channel_id=channel_id,
+            session_id=db_session.id,
+        )
+        if placeholder is None:
+            return
+
+        normalized_status = (execution_status or "").strip().lower() or "canceled"
+        content = dict(placeholder.content or {})
+        content["execution_status"] = normalized_status
+        if normalized_status == "canceling":
+            summary = "Cancellation requested."
+        else:
+            summary = "Execution canceled."
+        content["summary"] = summary
+        placeholder.content = content
+        placeholder.text_preview = summary
+
+    @staticmethod
+    def _release_agent_runtime_on_cancellation(
+        db: Session,
+        *,
+        db_session: AgentSession,
+        callback_status: str,
+    ) -> None:
+        config_snapshot = db_session.config_snapshot or {}
+        if not isinstance(config_snapshot, dict):
+            return
+        agent_identity_id = config_snapshot.get("agent_identity_id")
+        runtime_mode = (config_snapshot.get("agent_runtime_mode") or "").strip().lower()
+        if not agent_identity_id or runtime_mode != "persistent":
+            return
+        AgentRuntimeService().release_runtime_for_session(
+            db,
+            session_id=db_session.id,
+            callback_status=callback_status,
+        )
 
     @classmethod
     def _requires_manager_side_cancellation(
@@ -459,9 +520,24 @@ class SessionService:
             if reason is not None:
                 db_session.cancellation_reason = reason.strip() or None
             db_session.status = "canceling"
+            self._sync_channel_execution_cancellation(
+                db,
+                db_session=db_session,
+                execution_status="canceling",
+            )
         else:
             SessionQueueService.clear_cancellation_state(db_session)
             db_session.status = "canceled"
+            self._sync_channel_execution_cancellation(
+                db,
+                db_session=db_session,
+                execution_status="canceled",
+            )
+            self._release_agent_runtime_on_cancellation(
+                db,
+                db_session=db_session,
+                callback_status="canceled",
+            )
 
         db.commit()
         db.refresh(db_session)
@@ -603,6 +679,16 @@ class SessionService:
         db_session.cancellation_claimed_by = None
         db_session.cancellation_lease_expires_at = None
         db_session.cancellation_error = None
+        self._sync_channel_execution_cancellation(
+            db,
+            db_session=db_session,
+            execution_status="canceled",
+        )
+        self._release_agent_runtime_on_cancellation(
+            db,
+            db_session=db_session,
+            callback_status="canceled",
+        )
 
         db.commit()
         db.refresh(db_session)

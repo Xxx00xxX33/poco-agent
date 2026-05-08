@@ -1,13 +1,24 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, Bot, Info, MessageSquare, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  Info,
+  Loader2,
+  MessageSquare,
+  Pause,
+  UserRound,
+} from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import { ExecutionContainer } from "@/features/chat";
+import { cancelSessionAction } from "@/features/chat/actions/session-actions";
+import { useExecutionSession } from "@/features/chat/hooks/use-execution-session";
 import type {
   ChannelTask,
   ChannelTaskActivityMessage,
@@ -464,6 +475,25 @@ export function ExecutionDrawer({
   onClose: () => void;
 }) {
   const { t } = useT("translation");
+  const { session } = useExecutionSession({ sessionId });
+  const [isCancelling, setIsCancelling] = React.useState(false);
+  const isSessionCancelable =
+    session?.status === "running" || session?.status === "pending";
+
+  const handleCancel = React.useCallback(async () => {
+    if (!isSessionCancelable || isCancelling) {
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      await cancelSessionAction({ sessionId });
+    } catch (error) {
+      console.error("[ExecutionDrawer] failed to cancel session", error);
+      toast.error(t("chatInput.cancelFailed"));
+    } finally {
+      setIsCancelling(false);
+    }
+  }, [isCancelling, isSessionCancelable, sessionId, t]);
 
   return (
     <aside className={overlayDrawerClassName}>
@@ -483,9 +513,25 @@ export function ExecutionDrawer({
             {t("conversationView.execution.title")}
           </p>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={onClose}>
-          {t("conversationView.close")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleCancel()}
+            disabled={!isSessionCancelable || isCancelling}
+          >
+            {isCancelling ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Pause className="size-4" />
+            )}
+            {t("chatInput.cancelTask")}
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            {t("conversationView.close")}
+          </Button>
+        </div>
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">
         <TaskHistoryProvider

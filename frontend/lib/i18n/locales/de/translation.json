@@ -344,6 +344,20 @@
       "removeMember": "Mitglied entfernen"
     },
     "threadMentionHint": "Antworten in diesem Thread richten sich an",
+    "execution": {
+      "title": "Ausführung",
+      "openDrawer": "Vollständige Ausführungsdetails öffnen",
+      "emptySummary": "Ausführung gestartet.",
+      "todoProgress": "{{completed}} / {{total}} Aufgaben",
+      "status": {
+        "queued": "In Warteschlange",
+        "running": "Wird ausgeführt",
+        "canceling": "Wird abgebrochen",
+        "canceled": "Abgebrochen",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen"
+      }
+    },
     "toasts": {
       "loadFailed": "Unterhaltung konnte nicht geladen werden",
       "sendFailed": "Nachricht konnte nicht gesendet werden",
@@ -904,6 +918,7 @@
     "expand": "Erweitern",
     "collapse": "Reduzieren",
     "copyMessage": "Nachricht kopieren",
+    "copyFailed": "Kopieren fehlgeschlagen",
     "likeResponse": "Antwort liken",
     "createBranch": "Branch erstellen",
     "editMessageFailed": "Nachricht konnte nicht bearbeitet werden",

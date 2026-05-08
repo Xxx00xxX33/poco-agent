@@ -112,8 +112,13 @@ function getExecutionStatusTone(status: string | null | undefined): string {
   switch ((status || "").trim().toLowerCase()) {
     case "completed":
       return "bg-emerald-500";
+    case "canceled":
+    case "cancelled":
+      return "bg-muted-foreground";
     case "failed":
       return "bg-destructive";
+    case "canceling":
+      return "bg-orange-500";
     case "running":
       return "bg-amber-500";
     default:
@@ -125,8 +130,13 @@ function getExecutionStatusLabelKey(status: string | null | undefined): string {
   switch ((status || "").trim().toLowerCase()) {
     case "completed":
       return "conversationView.execution.status.completed";
+    case "canceled":
+    case "cancelled":
+      return "conversationView.execution.status.canceled";
     case "failed":
       return "conversationView.execution.status.failed";
+    case "canceling":
+      return "conversationView.execution.status.canceling";
     case "running":
       return "conversationView.execution.status.running";
     default:
@@ -249,7 +259,7 @@ export function MessageRow({
           }}
           disabled={!canOpenExecutionFromAvatar}
           className={cn(
-            "shrink-0",
+            "shrink-0 self-start",
             canOpenExecutionFromAvatar ? "cursor-pointer" : "cursor-default",
           )}
           aria-label={author}
@@ -263,7 +273,7 @@ export function MessageRow({
           />
         </button>
       ) : (
-        <Avatar className="size-11 shrink-0 rounded-md border border-border">
+        <Avatar className="size-11 shrink-0 self-start rounded-md border border-border">
           {avatarUrl ? <AvatarImage src={avatarUrl} alt={author} /> : null}
           <AvatarFallback className="rounded-md bg-muted text-sm font-semibold text-foreground">
             {getInitials(author)}

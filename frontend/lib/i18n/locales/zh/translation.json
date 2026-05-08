@@ -355,6 +355,8 @@
       "status": {
         "queued": "排队中",
         "running": "执行中",
+        "canceling": "取消中",
+        "canceled": "已取消",
         "completed": "已完成",
         "failed": "失败"
       }
@@ -2637,7 +2639,8 @@
   },
   "chatInput": {
     "connect": "连接",
-    "cancelTask": "取消任务"
+    "cancelTask": "取消任务",
+    "cancelFailed": "取消任务失败"
   },
   "chatContainer": {
     "loading": "加载中..."

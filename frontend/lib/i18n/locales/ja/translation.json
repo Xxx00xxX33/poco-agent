@@ -344,6 +344,20 @@
       "removeMember": "メンバーを削除"
     },
     "threadMentionHint": "このスレッドの返信は次宛てになります",
+    "execution": {
+      "title": "実行",
+      "openDrawer": "完全な実行詳細を開く",
+      "emptySummary": "実行が開始されました。",
+      "todoProgress": "{{completed}} / {{total}} 件のタスク",
+      "status": {
+        "queued": "待機中",
+        "running": "実行中",
+        "canceling": "キャンセル中",
+        "canceled": "キャンセル済み",
+        "completed": "完了",
+        "failed": "失敗"
+      }
+    },
     "toasts": {
       "loadFailed": "会話の読み込みに失敗しました",
       "sendFailed": "メッセージの送信に失敗しました",
@@ -904,6 +918,7 @@
     "expand": "展開",
     "collapse": "折りたたみ",
     "copyMessage": "メッセージをコピー",
+    "copyFailed": "コピーに失敗しました",
     "likeResponse": "回答を高評価",
     "createBranch": "ブランチを作成",
     "editMessageFailed": "メッセージ編集に失敗しました",
