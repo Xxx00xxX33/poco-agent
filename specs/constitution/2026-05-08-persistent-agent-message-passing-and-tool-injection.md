@@ -5,7 +5,7 @@
 | 字段 | 值 |
 | --- | --- |
 | **决策日期** | 2026-05-08 |
-| **关联 spec** | `2026-05-04-server-channel-agent-persistence.md`、`2026-05-05-channel-shared-context-and-artifacts.md`、`2026-05-06-server-agent-observability-tasks-and-persistence.md`、`2026-05-07-agent-dispatch-latency-optimization.md`、`20-channel-message-reactions-plan.md` |
+| **关联 spec** | `2026-05-04-server-channel-agent-persistence.md`、`2026-05-05-channel-shared-context-and-artifacts.md`、`2026-05-06-server-agent-observability-tasks-and-persistence.md`、`2026-05-07-agent-dispatch-latency-optimization.md`、`20-channel-message-reactions-plan.md`、`22-persistent-agent-trigger-envelope-plan.md`、`23-unified-channel-runtime-tools-plan.md` |
 
 ## 决策摘要
 
@@ -56,7 +56,7 @@ Claude Agent SDK 的 session 语义支持这次改造。官方 Python SDK 文档
 - **UX / UI 决策**：agent session 中的触发输入分为两部分。触发信封默认收缩，展示在触发正文上方；触发正文按普通 user message 显示。展开触发信封时，用户可以看到 server/channel/message/thread/run/agent 等索引和有限摘要。
 - **技术决策**：backend 不再把完整 recent context 和 artifacts preview 作为长期方向继续塞进一个大 prompt。第一阶段可以继续兼容旧 prompt，但新协议的目标是把上下文内联降到最小，把可读取对象交给 channel-scoped MCP tools。
 - **技术决策**：Claude Agent SDK session 被视为 agent 对话连续性的载体，但不是频道状态的 source of truth。每次触发都必须携带结构化触发信封，tools 通过 `session_id` 解析 server/channel/agent scope 并从 backend 读取权威状态。
-- **技术决策**：内置 channel MCP tools 按领域组织，避免把协作语义拆成大量细碎 tool。共享文件继续保留 list/search/read 三个 tool；agent 协作只新增一个统一 handoff/collaboration tool；message reaction 按独立 draft 提供 add/remove tool。
+- **技术决策**：内置 channel MCP tools 按领域组织，但运行时注入应收敛到一个 `ChannelRuntimeClient` 和一个内置 channel runtime MCP server。共享文件继续保留 list/search/read 三个 tool；agent 协作只新增一个统一 handoff/collaboration tool；message reaction 按独立 draft 提供 add/remove tool。
 
 ## 设计约束与不变量
 
@@ -69,6 +69,8 @@ Claude Agent SDK 的 session 语义支持这次改造。官方 Python SDK 文档
 - collaboration tool 只表达路由和触发，不承载复杂业务语义。agent 想请另一个 agent 输出什么，应在自己的可见频道输出中自然说明，并在 tool 参数中放最小请求文本和引用 id。
 - reaction 不作为触发源；reaction 是轻量互动关系，不是消息调度事件。
 - channel-scoped tools 不接受 server/channel/agent 身份参数；这些身份必须从当前 `session_id` 的 config snapshot 和 runtime scope 解析。
+- 新增 channel-scoped tools 必须优先挂到同一个 channel runtime client / MCP server 中一起注入，避免 executor 里继续增长多个彼此独立的 `__poco_channel_*` server。
+- 既有 `channel_tasks`、`channel_artifacts` 分散实现可以在迁移期兼容，但目标结构是单一 `__poco_channel_runtime`，由内部子模块按 artifacts、messages、agents、collaboration、tasks、reactions 分区实现。
 - 任何 tool 成功前，agent 都不能声称已经读取文件、创建任务、贴 reaction 或触发另一个 agent。
 
 ## 技术设计与结构边界
@@ -168,7 +170,15 @@ sequenceDiagram
 
 ### Tool 注入体系
 
-内置 channel MCP server 继续只在 `server_id && channel_id && agent_identity_id` 都存在时注入。推荐 tool surface 如下。
+内置 channel MCP server 继续只在 `server_id && channel_id && agent_identity_id` 都存在时注入。结构上应收敛为：
+
+- executor 只注入一个 built-in MCP server：`__poco_channel_runtime`
+- executor 只持有一个 channel runtime facade：`ChannelRuntimeClient`
+- `ChannelRuntimeClient` 内部可以按资源域组合多个小客户端，例如 artifact、message、agent directory、collaboration、task、reaction
+- executor-manager 可以保留多个代理路由，也可以提供统一 `/api/v1/agent-channel-runtime/*` 前缀；关键是不让 executor 的 MCP 注入层继续分散
+- backend internal API 仍按 service 边界拆分，避免一个大 service 同时承担消息读取、task、reaction 和 handoff 的业务逻辑
+
+推荐 tool surface 如下。
 
 | 领域 | 当前/新增 | Tool | 说明 |
 | --- | --- | --- | --- |
@@ -185,6 +195,8 @@ sequenceDiagram
 | 频道任务 | 当前保留 | `comment_on_channel_task` | 在 task thread 写进展 |
 | 消息互动 | 来自 reaction draft | `add_channel_message_reaction` | 对当前频道消息贴 emoji reaction |
 | 消息互动 | 来自 reaction draft | `remove_channel_message_reaction` | 撤销当前 agent 的 reaction |
+
+这个表描述的是 agent 看到的工具能力，不要求每个领域单独创建一个 MCP server。第一版实现时，新增 message / collaboration / reaction tools 应直接进入统一 channel runtime MCP server；现有 artifacts / tasks 可以在同一阶段迁移，或先通过 facade 包装旧 client，后续再删除旧注入入口。
 
 `request_agent_collaboration` 建议参数：
 
@@ -279,3 +291,4 @@ flowchart TD
 | 日期 | 变更内容 | 原因 |
 | --- | --- | --- |
 | 2026-05-08 | 初次记录 | 固化持久化 agent 频道触发、消息显示与 channel tool 注入体系 |
+| 2026-05-08 | 补充单一 `ChannelRuntimeClient` / `__poco_channel_runtime` 注入约束 | 避免新增频道 tool 继续分散到多个 MCP server |
