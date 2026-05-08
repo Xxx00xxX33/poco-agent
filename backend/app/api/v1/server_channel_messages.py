@@ -12,8 +12,15 @@ from app.schemas.server_channel_message import (
     ServerChannelMessageResponse,
     ServerChannelThreadResponse,
 )
+from app.schemas.server_channel_message_reaction import (
+    ServerChannelMessageReactionOperationResponse,
+    ServerChannelMessageReactionRequest,
+)
 from app.services.server_channel_message_service import (
     ServerChannelMessageService,
+)
+from app.services.server_channel_message_reaction_service import (
+    ServerChannelMessageReactionService,
 )
 
 router = APIRouter(
@@ -22,6 +29,7 @@ router = APIRouter(
 )
 
 service = ServerChannelMessageService()
+reaction_service = ServerChannelMessageReactionService()
 
 
 @router.get("/messages", response_model=ResponseSchema[list[ServerChannelMessageResponse]])
@@ -83,4 +91,56 @@ async def get_channel_thread(
     return Response.success(
         data=result,
         message="Server channel thread retrieved successfully",
+    )
+
+
+@router.post(
+    "/messages/{message_id}/reactions",
+    response_model=ResponseSchema[ServerChannelMessageReactionOperationResponse],
+)
+async def add_channel_message_reaction(
+    server_id: uuid.UUID,
+    channel_id: uuid.UUID,
+    message_id: uuid.UUID,
+    request: ServerChannelMessageReactionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    result = reaction_service.add_user_reaction(
+        db,
+        current_user,
+        server_id,
+        channel_id,
+        message_id,
+        request.emoji,
+    )
+    return Response.success(
+        data=result,
+        message="Server channel message reaction added successfully",
+    )
+
+
+@router.delete(
+    "/messages/{message_id}/reactions",
+    response_model=ResponseSchema[ServerChannelMessageReactionOperationResponse],
+)
+async def remove_channel_message_reaction(
+    server_id: uuid.UUID,
+    channel_id: uuid.UUID,
+    message_id: uuid.UUID,
+    request: ServerChannelMessageReactionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    result = reaction_service.remove_user_reaction(
+        db,
+        current_user,
+        server_id,
+        channel_id,
+        message_id,
+        request.emoji,
+    )
+    return Response.success(
+        data=result,
+        message="Server channel message reaction removed successfully",
     )

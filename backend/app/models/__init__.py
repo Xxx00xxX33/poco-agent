@@ -33,6 +33,7 @@ from app.models.project_local_mount import ProjectLocalMount
 from app.models.server import Server
 from app.models.server_channel import ServerChannel
 from app.models.server_channel_message import ServerChannelMessage
+from app.models.server_channel_message_reaction import ServerChannelMessageReaction
 from app.models.server_channel_agent_member import ServerChannelAgentMember
 from app.models.server_channel_member import ServerChannelMember
 from app.models.server_channel_task import ServerChannelTask
@@ -94,6 +95,7 @@ __all__ = [
     "ServerChannel",
     "ServerChannelAgentMember",
     "ServerChannelMessage",
+    "ServerChannelMessageReaction",
     "ServerChannelMember",
     "ServerChannelTask",
     "ServerInvite",

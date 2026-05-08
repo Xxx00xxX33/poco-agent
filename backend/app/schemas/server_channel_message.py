@@ -4,6 +4,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.server_channel_message_reaction import (
+    ServerChannelMessageReactionGroupResponse,
+)
 from app.schemas.user_profile import UserPublicProfileResponse
 
 ServerChannelMessageType = Literal["user", "system", "task"]
@@ -26,6 +29,9 @@ class ServerChannelMessageResponse(BaseModel):
     text_preview: str | None = None
     thread_root_message_id: UUID | None = None
     reply_count: int = 0
+    reactions: list[ServerChannelMessageReactionGroupResponse] = Field(
+        default_factory=list
+    )
     created_at: datetime
     updated_at: datetime
 

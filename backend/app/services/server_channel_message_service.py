@@ -20,6 +20,9 @@ from app.schemas.server_channel_message import (
     ServerChannelMessageResponse,
     ServerChannelThreadResponse,
 )
+from app.schemas.server_channel_message_reaction import (
+    ServerChannelMessageReactionGroupResponse,
+)
 from app.schemas.user_profile import UserPublicProfileResponse
 from app.services.server_agent_trigger_service import ServerAgentTriggerService
 from app.services.server_member_service import require_server_member
@@ -38,6 +41,7 @@ class ServerChannelMessageService:
         *,
         reply_count: int = 0,
         author_user: UserPublicProfileResponse | None = None,
+        reactions: list[ServerChannelMessageReactionGroupResponse] | None = None,
     ) -> ServerChannelMessageResponse:
         return ServerChannelMessageResponse.model_validate(
             message,
@@ -45,6 +49,7 @@ class ServerChannelMessageService:
             update={
                 "reply_count": reply_count,
                 "author_user": author_user,
+                "reactions": reactions or [],
             }
         )
 
@@ -167,11 +172,21 @@ class ServerChannelMessageService:
             db,
             [item.id for item in messages],
         )
+        from app.services.server_channel_message_reaction_service import (
+            ServerChannelMessageReactionService,
+        )
+
+        reactions = ServerChannelMessageReactionService().list_grouped_by_messages(
+            db,
+            [item.id for item in messages],
+            current_user_id=current_user.id,
+        )
         return [
             self._build_message_response(
                 item,
                 reply_count=reply_counts.get(item.id, 0),
                 author_user=author_profiles.get(item.author_user_id or ""),
+                reactions=reactions.get(item.id, []),
             )
             for item in messages
         ]
@@ -200,6 +215,7 @@ class ServerChannelMessageService:
                     message=f"Thread not found: {thread_root_message_id}",
                 )
         replies = ServerChannelMessageRepository.list_replies(db, root_id)
+        all_messages = [root, *replies]
         author_profiles = list_user_public_profiles_by_id(
             db,
             [
@@ -211,15 +227,26 @@ class ServerChannelMessageService:
                 if author_user_id is not None
             ],
         )
+        from app.services.server_channel_message_reaction_service import (
+            ServerChannelMessageReactionService,
+        )
+
+        reactions = ServerChannelMessageReactionService().list_grouped_by_messages(
+            db,
+            [item.id for item in all_messages],
+            current_user_id=current_user.id,
+        )
         return ServerChannelThreadResponse(
             root=self._build_message_response(
                 root,
                 author_user=author_profiles.get(root.author_user_id or ""),
+                reactions=reactions.get(root.id, []),
             ),
             replies=[
                 self._build_message_response(
                     item,
                     author_user=author_profiles.get(item.author_user_id or ""),
+                    reactions=reactions.get(item.id, []),
                 )
                 for item in replies
             ],
