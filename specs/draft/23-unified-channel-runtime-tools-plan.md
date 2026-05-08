@@ -12,7 +12,7 @@
 
 ## 实施阶段
 
-- [ ] Phase 0: 固化统一 channel runtime tool contract
+- [x] Phase 0: 固化统一 channel runtime tool contract
 - [ ] Phase 1: 建立 backend internal message / agent directory / collaboration API
 - [ ] Phase 2: 建立 executor-manager 统一代理前缀
 - [ ] Phase 3: 建立 executor `ChannelRuntimeClient` 与 `__poco_channel_runtime`
@@ -85,9 +85,9 @@
 
 **验收标准：**
 
-- [ ] channel-scoped run 注入 `__poco_channel_runtime`
-- [ ] 非 channel-scoped run 不注入
-- [ ] 新增 tools 不引入新的 `__poco_channel_*` server key
+- [x] channel-scoped run 注入 `__poco_channel_runtime`
+- [x] 非 channel-scoped run 不注入
+- [x] 新增 tools 不引入新的 `__poco_channel_*` server key
 
 #### 0.2 定义统一结果格式
 
@@ -100,8 +100,8 @@
 
 **验收标准：**
 
-- [ ] 成功结果包含 tool title 和 JSON body
-- [ ] 失败结果不抛给 SDK 崩溃，而是返回结构化 error
+- [x] 成功结果包含 tool title 和 JSON body
+- [x] 失败结果不抛给 SDK 崩溃，而是返回结构化 error
 
 ## Phase 1: 建立 backend internal message / agent directory / collaboration API
 

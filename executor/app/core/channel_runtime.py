@@ -62,11 +62,15 @@ def _format_tool_result(title: str, data: Any) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": f"{title}\n{body}"}]}
 
 
+def _format_tool_error(title: str, error: str, *, code: str) -> dict[str, Any]:
+    return _format_tool_result(f"{title}_error", {"error": error, "code": code})
+
+
 async def _run_tool(title: str, operation) -> dict[str, Any]:
     try:
         result = await operation
     except Exception as exc:
-        return _format_tool_result(f"{title}_error", {"error": str(exc)})
+        return _format_tool_error(title, str(exc), code="runtime_error")
     return _format_tool_result(title, result)
 
 
@@ -82,14 +86,16 @@ def create_channel_runtime_mcp_server(
         message_id = args.get("message_id")
         emoji = args.get("emoji")
         if not isinstance(message_id, str) or not message_id.strip():
-            return _format_tool_result(
-                "add_channel_message_reaction_error",
-                {"error": "message_id must be a non-empty string"},
+            return _format_tool_error(
+                "add_channel_message_reaction",
+                "message_id must be a non-empty string",
+                code="invalid_arguments",
             )
         if not isinstance(emoji, str) or not emoji.strip():
-            return _format_tool_result(
-                "add_channel_message_reaction_error",
-                {"error": "emoji must be a non-empty string"},
+            return _format_tool_error(
+                "add_channel_message_reaction",
+                "emoji must be a non-empty string",
+                code="invalid_arguments",
             )
         return await _run_tool(
             "add_channel_message_reaction",
@@ -108,14 +114,16 @@ def create_channel_runtime_mcp_server(
         message_id = args.get("message_id")
         emoji = args.get("emoji")
         if not isinstance(message_id, str) or not message_id.strip():
-            return _format_tool_result(
-                "remove_channel_message_reaction_error",
-                {"error": "message_id must be a non-empty string"},
+            return _format_tool_error(
+                "remove_channel_message_reaction",
+                "message_id must be a non-empty string",
+                code="invalid_arguments",
             )
         if not isinstance(emoji, str) or not emoji.strip():
-            return _format_tool_result(
-                "remove_channel_message_reaction_error",
-                {"error": "emoji must be a non-empty string"},
+            return _format_tool_error(
+                "remove_channel_message_reaction",
+                "emoji must be a non-empty string",
+                code="invalid_arguments",
             )
         return await _run_tool(
             "remove_channel_message_reaction",
