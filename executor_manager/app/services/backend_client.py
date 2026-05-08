@@ -677,6 +677,53 @@ class BackendClient:
             response.raise_for_status()
             return response.json().get("data")
 
+    async def read_agent_channel_messages(
+        self,
+        session_id: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        response = await self._request(
+            "POST",
+            "/api/v1/internal/channel-runtime/messages/read",
+            params={"session_id": session_id},
+            json=payload,
+            headers={
+                "X-Internal-Token": self.settings.internal_api_token,
+                **self._trace_headers(),
+            },
+        )
+        return response.json().get("data")
+
+    async def list_agent_channel_agents(self, session_id: str) -> Any:
+        response = await self._request(
+            "POST",
+            "/api/v1/internal/channel-runtime/agents/list",
+            params={"session_id": session_id},
+            json={},
+            headers={
+                "X-Internal-Token": self.settings.internal_api_token,
+                **self._trace_headers(),
+            },
+        )
+        return response.json().get("data")
+
+    async def request_agent_channel_collaboration(
+        self,
+        session_id: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        response = await self._request(
+            "POST",
+            "/api/v1/internal/channel-runtime/collaboration/request",
+            params={"session_id": session_id},
+            json=payload,
+            headers={
+                "X-Internal-Token": self.settings.internal_api_token,
+                **self._trace_headers(),
+            },
+        )
+        return response.json().get("data")
+
     async def add_agent_channel_message_reaction(
         self,
         session_id: str,
