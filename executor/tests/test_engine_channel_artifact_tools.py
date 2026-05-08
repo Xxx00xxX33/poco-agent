@@ -1,5 +1,4 @@
 import unittest
-from types import SimpleNamespace
 
 from app.core.engine import AgentExecutor
 from app.schemas.request import TaskConfig
@@ -37,21 +36,8 @@ class AgentExecutorChannelArtifactTests(unittest.TestCase):
         self.assertNotIn("list_channel_artifacts", prompt)
         self.assertNotIn("read_channel_artifact", prompt)
 
-    def test_inject_channel_artifacts_mcp_only_when_configured(self) -> None:
-        executor = AgentExecutor.__new__(AgentExecutor)
-        executor.channel_artifacts_mcp_server = SimpleNamespace(name="artifact-server")
-
-        injected = executor._inject_channel_artifacts_mcp({})
-
-        self.assertIn("__poco_channel_artifacts", injected)
-
-    def test_inject_channel_artifacts_mcp_is_noop_without_server(self) -> None:
-        executor = AgentExecutor.__new__(AgentExecutor)
-        executor.channel_artifacts_mcp_server = None
-
-        injected = executor._inject_channel_artifacts_mcp({"custom": {}})
-
-        self.assertEqual(injected, {"custom": {}})
+    def test_old_channel_artifact_mcp_injector_is_removed(self) -> None:
+        self.assertFalse(hasattr(AgentExecutor, "_inject_channel_artifacts_mcp"))
 
 
 if __name__ == "__main__":

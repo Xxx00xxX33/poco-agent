@@ -87,6 +87,77 @@ class ChannelRuntimeClient:
             },
         )
 
+    async def list_artifacts(self) -> Any:
+        return await self._request("/api/v1/agent-channel-artifacts/list", {})
+
+    async def read_artifact(
+        self,
+        *,
+        artifact_id: str | None,
+        logical_path: str | None,
+        max_bytes: int | None,
+    ) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-artifacts/read",
+            {
+                "artifact_id": artifact_id,
+                "logical_path": logical_path,
+                "max_bytes": max_bytes,
+            },
+        )
+
+    async def search_artifacts(
+        self,
+        *,
+        query: str,
+        limit: int | None,
+        include_content: bool,
+    ) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-artifacts/search",
+            {
+                "query": query,
+                "limit": limit,
+                "include_content": include_content,
+            },
+        )
+
+    async def create_task(
+        self,
+        *,
+        title: str,
+        description: str | None,
+        priority: str | None,
+    ) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-tasks/create",
+            {"title": title, "description": description, "priority": priority},
+        )
+
+    async def update_task_status(
+        self,
+        *,
+        task_id: str,
+        status: str,
+        position: int,
+    ) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-tasks/status",
+            {"task_id": task_id, "status": status, "position": position},
+        )
+
+    async def claim_task(self, *, task_id: str) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-tasks/claim",
+            {"task_id": task_id},
+        )
+
+    async def comment_on_task(self, *, task_id: str, text: str) -> Any:
+        return await self._request(
+            "/api/v1/agent-channel-tasks/comment",
+            {"task_id": task_id, "text": text},
+        )
+
     async def add_message_reaction(self, *, message_id: str, emoji: str) -> Any:
         return await self._request(
             "/api/v1/agent-channel-runtime/reactions/add",
@@ -120,6 +191,84 @@ async def _run_tool(title: str, operation) -> dict[str, Any]:
 def create_channel_runtime_mcp_server(
     runtime_client: ChannelRuntimeClient,
 ) -> McpSdkServerConfig:
+    @tool(
+        "list_channel_artifacts",
+        "List read-only published artifacts available in the current channel",
+        {},
+    )
+    async def list_channel_artifacts(args: dict[str, Any]) -> dict[str, Any]:
+        _ = args
+        return await _run_tool(
+            "list_channel_artifacts",
+            runtime_client.list_artifacts(),
+        )
+
+    @tool(
+        "read_channel_artifact",
+        "Read one published channel artifact by artifact_id or logical_path",
+        {"artifact_id": str, "logical_path": str, "max_bytes": int},
+    )
+    async def read_channel_artifact(args: dict[str, Any]) -> dict[str, Any]:
+        artifact_id = args.get("artifact_id")
+        logical_path = args.get("logical_path")
+        if (
+            not isinstance(artifact_id, str)
+            or not artifact_id.strip()
+        ) and (
+            not isinstance(logical_path, str)
+            or not logical_path.strip()
+        ):
+            return _format_tool_error(
+                "read_channel_artifact",
+                "artifact_id or logical_path must be provided",
+                code="invalid_arguments",
+            )
+        if isinstance(logical_path, str) and logical_path.strip().startswith(
+            "/workspace"
+        ):
+            return _format_tool_error(
+                "read_channel_artifact",
+                "logical_path is a published artifact identifier, not a /workspace path",
+                code="invalid_arguments",
+            )
+        max_bytes = args.get("max_bytes")
+        return await _run_tool(
+            "read_channel_artifact",
+            runtime_client.read_artifact(
+                artifact_id=artifact_id.strip() if isinstance(artifact_id, str) else None,
+                logical_path=(
+                    logical_path.strip() if isinstance(logical_path, str) else None
+                ),
+                max_bytes=max_bytes if isinstance(max_bytes, int) else None,
+            ),
+        )
+
+    @tool(
+        "search_channel_artifacts",
+        "Search current channel artifacts by name, logical path, source, or text",
+        {"query": str, "limit": int, "include_content": bool},
+    )
+    async def search_channel_artifacts(args: dict[str, Any]) -> dict[str, Any]:
+        query = args.get("query")
+        if not isinstance(query, str) or not query.strip():
+            return _format_tool_error(
+                "search_channel_artifacts",
+                "query must be a non-empty string",
+                code="invalid_arguments",
+            )
+        limit = args.get("limit")
+        include_content = args.get("include_content")
+        return await _run_tool(
+            "search_channel_artifacts",
+            runtime_client.search_artifacts(
+                query=query.strip(),
+                limit=limit if isinstance(limit, int) else None,
+                include_content=(
+                    include_content if isinstance(include_content, bool) else False
+                ),
+            ),
+        )
+
     @tool(
         "read_channel_messages",
         "Read full messages or thread replies from the current channel",
@@ -243,6 +392,103 @@ def create_channel_runtime_mcp_server(
         )
 
     @tool(
+        "create_channel_task",
+        "Create a structured channel task in the current server channel",
+        {"title": str, "description": str, "priority": str},
+    )
+    async def create_channel_task(args: dict[str, Any]) -> dict[str, Any]:
+        title = args.get("title")
+        if not isinstance(title, str) or not title.strip():
+            return _format_tool_error(
+                "create_channel_task",
+                "title must be a non-empty string",
+                code="invalid_arguments",
+            )
+        description = args.get("description")
+        priority = args.get("priority")
+        return await _run_tool(
+            "create_channel_task",
+            runtime_client.create_task(
+                title=title.strip(),
+                description=description.strip() if isinstance(description, str) else None,
+                priority=priority.strip() if isinstance(priority, str) else None,
+            ),
+        )
+
+    @tool(
+        "update_channel_task_status",
+        "Update a structured channel task status in the current server channel",
+        {"task_id": str, "status": str, "position": int},
+    )
+    async def update_channel_task_status(args: dict[str, Any]) -> dict[str, Any]:
+        task_id = args.get("task_id")
+        status = args.get("status")
+        if not isinstance(task_id, str) or not task_id.strip():
+            return _format_tool_error(
+                "update_channel_task_status",
+                "task_id must be a non-empty string",
+                code="invalid_arguments",
+            )
+        if not isinstance(status, str) or not status.strip():
+            return _format_tool_error(
+                "update_channel_task_status",
+                "status must be a non-empty string",
+                code="invalid_arguments",
+            )
+        position = args.get("position")
+        return await _run_tool(
+            "update_channel_task_status",
+            runtime_client.update_task_status(
+                task_id=task_id.strip(),
+                status=status.strip(),
+                position=position if isinstance(position, int) else 0,
+            ),
+        )
+
+    @tool(
+        "claim_channel_task",
+        "Claim a structured channel task as the current agent",
+        {"task_id": str},
+    )
+    async def claim_channel_task(args: dict[str, Any]) -> dict[str, Any]:
+        task_id = args.get("task_id")
+        if not isinstance(task_id, str) or not task_id.strip():
+            return _format_tool_error(
+                "claim_channel_task",
+                "task_id must be a non-empty string",
+                code="invalid_arguments",
+            )
+        return await _run_tool(
+            "claim_channel_task",
+            runtime_client.claim_task(task_id=task_id.strip()),
+        )
+
+    @tool(
+        "comment_on_channel_task",
+        "Post a structured comment to a channel task thread",
+        {"task_id": str, "text": str},
+    )
+    async def comment_on_channel_task(args: dict[str, Any]) -> dict[str, Any]:
+        task_id = args.get("task_id")
+        text = args.get("text")
+        if not isinstance(task_id, str) or not task_id.strip():
+            return _format_tool_error(
+                "comment_on_channel_task",
+                "task_id must be a non-empty string",
+                code="invalid_arguments",
+            )
+        if not isinstance(text, str) or not text.strip():
+            return _format_tool_error(
+                "comment_on_channel_task",
+                "text must be a non-empty string",
+                code="invalid_arguments",
+            )
+        return await _run_tool(
+            "comment_on_channel_task",
+            runtime_client.comment_on_task(task_id=task_id.strip(), text=text.strip()),
+        )
+
+    @tool(
         "add_channel_message_reaction",
         "Add an emoji reaction to a message in the current channel",
         {"message_id": str, "emoji": str},
@@ -302,9 +548,16 @@ def create_channel_runtime_mcp_server(
         name="poco-channel-runtime",
         version="0.1.0",
         tools=[
+            list_channel_artifacts,
+            read_channel_artifact,
+            search_channel_artifacts,
             read_channel_messages,
             list_channel_agents,
             request_agent_collaboration,
+            create_channel_task,
+            update_channel_task_status,
+            claim_channel_task,
+            comment_on_channel_task,
             add_channel_message_reaction,
             remove_channel_message_reaction,
         ],

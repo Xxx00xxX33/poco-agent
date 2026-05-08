@@ -24,20 +24,10 @@ from claude_agent_sdk.types import (
 from dotenv import load_dotenv
 
 from app.core.client_pool import ToolPermissionController, get_claude_sdk_client_pool
-from app.core.channel_artifacts import (
-    CHANNEL_ARTIFACTS_MCP_SERVER_KEY,
-    ChannelArtifactClient,
-    create_channel_artifacts_mcp_server,
-)
 from app.core.channel_runtime import (
     CHANNEL_RUNTIME_MCP_SERVER_KEY,
     ChannelRuntimeClient,
     create_channel_runtime_mcp_server,
-)
-from app.core.channel_tasks import (
-    CHANNEL_TASKS_MCP_SERVER_KEY,
-    ChannelTaskClient,
-    create_channel_tasks_mcp_server,
 )
 from app.core.memory import (
     MEMORY_MCP_SERVER_KEY,
@@ -95,8 +85,6 @@ class AgentExecutor:
         user_input_client: UserInputClient | None = None,
         memory_client: MemoryClient | None = None,
         channel_runtime_client: ChannelRuntimeClient | None = None,
-        channel_task_client: ChannelTaskClient | None = None,
-        channel_artifact_client: ChannelArtifactClient | None = None,
         request_id: str | None = None,
         trace_id: str | None = None,
     ):
@@ -113,18 +101,6 @@ class AgentExecutor:
         self.channel_runtime_mcp_server = (
             create_channel_runtime_mcp_server(channel_runtime_client)
             if channel_runtime_client
-            else None
-        )
-        self.channel_task_client = channel_task_client
-        self.channel_tasks_mcp_server = (
-            create_channel_tasks_mcp_server(channel_task_client)
-            if channel_task_client
-            else None
-        )
-        self.channel_artifact_client = channel_artifact_client
-        self.channel_artifacts_mcp_server = (
-            create_channel_artifacts_mcp_server(channel_artifact_client)
-            if channel_artifact_client
             else None
         )
         self._request_id = request_id
@@ -308,8 +284,6 @@ class AgentExecutor:
             mcp_servers = dict(config.mcp_config or {})
             mcp_servers = self._inject_memory_mcp(mcp_servers)
             mcp_servers = self._inject_channel_runtime_mcp(mcp_servers)
-            mcp_servers = self._inject_channel_tasks_mcp(mcp_servers)
-            mcp_servers = self._inject_channel_artifacts_mcp(mcp_servers)
             if config.browser_enabled:
                 mcp_servers = self._inject_playwright_mcp(mcp_servers)
 
@@ -914,26 +888,4 @@ PY
 
         injected = dict(mcp_servers)
         injected[CHANNEL_RUNTIME_MCP_SERVER_KEY] = self.channel_runtime_mcp_server
-        return injected
-
-    def _inject_channel_tasks_mcp(self, mcp_servers: dict) -> dict:
-        """Inject built-in channel task MCP server for channel-scoped agent runs."""
-        if not self.channel_tasks_mcp_server:
-            return mcp_servers
-        if CHANNEL_TASKS_MCP_SERVER_KEY in mcp_servers:
-            return mcp_servers
-
-        injected = dict(mcp_servers)
-        injected[CHANNEL_TASKS_MCP_SERVER_KEY] = self.channel_tasks_mcp_server
-        return injected
-
-    def _inject_channel_artifacts_mcp(self, mcp_servers: dict) -> dict:
-        """Inject built-in channel artifact MCP server for channel-scoped agent runs."""
-        if not self.channel_artifacts_mcp_server:
-            return mcp_servers
-        if CHANNEL_ARTIFACTS_MCP_SERVER_KEY in mcp_servers:
-            return mcp_servers
-
-        injected = dict(mcp_servers)
-        injected[CHANNEL_ARTIFACTS_MCP_SERVER_KEY] = self.channel_artifacts_mcp_server
         return injected

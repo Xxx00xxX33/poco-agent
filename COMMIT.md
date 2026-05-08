@@ -1,7 +1,7 @@
-feat(channel-runtime): add executor runtime facade tools
+refactor(channel-runtime): migrate artifacts and tasks into runtime server
 
-- Add ChannelRuntimeClient methods for messages, agents, and collaboration
-- Expose read_channel_messages, list_channel_agents, and request_agent_collaboration tools
-- Add channel runtime prompt guidance for message reads and explicit collaboration
-- Cover executor facade methods and prompt contract with unittest cases
-- Mark completed Phase 3 client criteria in the unified runtime plan
+- Route artifact and task tools through the ChannelRuntimeClient facade
+- Expose artifacts, tasks, messages, collaboration, and reactions from __poco_channel_runtime
+- Remove old executor injection paths for __poco_channel_tasks and __poco_channel_artifacts
+- Cover facade routing and old injector removal with executor unittest cases
+- Mark Phase 3 and Phase 4 unified runtime plan criteria complete

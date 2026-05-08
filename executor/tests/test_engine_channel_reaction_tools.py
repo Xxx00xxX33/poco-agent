@@ -52,6 +52,9 @@ class AgentExecutorChannelReactionTests(unittest.TestCase):
 
         self.assertEqual(injected, {"custom": {}})
 
+    def test_old_channel_task_mcp_injector_is_removed(self) -> None:
+        self.assertFalse(hasattr(AgentExecutor, "_inject_channel_tasks_mcp"))
+
 
 if __name__ == "__main__":
     unittest.main()

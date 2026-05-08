@@ -119,6 +119,42 @@ class ChannelRuntimeToolContractTests(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_client_routes_artifact_tools_through_facade(self) -> None:
+        client = ChannelRuntimeClient("http://manager", "session-1")
+
+        with patch.object(
+            client,
+            "_request",
+            new=AsyncMock(return_value={"artifacts": []}),
+        ) as request:
+            result = await client.list_artifacts()
+
+        self.assertEqual(result, {"artifacts": []})
+        request.assert_awaited_once_with(
+            "/api/v1/agent-channel-artifacts/list",
+            {},
+        )
+
+    async def test_client_routes_task_tools_through_facade(self) -> None:
+        client = ChannelRuntimeClient("http://manager", "session-1")
+
+        with patch.object(
+            client,
+            "_request",
+            new=AsyncMock(return_value={"task": {"title": "Review"}}),
+        ) as request:
+            result = await client.create_task(
+                title="Review",
+                description=None,
+                priority="medium",
+            )
+
+        self.assertEqual(result, {"task": {"title": "Review"}})
+        request.assert_awaited_once_with(
+            "/api/v1/agent-channel-tasks/create",
+            {"title": "Review", "description": None, "priority": "medium"},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
