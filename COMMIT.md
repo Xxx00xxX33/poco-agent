@@ -1,6 +1,6 @@
-feat(agent-trigger): add trigger envelope schema
+feat(agent-trigger): split channel trigger envelope and body
 
-- Define structured AgentTriggerEnvelope models for persistent channel triggers
-- Persist trigger_context metadata on materialized user messages
-- Add backend tests for schema validation and message metadata compatibility
-- Mark Phase 0 trigger envelope plan tasks complete
+- Build persistent trigger envelopes with message, thread, actor, and agent indexes
+- Enqueue visible trigger body separately from the legacy SDK context prompt
+- Reduce legacy channel context to lightweight message and artifact indexes
+- Update backend trigger tests and mark Phase 1 plan tasks complete

@@ -22,7 +22,55 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
             status="active",
         )
 
-    def test_build_message_trigger_prompt_includes_recent_messages_and_artifacts(self) -> None:
+    def test_build_trigger_envelope_uses_message_and_agent_indexes(self) -> None:
+        message = SimpleNamespace(
+            id=self.message_id,
+            channel_id=self.channel_id,
+            author_user_id="user-1",
+            text_preview="Please review @api-specialist",
+            content={"text": "Please review @api-specialist"},
+            thread_root_message_id=None,
+        )
+        agent_id = uuid.uuid4()
+
+        envelope = self.service.build_trigger_envelope(
+            server_id=self.server_id,
+            channel_id=self.channel_id,
+            message=message,
+            current_user=self.current_user,
+            target_agent_identity_id=agent_id,
+            target_agent_handle="api-specialist",
+            trigger_type="channel_mention",
+        )
+
+        payload = envelope.model_dump(mode="json")
+        self.assertEqual(payload["trigger_type"], "channel_mention")
+        self.assertEqual(payload["trigger_message_id"], str(self.message_id))
+        self.assertEqual(payload["thread_root_message_id"], str(self.message_id))
+        self.assertEqual(payload["target_agent_identity_id"], str(agent_id))
+        self.assertEqual(payload["source_actor"]["user_id"], "user-1")
+        self.assertEqual(
+            payload["handoff"]["dedupe_key"],
+            f"channel-trigger:{self.message_id}:{agent_id}",
+        )
+
+    def test_extract_trigger_body_prefers_full_content_over_preview(self) -> None:
+        full_text = ("Complete @jimi summary " + ("details " * 120)).strip()
+        truncated_preview = "Complete @jimi summary details details"
+        message = SimpleNamespace(
+            id=self.message_id,
+            channel_id=self.channel_id,
+            author_user_id="user-1",
+            text_preview=truncated_preview,
+            content={"text": full_text},
+            thread_root_message_id=None,
+        )
+
+        body = self.service.extract_trigger_body(message)
+
+        self.assertEqual(body, full_text)
+
+    def test_build_legacy_prompt_for_sdk_uses_lightweight_context_index(self) -> None:
         message = SimpleNamespace(
             id=self.message_id,
             channel_id=self.channel_id,
@@ -44,6 +92,7 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
         ]
         artifacts = [
             SimpleNamespace(
+                id=uuid.uuid4(),
                 display_name="rate-limit-plan.md",
                 logical_path="/plans/rate-limit-plan.md",
                 mime_type="text/markdown",
@@ -82,12 +131,13 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
         self.assertIn("Please review @api-specialist", prompt)
         self.assertIn("Rate limit plan updated", prompt)
         self.assertIn("rate-limit-plan.md", prompt)
-        self.assertIn("Use per-user rate limits.", prompt)
         self.assertIn("list_channel_artifacts", prompt)
         self.assertIn("read_channel_artifact", prompt)
         self.assertIn("not /workspace paths", prompt)
+        self.assertIn("artifact_id:", prompt)
+        self.assertNotIn("Use per-user rate limits.", prompt)
 
-    def test_build_message_trigger_prompt_prefers_full_content_over_preview(self) -> None:
+    def test_build_message_trigger_prompt_shows_trigger_body_once(self) -> None:
         full_text = ("Complete @jimi summary " + ("details " * 120)).strip()
         truncated_preview = "Complete @jimi summary details details"
         message = SimpleNamespace(
@@ -147,7 +197,7 @@ class ChannelSharedContextServiceTests(unittest.TestCase):
             )
 
         self.assertIn(full_text, prompt)
-        self.assertGreater(prompt.count(full_text), 1)
+        self.assertEqual(prompt.count(full_text), 1)
 
 
 if __name__ == "__main__":

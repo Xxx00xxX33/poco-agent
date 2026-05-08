@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from app.models.user import User
+from app.schemas.agent_trigger import AgentTriggerEnvelope
 from app.schemas.task import TaskEnqueueResponse
 from app.services.server_agent_trigger_service import ServerAgentTriggerService
 
@@ -55,7 +56,22 @@ class ServerAgentTriggerServiceTests(unittest.TestCase):
             persistent_state=SimpleNamespace(active_session_id=None),
         )
         membership = SimpleNamespace(agent_identity_id=self.agent_id)
-        self.context_service.build_message_trigger_prompt.return_value = "shared prompt"
+        self.context_service.extract_trigger_body.return_value = (
+            "Please review @api-specialist"
+        )
+        self.context_service.build_trigger_envelope.return_value = AgentTriggerEnvelope(
+            trigger_type="channel_mention",
+            server_id=self.server_id,
+            channel_id=self.channel_id,
+            trigger_message_id=message.id,
+            thread_root_message_id=message.id,
+            target_agent_identity_id=self.agent_id,
+            target_agent_handle="api-specialist",
+            source_actor={"actor_type": "user", "user_id": "user-1"},
+            handoff={
+                "dedupe_key": f"channel-trigger:{message.id}:{self.agent_id}",
+            },
+        )
         self.task_service.enqueue_task.return_value = TaskEnqueueResponse(
             session_id=uuid.uuid4(),
             accepted_type="run",
@@ -83,14 +99,20 @@ class ServerAgentTriggerServiceTests(unittest.TestCase):
             )
 
         self.assertEqual(len(results), 1)
-        self.context_service.build_message_trigger_prompt.assert_called_once()
+        self.context_service.extract_trigger_body.assert_called_once_with(message)
+        self.context_service.build_trigger_envelope.assert_called_once()
         self.task_service.enqueue_task.assert_called_once()
         _, owner_user_id, request = self.task_service.enqueue_task.call_args.args
         self.assertEqual(owner_user_id, "owner-user")
+        self.assertEqual(request.prompt, "Please review @api-specialist")
         self.assertEqual(request.config.agent_identity_id, self.agent_id)
         self.assertEqual(request.config.channel_id, self.channel_id)
         self.assertEqual(request.config.server_id, self.server_id)
         self.assertEqual(request.config.trigger_type, "channel_mention")
+        self.assertEqual(
+            request.config.trigger_context.handoff.dedupe_key,
+            f"channel-trigger:{message.id}:{self.agent_id}",
+        )
 
     def test_agent_dm_message_triggers_direct_agent_without_mention(self) -> None:
         message = SimpleNamespace(
@@ -118,7 +140,22 @@ class ServerAgentTriggerServiceTests(unittest.TestCase):
             created_by="owner-user",
             persistent_state=SimpleNamespace(active_session_id=uuid.uuid4()),
         )
-        self.context_service.build_message_trigger_prompt.return_value = "dm prompt"
+        self.context_service.extract_trigger_body.return_value = (
+            "Can you continue this work?"
+        )
+        self.context_service.build_trigger_envelope.return_value = AgentTriggerEnvelope(
+            trigger_type="agent_dm",
+            server_id=self.server_id,
+            channel_id=self.channel_id,
+            trigger_message_id=message.id,
+            thread_root_message_id=message.id,
+            target_agent_identity_id=self.agent_id,
+            target_agent_handle="api-specialist",
+            source_actor={"actor_type": "user", "user_id": "user-1"},
+            handoff={
+                "dedupe_key": f"channel-trigger:{message.id}:{self.agent_id}",
+            },
+        )
         self.task_service.enqueue_task.return_value = TaskEnqueueResponse(
             session_id=agent.persistent_state.active_session_id,
             accepted_type="queued_query",
@@ -142,7 +179,9 @@ class ServerAgentTriggerServiceTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
         _, _, request = self.task_service.enqueue_task.call_args.args
         self.assertEqual(request.session_id, agent.persistent_state.active_session_id)
+        self.assertEqual(request.prompt, "Can you continue this work?")
         self.assertEqual(request.config.trigger_type, "agent_dm")
+        self.assertEqual(request.config.trigger_context.trigger_type, "agent_dm")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from app.repositories.server_channel_message_repository import (
     ServerChannelMessageRepository,
 )
 from app.repositories.user_repository import UserRepository
+from app.schemas.agent_trigger import AgentTriggerEnvelope, TriggerType
 from app.services.storage_service import S3StorageService
 
 
@@ -69,6 +70,13 @@ class ChannelSharedContextService:
             return author_user_id.strip()
         return "Unknown"
 
+    @staticmethod
+    def _message_preview(message: Any) -> str:
+        text_preview = getattr(message, "text_preview", None)
+        if isinstance(text_preview, str) and text_preview.strip():
+            return text_preview.strip()
+        return ChannelSharedContextService._message_text(message)
+
     @classmethod
     def _is_text_artifact(cls, artifact: Any) -> bool:
         mime_type = getattr(artifact, "mime_type", None)
@@ -86,25 +94,61 @@ class ChannelSharedContextService:
         artifact_id = getattr(artifact, "id", None)
         if artifact_id is not None:
             lines.append(f"  artifact_id: {artifact_id}")
+        mime_type = getattr(artifact, "mime_type", None)
+        if isinstance(mime_type, str) and mime_type.strip():
+            lines.append(f"  mime_type: {mime_type.strip()}")
         size_bytes = getattr(artifact, "size_bytes", None)
-        if isinstance(size_bytes, int) and size_bytes > self.MAX_TEXT_ARTIFACT_BYTES:
-            lines.append("  [metadata only: file too large to inline]")
-            return "\n".join(lines)
-        if not self._is_text_artifact(artifact):
-            lines.append("  [metadata only: binary or unsupported preview type]")
-            return "\n".join(lines)
-        try:
-            content = self._storage.get_text(getattr(artifact, "object_key"))
-        except Exception:
-            lines.append("  [metadata only: failed to load file content]")
-            return "\n".join(lines)
-        trimmed = content.strip()
-        if not trimmed:
-            lines.append("  [empty file]")
-            return "\n".join(lines)
-        lines.append("  preview:")
-        lines.append(trimmed[: self.MAX_TEXT_ARTIFACT_BYTES])
+        if isinstance(size_bytes, int):
+            lines.append(f"  size_bytes: {size_bytes}")
+        lines.append("  [metadata only: use read_channel_artifact for content]")
         return "\n".join(lines)
+
+    def extract_trigger_body(self, message: Any) -> str:
+        return self._message_text(message)
+
+    @staticmethod
+    def build_trigger_envelope(
+        *,
+        server_id: uuid.UUID,
+        channel_id: uuid.UUID,
+        message: Any,
+        current_user: Any,
+        target_agent_identity_id: uuid.UUID,
+        target_agent_handle: str,
+        trigger_type: TriggerType,
+    ) -> AgentTriggerEnvelope:
+        message_id = getattr(message, "id")
+        thread_root_message_id = (
+            getattr(message, "thread_root_message_id", None) or message_id
+        )
+        display_name = getattr(current_user, "display_name", None) or getattr(
+            current_user,
+            "primary_email",
+            None,
+        )
+        user_id = getattr(current_user, "id", None) or getattr(
+            message,
+            "author_user_id",
+            None,
+        )
+        return AgentTriggerEnvelope(
+            trigger_type=trigger_type,
+            server_id=server_id,
+            channel_id=channel_id,
+            trigger_message_id=message_id,
+            thread_root_message_id=thread_root_message_id,
+            target_agent_identity_id=target_agent_identity_id,
+            target_agent_handle=target_agent_handle,
+            source_actor={
+                "actor_type": "user",
+                "user_id": user_id,
+                "display_name": display_name,
+            },
+            references={"message_ids": [message_id]},
+            handoff={
+                "dedupe_key": f"channel-trigger:{message_id}:{target_agent_identity_id}",
+            },
+        )
 
     def build_message_trigger_prompt(
         self,
@@ -113,6 +157,33 @@ class ChannelSharedContextService:
         server_id: uuid.UUID,
         channel_id: uuid.UUID,
         message: Any,
+        current_user: Any,
+        agent_display_name: str,
+        agent_handle: str | None = None,
+    ) -> str:
+        trigger_body = self.extract_trigger_body(message)
+        return self.build_legacy_prompt_for_sdk(
+            db,
+            server_id=server_id,
+            channel_id=channel_id,
+            trigger_message_id=getattr(message, "id", None),
+            thread_root_message_id=getattr(message, "thread_root_message_id", None)
+            or getattr(message, "id", None),
+            trigger_body=trigger_body,
+            current_user=current_user,
+            agent_display_name=agent_display_name,
+            agent_handle=agent_handle,
+        )
+
+    def build_legacy_prompt_for_sdk(
+        self,
+        db: Session,
+        *,
+        server_id: uuid.UUID,
+        channel_id: uuid.UUID,
+        trigger_message_id: uuid.UUID | None,
+        thread_root_message_id: uuid.UUID | None,
+        trigger_body: str,
         current_user: Any,
         agent_display_name: str,
         agent_handle: str | None = None,
@@ -150,20 +221,16 @@ class ChannelSharedContextService:
         actor_label = getattr(current_user, "display_name", None) or getattr(
             current_user, "primary_email", None
         ) or getattr(current_user, "id", "User")
-        trigger_text = self._message_text(message)
-        thread_root_id = getattr(message, "thread_root_message_id", None) or getattr(
-            message, "id", None
-        )
 
         lines = [
             f"You are {agent_display_name}.",
             f"{actor_label} triggered you from a server conversation.",
             f"Channel ID: {channel_id}",
-            f"Trigger message ID: {getattr(message, 'id', '')}",
-            f"Thread root message ID: {thread_root_id}",
+            f"Trigger message ID: {trigger_message_id or ''}",
+            f"Thread root message ID: {thread_root_message_id or ''}",
             "",
             "Trigger message:",
-            trigger_text or "[no visible trigger text]",
+            trigger_body or "[no visible trigger text]",
             "",
             "Channel people you can collaborate with:",
         ]
@@ -209,10 +276,15 @@ class ChannelSharedContextService:
 
         if recent_messages:
             for recent in recent_messages:
-                text = self._message_text(recent)
+                if getattr(recent, "id", None) == trigger_message_id:
+                    continue
+                text = self._message_preview(recent)
                 if not text:
                     continue
-                lines.append(f"- {self._message_author_label(recent)}: {text}")
+                lines.append(
+                    f"- {getattr(recent, 'id', '')} "
+                    f"{self._message_author_label(recent)}: {text}"
+                )
         else:
             lines.append("- [no recent visible messages]")
 

@@ -185,14 +185,15 @@ class ServerAgentTriggerService:
         )
 
         for agent in agents:
-            prompt = self._shared_context_service.build_message_trigger_prompt(
-                db,
+            trigger_body = self._shared_context_service.extract_trigger_body(message)
+            trigger_context = self._shared_context_service.build_trigger_envelope(
                 server_id=server_id,
                 channel_id=channel.id,
                 message=message,
                 current_user=current_user,
-                agent_display_name=agent.display_name,
-                agent_handle=agent.handle,
+                target_agent_identity_id=agent.id,
+                target_agent_handle=agent.handle,
+                trigger_type=trigger_type,
             )
             active_session_id = None
             if getattr(agent, "persistent_state", None) is not None:
@@ -203,7 +204,7 @@ class ServerAgentTriggerService:
                 )
 
             request = TaskEnqueueRequest(
-                prompt=prompt,
+                prompt=trigger_body,
                 session_id=active_session_id,
                 permission_mode="acceptEdits",
                 schedule_mode="immediate",
@@ -219,6 +220,7 @@ class ServerAgentTriggerService:
                     trigger_message_id=message.id,
                     thread_root_message_id=thread_root_message_id,
                     trigger_type=trigger_type,
+                    trigger_context=trigger_context,
                 ),
             )
             results.append(
