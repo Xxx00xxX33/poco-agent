@@ -70,6 +70,10 @@ import {
   getMentionTrigger,
 } from "@/features/servers/lib/server-conversation-view";
 import { getMessageSessionId } from "@/features/servers/lib/server-conversation-messages";
+import {
+  toggleMessageReaction,
+  updateMessageById,
+} from "@/features/servers/lib/message-reactions";
 import { shouldShowServerMobileDetail } from "@/features/servers/lib/server-mobile-navigation";
 import { AgentPresetDialog } from "@/features/servers/ui/agent-preset-dialog";
 import { ChannelTasksWorkspace } from "@/features/servers/ui/channel-tasks-workspace";
@@ -295,6 +299,7 @@ function ConversationContent({
   onOpenArtifacts,
   onOpenLeaveConfirm,
   onToggleSaved,
+  onToggleReaction,
   onOpenExecution,
   isSending,
   currentUserId,
@@ -317,6 +322,7 @@ function ConversationContent({
   onOpenArtifacts: () => void;
   onOpenLeaveConfirm: () => void;
   onToggleSaved: (messageId: string) => void;
+  onToggleReaction: (message: ServerConversationMessage, emoji: string) => void;
   onOpenExecution: (sessionId: string) => void;
   isSending: boolean;
   currentUserId?: string | null;
@@ -546,6 +552,7 @@ function ConversationContent({
                   onOpenExecution={onOpenExecution}
                   isSaved={savedMessageIds.has(message.id)}
                   onToggleSaved={() => onToggleSaved(message.id)}
+                  onToggleReaction={(emoji) => onToggleReaction(message, emoji)}
                 />
               ))}
             </div>
@@ -2165,6 +2172,58 @@ export function ServerConversationPageClient({
     });
   };
 
+  const applyMessageUpdate = React.useCallback(
+    (
+      messageId: string,
+      update: (message: ServerConversationMessage) => ServerConversationMessage,
+    ) => {
+      setMessagesByChannel((current) =>
+        Object.fromEntries(
+          Object.entries(current).map(([channelId, messages]) => [
+            channelId,
+            updateMessageById(messages, messageId, update),
+          ]),
+        ),
+      );
+      setThreadMessages((current) => updateMessageById(current, messageId, update));
+    },
+    [],
+  );
+
+  const handleToggleReaction = React.useCallback(
+    async (message: ServerConversationMessage, emoji: string) => {
+      if (!selectedServerId) {
+        return;
+      }
+      const wasReacted = (message.reactions ?? []).some(
+        (reaction) => reaction.emoji === emoji && reaction.reactedByCurrentUser,
+      );
+      applyMessageUpdate(message.id, (item) => toggleMessageReaction(item, emoji));
+      try {
+        if (wasReacted) {
+          await serversApi.removeMessageReaction(
+            selectedServerId,
+            message.channelId,
+            message.id,
+            emoji,
+          );
+        } else {
+          await serversApi.addMessageReaction(
+            selectedServerId,
+            message.channelId,
+            message.id,
+            emoji,
+          );
+        }
+      } catch (error) {
+        console.error("[ServersWorkspace] reaction update failed", error);
+        applyMessageUpdate(message.id, () => message);
+        toast.error(t("conversationView.toasts.reactionFailed"));
+      }
+    },
+    [applyMessageUpdate, selectedServerId, t],
+  );
+
   const handleArchiveChannel = async () => {
     if (!selectedServerId || !activeChannelId) {
       return;
@@ -2452,6 +2511,9 @@ export function ServerConversationPageClient({
                     setDrawer({ type: "execution", sessionId });
                   }}
                   onToggleSaved={toggleSaved}
+                  onToggleReaction={(item, emoji) =>
+                    void handleToggleReaction(item.message, emoji)
+                  }
                 />
               ) : (
                 <FeedPanel
@@ -2481,6 +2543,9 @@ export function ServerConversationPageClient({
                     setDrawer({ type: "execution", sessionId });
                   }}
                   onToggleSaved={toggleSaved}
+                  onToggleReaction={(item, emoji) =>
+                    void handleToggleReaction(item.message, emoji)
+                  }
                 />
               )}
             </section>
@@ -2539,6 +2604,9 @@ export function ServerConversationPageClient({
               onOpenArtifacts={() => setDrawer({ type: "artifacts" })}
               onOpenLeaveConfirm={() => setLeaveChannelOpen(true)}
               onToggleSaved={toggleSaved}
+              onToggleReaction={(message, emoji) =>
+                void handleToggleReaction(message, emoji)
+              }
               onOpenExecution={(sessionId) =>
                 setDrawer({ type: "execution", sessionId })
               }
@@ -2576,6 +2644,9 @@ export function ServerConversationPageClient({
                     onClose={() => setDrawer({ type: "none" })}
                     onOpenExecution={(sessionId) =>
                       setDrawer({ type: "execution", sessionId })
+                    }
+                    onToggleReaction={(message, emoji) =>
+                      void handleToggleReaction(message, emoji)
                     }
                     isSending={isSending}
                   />

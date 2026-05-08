@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Copy,
   MessageSquare,
+  SmilePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +31,7 @@ import {
 } from "../lib/server-conversation-messages";
 import { ServerMessageContent } from "./server-message-content";
 import { ServerAgentAvatar } from "./server-agent-avatar";
+import { MessageReactionPicker } from "./message-reaction-picker";
 
 const MESSAGE_COLLAPSE_LINES = 8;
 
@@ -154,6 +156,7 @@ export function MessageRow({
   onOpenThread,
   onOpenExecution,
   onToggleSaved,
+  onToggleReaction,
 }: {
   message: ServerConversationMessage;
   agents?: ServerAgentItem[];
@@ -164,10 +167,12 @@ export function MessageRow({
   onOpenThread: () => void;
   onOpenExecution?: ((sessionId: string) => void) | undefined;
   onToggleSaved: () => void;
+  onToggleReaction?: (emoji: string) => void;
 }) {
   const { t } = useT("translation");
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [shouldCollapse, setShouldCollapse] = React.useState(false);
+  const [reactionPickerOpen, setReactionPickerOpen] = React.useState(false);
   const agentMessageRef = React.useRef<HTMLDivElement>(null);
   const author = getMessageAuthor(message);
   const text = getMessageText(message);
@@ -216,6 +221,7 @@ export function MessageRow({
 
   React.useEffect(() => {
     setIsExpanded(false);
+    setReactionPickerOpen(false);
   }, [message.id, text]);
 
   React.useEffect(() => {
@@ -296,6 +302,24 @@ export function MessageRow({
             ) : null}
           </div>
           <div className="absolute right-0 top-0 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+            {onToggleReaction ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setReactionPickerOpen((open) => !open)}
+                  aria-label={t("conversationView.reactions.add")}
+                  title={t("conversationView.reactions.add")}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                >
+                  <SmilePlus className="size-4" />
+                </button>
+                <MessageReactionPicker
+                  open={reactionPickerOpen}
+                  onOpenChange={setReactionPickerOpen}
+                  onSelect={onToggleReaction}
+                />
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={() => void handleCopyMessage()}
@@ -430,6 +454,40 @@ export function MessageRow({
             ) : null}
           </div>
         )}
+        {(message.reactions ?? []).length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {(message.reactions ?? []).map((reaction) => {
+              const selected = reaction.reactedByCurrentUser;
+              const label = selected
+                ? t("conversationView.reactions.removeEmoji", {
+                    emoji: reaction.emoji,
+                  })
+                : t("conversationView.reactions.addEmoji", {
+                    emoji: reaction.emoji,
+                  });
+              return (
+                <button
+                  key={reaction.emoji}
+                  type="button"
+                  disabled={!onToggleReaction}
+                  onClick={() => onToggleReaction?.(reaction.emoji)}
+                  aria-label={label}
+                  title={label}
+                  className={cn(
+                    "inline-flex h-7 min-w-10 items-center justify-center gap-1 rounded-md border px-2 text-sm transition-colors",
+                    selected
+                      ? "border-primary/50 bg-primary/15 text-foreground"
+                      : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/45 hover:text-foreground",
+                    !onToggleReaction && "cursor-default",
+                  )}
+                >
+                  <span>{reaction.emoji}</span>
+                  <span className="text-xs tabular-nums">{reaction.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </article>
   );

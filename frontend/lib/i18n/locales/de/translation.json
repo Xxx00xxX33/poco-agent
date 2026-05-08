@@ -391,7 +391,14 @@
       "agentCreated": "Agent erstellt",
       "agentCreateFailed": "Agent konnte nicht erstellt werden",
       "memberRemoved": "Mitglied entfernt",
-      "memberRemoveFailed": "Mitglied konnte nicht entfernt werden"
+      "memberRemoveFailed": "Mitglied konnte nicht entfernt werden",
+      "reactionFailed": "Reaktion konnte nicht aktualisiert werden"
+    },
+    "reactions": {
+      "add": "Reaktion hinzufügen",
+      "pickerLabel": "Reaktion auswählen",
+      "addEmoji": "Mit {{emoji}} reagieren",
+      "removeEmoji": "Reaktion {{emoji}} entfernen"
     }
   },
   "workspaces": {

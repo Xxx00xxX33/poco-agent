@@ -25,6 +25,7 @@ export function SearchPanel({
   onOpenThread,
   onOpenExecution,
   onToggleSaved,
+  onToggleReaction,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
@@ -34,6 +35,7 @@ export function SearchPanel({
   onOpenThread: (item: FeedItem) => void;
   onOpenExecution?: (sessionId: string) => void;
   onToggleSaved: (messageId: string) => void;
+  onToggleReaction?: (item: FeedItem, emoji: string) => void;
 }) {
   const { t } = useT("translation");
   const [mineOnly, setMineOnly] = React.useState(false);
@@ -117,6 +119,7 @@ export function SearchPanel({
               onOpenThread={() => onOpenThread(item)}
               onOpenExecution={onOpenExecution}
               onToggleSaved={() => onToggleSaved(item.message.id)}
+              onToggleReaction={(emoji) => onToggleReaction?.(item, emoji)}
             />
           ))
         ) : (
@@ -146,6 +149,7 @@ export function FeedPanel({
   onOpenThread,
   onOpenExecution,
   onToggleSaved,
+  onToggleReaction,
 }: {
   inboxItems: FeedItem[];
   savedItems: FeedItem[];
@@ -155,6 +159,7 @@ export function FeedPanel({
   onOpenThread: (item: FeedItem) => void;
   onOpenExecution?: (sessionId: string) => void;
   onToggleSaved: (messageId: string) => void;
+  onToggleReaction?: (item: FeedItem, emoji: string) => void;
 }) {
   const { t } = useT("translation");
   const [filter, setFilter] = React.useState<"all" | "unread" | "saved">(
@@ -223,6 +228,7 @@ export function FeedPanel({
               onOpenThread={() => onOpenThread(item)}
               onOpenExecution={onOpenExecution}
               onToggleSaved={() => onToggleSaved(item.message.id)}
+              onToggleReaction={(emoji) => onToggleReaction?.(item, emoji)}
             />
           ))
         ) : (

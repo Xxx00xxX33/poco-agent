@@ -116,8 +116,26 @@ export interface ServerConversationMessage {
   textPreview?: string | null;
   threadRootMessageId?: string | null;
   replyCount: number;
+  reactions: ServerConversationMessageReactionGroup[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ServerConversationMessageReactionActor {
+  actorType: "user" | "agent";
+  userId?: string | null;
+  user?: ServerUserPublicProfile | null;
+  agentIdentityId?: string | null;
+  agentHandle?: string | null;
+  agentLabel?: string | null;
+}
+
+export interface ServerConversationMessageReactionGroup {
+  emoji: string;
+  count: number;
+  reactedByCurrentUser: boolean;
+  reactedByCurrentAgent: boolean;
+  actors: ServerConversationMessageReactionActor[];
 }
 
 export interface ServerExecutionTodoProgress {

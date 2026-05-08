@@ -63,6 +63,7 @@ export function ThreadDrawer({
   onSend,
   onClose,
   onOpenExecution,
+  onToggleReaction,
   isSending,
 }: {
   thread: ServerConversationMessage[];
@@ -78,6 +79,7 @@ export function ThreadDrawer({
   onSend: () => void;
   onClose: () => void;
   onOpenExecution?: (sessionId: string) => void;
+  onToggleReaction?: (message: ServerConversationMessage, emoji: string) => void;
   isSending: boolean;
 }) {
   const { t } = useT("translation");
@@ -178,6 +180,7 @@ export function ThreadDrawer({
             onOpenThread={() => undefined}
             onOpenExecution={onOpenExecution}
             onToggleSaved={() => undefined}
+            onToggleReaction={(emoji) => onToggleReaction?.(message, emoji)}
           />
         ))}
       </div>

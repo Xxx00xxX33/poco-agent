@@ -391,7 +391,14 @@
       "agentCreated": "Agent を作成しました",
       "agentCreateFailed": "Agent の作成に失敗しました",
       "memberRemoved": "メンバーを削除しました",
-      "memberRemoveFailed": "メンバーの削除に失敗しました"
+      "memberRemoveFailed": "メンバーの削除に失敗しました",
+      "reactionFailed": "リアクションの更新に失敗しました"
+    },
+    "reactions": {
+      "add": "リアクションを追加",
+      "pickerLabel": "リアクションを選択",
+      "addEmoji": "{{emoji}} でリアクション",
+      "removeEmoji": "{{emoji}} のリアクションを削除"
     }
   },
   "workspaces": {

@@ -6,6 +6,8 @@ import type {
   ServerChannelMemberItem,
   ServerChannelVisibility,
   ServerConversationMessage,
+  ServerConversationMessageReactionActor,
+  ServerConversationMessageReactionGroup,
   ServerConversationType,
   ServerInviteItem,
   ServerItem,
@@ -128,8 +130,26 @@ interface ServerConversationMessageResponse {
   text_preview?: string | null;
   thread_root_message_id?: string | null;
   reply_count: number;
+  reactions?: ServerConversationMessageReactionGroupResponse[];
   created_at: string;
   updated_at: string;
+}
+
+interface ServerConversationMessageReactionActorResponse {
+  actor_type: "user" | "agent";
+  user_id?: string | null;
+  user?: ServerUserPublicProfileResponse | null;
+  agent_identity_id?: string | null;
+  agent_handle?: string | null;
+  agent_label?: string | null;
+}
+
+interface ServerConversationMessageReactionGroupResponse {
+  emoji: string;
+  count: number;
+  reacted_by_current_user: boolean;
+  reacted_by_current_agent: boolean;
+  actors?: ServerConversationMessageReactionActorResponse[];
 }
 
 interface ServerConversationThreadResponse {
@@ -275,8 +295,34 @@ function mapConversationMessage(
     textPreview: message.text_preview,
     threadRootMessageId: message.thread_root_message_id,
     replyCount: message.reply_count,
+    reactions: (message.reactions ?? []).map(mapReactionGroup),
     createdAt: message.created_at,
     updatedAt: message.updated_at,
+  };
+}
+
+function mapReactionActor(
+  actor: ServerConversationMessageReactionActorResponse,
+): ServerConversationMessageReactionActor {
+  return {
+    actorType: actor.actor_type,
+    userId: actor.user_id,
+    user: mapUserProfile(actor.user),
+    agentIdentityId: actor.agent_identity_id,
+    agentHandle: actor.agent_handle,
+    agentLabel: actor.agent_label,
+  };
+}
+
+function mapReactionGroup(
+  reaction: ServerConversationMessageReactionGroupResponse,
+): ServerConversationMessageReactionGroup {
+  return {
+    emoji: reaction.emoji,
+    count: reaction.count,
+    reactedByCurrentUser: reaction.reacted_by_current_user,
+    reactedByCurrentAgent: reaction.reacted_by_current_agent,
+    actors: (reaction.actors ?? []).map(mapReactionActor),
   };
 }
 
@@ -447,6 +493,30 @@ export const serversApi = {
       `/servers/${serverId}/channels/${channelId}/threads/${threadRootMessageId}`,
     );
     return [thread.root, ...thread.replies].map(mapConversationMessage);
+  },
+
+  addMessageReaction: async (
+    serverId: string,
+    channelId: string,
+    messageId: string,
+    emoji: string,
+  ): Promise<void> => {
+    await apiClient.post(
+      `/servers/${serverId}/channels/${channelId}/messages/${messageId}/reactions`,
+      { emoji },
+    );
+  },
+
+  removeMessageReaction: async (
+    serverId: string,
+    channelId: string,
+    messageId: string,
+    emoji: string,
+  ): Promise<void> => {
+    await apiClient.delete(
+      `/servers/${serverId}/channels/${channelId}/messages/${messageId}/reactions`,
+      { body: { emoji } as unknown as BodyInit },
+    );
   },
 
   createDirectMessage: async (

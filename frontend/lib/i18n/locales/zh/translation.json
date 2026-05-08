@@ -394,7 +394,14 @@
       "agentCreated": "Agent 已创建",
       "agentCreateFailed": "创建 Agent 失败",
       "memberRemoved": "成员已移除",
-      "memberRemoveFailed": "移除成员失败"
+      "memberRemoveFailed": "移除成员失败",
+      "reactionFailed": "更新表情反应失败"
+    },
+    "reactions": {
+      "add": "添加表情反应",
+      "pickerLabel": "选择表情反应",
+      "addEmoji": "用 {{emoji}} 反应",
+      "removeEmoji": "移除 {{emoji}} 反应"
     }
   },
   "workspaces": {

@@ -391,7 +391,14 @@
       "agentCreated": "Агент создан",
       "agentCreateFailed": "Не удалось создать агента",
       "memberRemoved": "Участник удалён",
-      "memberRemoveFailed": "Не удалось удалить участника"
+      "memberRemoveFailed": "Не удалось удалить участника",
+      "reactionFailed": "Не удалось обновить реакцию"
+    },
+    "reactions": {
+      "add": "Добавить реакцию",
+      "pickerLabel": "Выбрать реакцию",
+      "addEmoji": "Отреагировать {{emoji}}",
+      "removeEmoji": "Удалить реакцию {{emoji}}"
     }
   },
   "workspaces": {
