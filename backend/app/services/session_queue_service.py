@@ -62,6 +62,17 @@ class SessionQueueService:
         db_session.cancellation_error = None
 
     @staticmethod
+    def _message_metadata_from_run_snapshot(
+        run_config_snapshot: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        if not isinstance(run_config_snapshot, dict):
+            return None
+        trigger_context = run_config_snapshot.get("trigger_context")
+        if not isinstance(trigger_context, dict):
+            return None
+        return {"trigger_context": trigger_context}
+
+    @staticmethod
     def _move_item_to_front(
         db: Session,
         *,
@@ -224,6 +235,9 @@ class SessionQueueService:
             "_type": "UserMessage",
             "content": [{"_type": "TextBlock", "text": normalized_prompt}],
         }
+        metadata = self._message_metadata_from_run_snapshot(run_config_snapshot)
+        if metadata is not None:
+            user_message_content["metadata"] = metadata
         db_message = MessageRepository.create(
             session_db=db,
             session_id=db_session.id,

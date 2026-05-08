@@ -1,6 +1,6 @@
-fix(execution-drawer): streamline server channel execution entry
+feat(agent-trigger): add trigger envelope schema
 
-- default server channel execution drawers to a collapsed right panel while keeping manual expand available
-- hide preset identity badges in channel-opened execution views without changing normal chat behavior
-- keep thread execution drilldown wired through the shared drawer container
-- update the active spec to mark Phase 3-4 complete and record verification plus known unrelated test debt
+- Define structured AgentTriggerEnvelope models for persistent channel triggers
+- Persist trigger_context metadata on materialized user messages
+- Add backend tests for schema validation and message metadata compatibility
+- Mark Phase 0 trigger envelope plan tasks complete
