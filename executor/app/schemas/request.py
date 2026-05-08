@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -77,6 +77,7 @@ class TaskConfig(BaseModel):
     trigger_message_id: UUID | None = None
     thread_root_message_id: UUID | None = None
     trigger_type: str | None = None
+    trigger_context: dict[str, Any] | None = None
     filesystem_mode: FilesystemMode = "sandbox"
     local_mounts: list[LocalMountConfig] = Field(default_factory=list)
     deployment_mode: DeploymentMode = "local"

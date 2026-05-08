@@ -14,7 +14,7 @@
 
 - [x] Phase 0: 固化 trigger envelope schema 与兼容策略
 - [x] Phase 1: 后端生成并持久化 trigger envelope
-- [ ] Phase 2: executor 基于 envelope 组合 SDK prompt
+- [x] Phase 2: executor 基于 envelope 组合 SDK prompt
 - [ ] Phase 3: 前端 agent session 两层消息显示
 - [ ] Phase 4: 测试、回归与旧 prompt 收敛
 
@@ -222,8 +222,8 @@ executor 接收结构化 trigger context 后，负责把 envelope 摘要、trigg
 
 **验收标准：**
 
-- [ ] executor 可解析 trigger_context
-- [ ] 非频道 run 没有 trigger_context 时行为不变
+- [x] executor 可解析 trigger_context
+- [x] 非频道 run 没有 trigger_context 时行为不变
 
 #### 2.2 重写 channel trigger prompt contract
 
@@ -236,9 +236,9 @@ executor 接收结构化 trigger context 后，负责把 envelope 摘要、trigg
 
 **验收标准：**
 
-- [ ] SDK prompt 包含 trigger envelope 的关键 id
-- [ ] SDK prompt 明确提示通过 channel runtime tools 按需读取消息和 artifacts
-- [ ] SDK prompt 不重复展示大段 recent context
+- [x] SDK prompt 包含 trigger envelope 的关键 id
+- [x] SDK prompt 明确提示通过 channel runtime tools 按需读取消息和 artifacts
+- [x] SDK prompt 不重复展示大段 recent context
 
 ## Phase 3: 前端 agent session 两层消息显示
 

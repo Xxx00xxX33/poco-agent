@@ -1,6 +1,6 @@
-feat(agent-trigger): split channel trigger envelope and body
+feat(executor): compose prompts from trigger context
 
-- Build persistent trigger envelopes with message, thread, actor, and agent indexes
-- Enqueue visible trigger body separately from the legacy SDK context prompt
-- Reduce legacy channel context to lightweight message and artifact indexes
-- Update backend trigger tests and mark Phase 1 plan tasks complete
+- Accept trigger_context in executor and executor-manager task config schemas
+- Add compact channel trigger context and runtime tool guidance to SDK prompts
+- Cover trigger-context prompt composition and plain-run compatibility
+- Mark Phase 2 trigger envelope plan tasks complete

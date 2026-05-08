@@ -656,12 +656,87 @@ class AgentExecutor:
             ]
         )
 
+    @staticmethod
+    def _build_channel_trigger_context_hint(config: TaskConfig) -> str | None:
+        context = config.trigger_context
+        if not isinstance(context, dict):
+            return None
+        if not (config.server_id and config.channel_id and config.agent_identity_id):
+            return None
+
+        source_actor = context.get("source_actor")
+        source_actor_label = ""
+        if isinstance(source_actor, dict):
+            actor_type = source_actor.get("actor_type") or "unknown"
+            display_name = source_actor.get("display_name")
+            user_id = source_actor.get("user_id")
+            agent_id = source_actor.get("agent_identity_id")
+            identity = user_id or agent_id
+            if display_name and identity:
+                source_actor_label = f"{actor_type} {display_name} ({identity})"
+            elif display_name:
+                source_actor_label = f"{actor_type} {display_name}"
+            elif identity:
+                source_actor_label = f"{actor_type} ({identity})"
+            else:
+                source_actor_label = str(actor_type)
+
+        lines = [
+            "Channel trigger context:",
+            f"- version: {context.get('version', 1)}",
+            f"- trigger_type: {context.get('trigger_type') or config.trigger_type or 'unknown'}",
+            f"- server_id: {context.get('server_id') or config.server_id}",
+            f"- channel_id: {context.get('channel_id') or config.channel_id}",
+            f"- trigger_message_id: {context.get('trigger_message_id') or config.trigger_message_id}",
+            f"- thread_root_message_id: {context.get('thread_root_message_id') or config.thread_root_message_id}",
+            f"- target_agent_identity_id: {context.get('target_agent_identity_id') or config.agent_identity_id}",
+        ]
+        target_handle = context.get("target_agent_handle")
+        if target_handle:
+            lines.append(f"- target_agent_handle: {target_handle}")
+        if source_actor_label:
+            lines.append(f"- source_actor: {source_actor_label}")
+
+        references = context.get("references")
+        if isinstance(references, dict):
+            message_ids = references.get("message_ids") or []
+            artifact_ids = references.get("artifact_ids") or []
+            task_ids = references.get("task_ids") or []
+            lines.append(f"- reference_message_ids: {', '.join(message_ids) or 'none'}")
+            lines.append(f"- reference_artifact_ids: {', '.join(artifact_ids) or 'none'}")
+            lines.append(f"- reference_task_ids: {', '.join(task_ids) or 'none'}")
+
+        handoff = context.get("handoff")
+        if isinstance(handoff, dict):
+            depth = handoff.get("depth")
+            dedupe_key = handoff.get("dedupe_key")
+            if depth is not None:
+                lines.append(f"- handoff_depth: {depth}")
+            if dedupe_key:
+                lines.append(f"- handoff_dedupe_key: {dedupe_key}")
+
+        lines.extend(
+            [
+                "",
+                "Channel context access contract:",
+                "- Treat the visible user prompt as the trigger body.",
+                "- Use read_channel_messages with trigger_message_id, thread_root_message_id, or reference_message_ids when you need full channel history.",
+                "- Use list_channel_artifacts, search_channel_artifacts, and read_channel_artifact when you need shared files.",
+                "- Do not assume recent channel conversation or artifact content is fully inlined in this prompt.",
+            ]
+        )
+        return "\n".join(lines)
+
     def _compose_user_prompt(self, prompt: str, config: TaskConfig, *, cwd: str) -> str:
         sections = [prompt]
 
         input_hint = self._build_input_hint(config)
         if input_hint:
             sections.insert(0, input_hint)
+
+        channel_trigger_hint = self._build_channel_trigger_context_hint(config)
+        if channel_trigger_hint:
+            sections.insert(0, channel_trigger_hint)
 
         persistent_state_hint = self._build_persistent_state_hint(config)
         if persistent_state_hint:
