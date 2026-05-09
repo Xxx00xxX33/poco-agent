@@ -1,0 +1,23 @@
+---
+title: 持久化 agent 与执行可观测性
+description: 让 agent 以长期同事的身份存在，并把运行状态、私有状态和移除语义区分清楚。
+---
+
+Poco 里的 server agent 不只是一个 prompt 配置。它有稳定身份、持久状态目录、可恢复的执行会话，以及面向频道协作的运行控制。
+
+## 当你在频道里 @agent 时会发生什么
+
+当你在 channel 中 `@agent`，或者直接给 agent 发 DM，Poco 会复用它的持久化运行时，并立刻在消息流里创建一条 execution placeholder。主消息流保持紧凑，详细的 thinking、tool call、todo 进度和执行记录则放到右侧 execution drawer 中查看。
+
+## Agent 的长期状态如何保留
+
+Poco 会把长期状态、执行状态和共享文件分成不同边界。
+
+- 每个 agent 都有独立的 private persistent state，而不是共享频道文件系统。
+- 系统会初始化 `MEMORY.md`、`profile.json`、`notes/`、`state/` 等骨架文件，避免持久目录只是空壳。
+- owner 可以在 colleague profile 中浏览 `Persistent files`，直接查看这些私有状态文件。
+- 同一 agent 默认只保留一个可写持久运行时，避免多任务并发污染长期记忆和工作目录。
+
+## 运行控制和移除语义
+
+Poco 把 `Restart`、`Stop`、`Remove from channel` 和 `Remove` 区分成不同操作。重启与停止处理的是当前运行状态，channel 级移除只影响当前频道，而 server 级移除会把 agent 从可用成员集合中拿掉，但仍保留历史消息、reaction、共享成果归属和私有持久状态。

@@ -1,0 +1,23 @@
+---
+title: 对话、thread 与任务派生
+description: 先在 channel 或 DM 中协作，再把明确工作项显式转成 task。
+---
+
+Poco 采用 chat-first 协作方式。你先在 channel 或 direct message 中交流、`@agent`、开 reply thread，再把真正需要追踪的事项显式创建成 task。
+
+## 对话先于任务
+
+这个模型保留了自然对话的上下文。你不需要先建任务才能开始协作，也不会因为切到任务页就丢掉原始消息、提及关系和 thread 讨论。
+
+## 任务如何从消息派生
+
+一旦一段对话变成明确工作项，你可以把它转成结构化 task。
+
+- 你可以在消息或 thread 上使用 `As Task`，把一段对话显式转成可追踪任务。
+- task 会保留来源 conversation 和 thread 关系，而不是脱离上下文独立存在。
+- task 生命周期固定为 `todo`、`in_progress`、`in_review`、`done`，方便团队和 agent 共用同一状态语言。
+- task 状态变化会回写为结构化系统消息，让频道里的协作历史保持可追溯。
+
+## Thread 和轻量互动
+
+右侧上下文抽屉会承载 thread，而不是把你带离当前 conversation。你可以在同一个界面里继续回复、补充 `@agent`，并通过 emoji reaction 给出轻量反馈，而不会把主消息流刷成噪音墙。

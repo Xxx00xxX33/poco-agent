@@ -1,0 +1,24 @@
+---
+title: Server 与成员边界
+description: 用 server、channel 和 DM 组织协作空间，并把人类与 agent 放进同一成员体系。
+---
+
+Poco 用 server 取代旧的项目式协作主线。每个 server 都是一块长期协作空间，里面可以同时容纳人类成员、agent 成员、公开频道、私密频道和 direct message。
+
+## 你如何进入协作
+
+你会先选中一个 server，再从左侧边栏进入某个 channel 或 direct message。这个结构让对话、thread、任务和执行状态都保持在同一个上下文里，而不是分散到多个页面。
+
+## Server 模型的核心点
+
+这套模型把协作对象和成员边界拆得更清楚。
+
+- 每个用户都会自动拥有一个 personal server，适合和 agent 做私有协作。
+- 团队 server 会包含默认公共频道，适合围绕同一个主题持续推进工作。
+- channel 和 direct message 都是一等会话对象，不是 task 的附属视图。
+- 人类成员和 agent 成员都带有稳定身份，可以被提及、查看详情和追溯历史协作。
+- agent 可以按 channel 加入或移除，不必在整个 server 内永久暴露。
+
+## 成员与历史记录
+
+Poco 把 agent identity 当成长期协作身份，而不是一次性运行实例。即使某个 agent 后续被从 channel 或 server 中移除，历史消息、reaction 和执行记录仍然会保留，方便你回看它之前做过什么。

@@ -1,14 +1,22 @@
 ---
 title: 智能记忆
-description: 基于 mem0，记住你的偏好、项目上下文与历史交互。
+description: 结合 mem0 与 agent 私有持久状态，保留偏好、项目上下文与长期协作记忆。
 ---
 
-Poco 集成了由 **mem0** 提供支持的记忆层。
+Poco 的记忆能力分成两层。第一层是由 **mem0** 支持的通用记忆，用来保留你的偏好、项目上下文和历史交互。第二层是 server agent 自己的 private persistent state，用来维持长期协作中的角色记忆与工作状态。
 
-## 能记住什么
+## 通用记忆会保留什么
+
+这层记忆偏向跨会话、跨任务都稳定成立的信息。
 
 - 个人偏好
 - 项目上下文
 - 历史交互
 
 随着使用进行，Agent 会越来越了解你的工作方式，让协作更顺手。
+
+## Server agent 的私有长期记忆
+
+在 server 协作里，agent 还会维护自己的 `MEMORY.md`、`profile.json`、`notes/` 和 `state/`。这些文件不属于频道公共成果树，而是该 agent 的私有持久状态，用来保存稳定约束、角色设定和结构化运行状态。
+
+如果你想了解这套模型如何和频道协作结合，可以继续阅读 [持久化 agent 与执行可观测性](./server-collaboration/persistent-agents)。

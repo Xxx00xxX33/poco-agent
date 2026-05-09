@@ -1,0 +1,10 @@
+{
+  "title": "Server collaboration and channel workflows",
+  "pages": [
+    "!index",
+    "servers-and-membership",
+    "conversations-and-tasks",
+    "persistent-agents",
+    "shared-context-and-artifacts"
+  ]
+}
