@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.agent_identity import (
     AgentIdentityCreateRequest,
     AgentIdentityResponse,
+    AgentIdentityUpdateRequest,
     ChannelAgentMemberCreateRequest,
     ChannelAgentMemberResponse,
 )
@@ -60,6 +61,21 @@ async def get_server_agent(
 ) -> JSONResponse:
     result = service.get_agent(db, current_user, server_id, agent_identity_id)
     return Response.success(data=result, message="Server agent retrieved successfully")
+
+
+@router.patch(
+    "/{agent_identity_id}",
+    response_model=ResponseSchema[AgentIdentityResponse],
+)
+async def update_server_agent(
+    server_id: uuid.UUID,
+    agent_identity_id: uuid.UUID,
+    request: AgentIdentityUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    result = service.update_agent(db, current_user, server_id, agent_identity_id, request)
+    return Response.success(data=result, message="Server agent updated successfully")
 
 
 @router.post(

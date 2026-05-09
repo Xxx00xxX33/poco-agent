@@ -30,11 +30,13 @@ export function AgentPersistentFilesPanel({
   files,
   isLoading,
   emptyMessage,
-  fileListLayoutClassName = "lg:grid-cols-[minmax(0,1fr)_minmax(12rem,14rem)]",
+  className,
+  fileListLayoutClassName = "grid-rows-[minmax(0,1fr)_minmax(10rem,14rem)] 2xl:grid-cols-[minmax(0,1fr)_minmax(12rem,14rem)] 2xl:grid-rows-1",
 }: {
   files: FileNode[];
   isLoading: boolean;
   emptyMessage: string;
+  className?: string;
   fileListLayoutClassName?: string;
 }) {
   const { t } = useT("translation");
@@ -64,13 +66,15 @@ export function AgentPersistentFilesPanel({
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-md bg-background">
+    <div
+      className={`h-full min-h-0 max-h-full overflow-hidden rounded-md bg-background ${className ?? ""}`}
+    >
       <div
-        className={`grid min-h-[24rem] grid-cols-1 ${fileListLayoutClassName}`}
+        className={`grid h-full min-h-0 grid-cols-1 ${fileListLayoutClassName}`}
       >
-        <div className="min-h-0 border-b border-border lg:border-b-0 lg:border-r">
+        <div className="min-h-0 border-b border-border 2xl:border-b-0 2xl:border-r">
           <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               {isLoading ? (
                 <div className="flex h-full items-center justify-center px-6 text-sm text-muted-foreground">
                   {t("conversationView.loading")}

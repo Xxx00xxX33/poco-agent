@@ -115,6 +115,18 @@ const LAST_SELECTION_KEY = "poco-servers-last-selection-v1";
 const SAVED_MESSAGES_KEY = "poco-saved-messages-v1";
 const READ_MESSAGES_KEY = "poco-read-messages-v1";
 
+type CachedServerConversationContext = {
+  channels: ServerChannelItem[];
+  messagesByChannel: Record<string, ServerConversationMessage[]>;
+  channelAgentsByChannelId: Record<string, ServerAgentItem[]>;
+};
+
+const serverConversationContextCache = new Map<
+  string,
+  CachedServerConversationContext
+>();
+let serverListCache: ServerItem[] | null = null;
+
 function resolveWorkspaceMode(value: string | null): WorkspaceMode | null {
   if (value === "saved") {
     return "inbox";
@@ -1322,22 +1334,38 @@ export function ServerConversationPageClient({
   const lng = useLanguage() || "en";
   const router = useRouter();
   const searchParams = useSearchParams();
+  const routeServerParam = searchParams.get("server");
+  const routeModeParam = searchParams.get("mode");
+  const routeViewParam = searchParams.get("view");
   const { profile } = useUserAccount();
+  const initialSelectedServerId =
+    serverId ??
+    routeServerParam ??
+    loadLastSelection()?.serverId ??
+    serverListCache?.[0]?.id ??
+    null;
+  const cachedServerContext = initialSelectedServerId
+    ? serverConversationContextCache.get(initialSelectedServerId)
+    : null;
 
-  const [servers, setServers] = React.useState<ServerItem[]>([]);
-  const [selectedServerId, setSelectedServerId] = React.useState<string | null>(
-    serverId ?? null,
+  const [servers, setServers] = React.useState<ServerItem[]>(
+    () => serverListCache ?? [],
   );
-  const [channels, setChannels] = React.useState<ServerChannelItem[]>([]);
+  const [selectedServerId, setSelectedServerId] = React.useState<string | null>(
+    initialSelectedServerId,
+  );
+  const [channels, setChannels] = React.useState<ServerChannelItem[]>(
+    () => cachedServerContext?.channels ?? [],
+  );
   const [messagesByChannel, setMessagesByChannel] = React.useState<
     Record<string, ServerConversationMessage[]>
-  >({});
+  >(() => cachedServerContext?.messagesByChannel ?? {});
   const [channelAgents, setChannelAgents] = React.useState<ServerAgentItem[]>(
     [],
   );
   const [channelAgentsByChannelId, setChannelAgentsByChannelId] = React.useState<
     Record<string, ServerAgentItem[]>
-  >({});
+  >(() => cachedServerContext?.channelAgentsByChannelId ?? {});
   const [channelMembers, setChannelMembers] = React.useState<
     ServerChannelMemberItem[]
   >([]);
@@ -1354,7 +1382,7 @@ export function ServerConversationPageClient({
   const [draft, setDraft] = React.useState("");
   const [threadDraft, setThreadDraft] = React.useState("");
   const [searchValue, setSearchValue] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(!cachedServerContext);
   const [isSending, setIsSending] = React.useState(false);
   const [asTask, setAsTask] = React.useState(false);
   const [threadAsTask, setThreadAsTask] = React.useState(false);
@@ -1365,7 +1393,7 @@ export function ServerConversationPageClient({
     new Set(),
   );
   const [mode, setMode] = React.useState<WorkspaceMode>(
-    resolveWorkspaceMode(searchParams.get("mode")) ??
+    resolveWorkspaceMode(routeModeParam) ??
       (channelId ? "conversation" : "search"),
   );
   const [isDesktop, setIsDesktop] = React.useState(false);
@@ -1373,11 +1401,11 @@ export function ServerConversationPageClient({
     shouldShowServerMobileDetail({
       isDesktop: false,
       channelId,
-      modeFromUrl: resolveWorkspaceMode(searchParams.get("mode")),
+      modeFromUrl: resolveWorkspaceMode(routeModeParam),
     }),
   );
   const [taskView, setTaskView] = React.useState<ChannelTaskView>(
-    resolveChannelTaskView(searchParams.get("view")),
+    resolveChannelTaskView(routeViewParam),
   );
   const [drawer, setDrawer] = React.useState<DrawerState>({ type: "none" });
   const [desktopDrawerRatio, setDesktopDrawerRatio] = React.useState(50);
@@ -1391,6 +1419,11 @@ export function ServerConversationPageClient({
     React.useState(false);
   const [isArchivingChannel, setIsArchivingChannel] = React.useState(false);
   const [isLeavingChannel, setIsLeavingChannel] = React.useState(false);
+
+  const syncServers = React.useCallback((nextServers: ServerItem[]) => {
+    serverListCache = nextServers;
+    setServers(nextServers);
+  }, []);
 
   const switchServer = React.useCallback(
     (nextServerId: string) => {
@@ -1418,11 +1451,12 @@ export function ServerConversationPageClient({
     createInvite,
     copyInvite,
     createAgent,
+    updateAgentDescription,
     removeMember,
     refreshMembership,
   } = useServerMembership({
     selectedServerId,
-    onServersChanged: setServers,
+    onServersChanged: syncServers,
     onSwitchServer: switchServer,
     onSelectAgent: (agent) => {
       setDrawer({
@@ -1597,9 +1631,9 @@ export function ServerConversationPageClient({
 
   const loadServers = React.useCallback(async () => {
     const nextServers = await serversApi.listServers();
-    setServers(nextServers);
+    syncServers(nextServers);
 
-    const requestedServerId = serverId || searchParams.get("server");
+    const requestedServerId = serverId || routeServerParam;
     const lastSelection = loadLastSelection();
     const preferredServerId =
       requestedServerId ||
@@ -1607,8 +1641,11 @@ export function ServerConversationPageClient({
       nextServers[0]?.id ||
       null;
     setSelectedServerId(preferredServerId);
+  }, [routeServerParam, serverId, syncServers]);
 
-    const routeMode = resolveWorkspaceMode(searchParams.get("mode"));
+  React.useEffect(() => {
+    const lastSelection = loadLastSelection();
+    const routeMode = resolveWorkspaceMode(routeModeParam);
     if (routeMode) {
       setMode(routeMode);
     } else if (!channelId && lastSelection?.mode) {
@@ -1622,7 +1659,7 @@ export function ServerConversationPageClient({
     } else {
       setMode("conversation");
     }
-  }, [channelId, searchParams, serverId]);
+  }, [channelId, routeModeParam]);
 
   React.useEffect(() => {
     setSavedMessageIds(loadSavedMessageIds());
@@ -1663,7 +1700,7 @@ export function ServerConversationPageClient({
         shouldShowServerMobileDetail({
           isDesktop: matches,
           channelId,
-          modeFromUrl: resolveWorkspaceMode(searchParams.get("mode")),
+          modeFromUrl: resolveWorkspaceMode(routeModeParam),
         }),
       );
     };
@@ -1681,7 +1718,7 @@ export function ServerConversationPageClient({
 
     mediaQuery.addListener(handleChange);
     return () => mediaQuery.removeListener(handleChange);
-  }, [channelId, searchParams]);
+  }, [channelId, routeModeParam]);
 
   React.useEffect(() => {
     const loadServerContext = async () => {
@@ -1689,10 +1726,22 @@ export function ServerConversationPageClient({
         setChannels([]);
         setMessagesByChannel({});
         setChannelAgentsByChannelId({});
+        setTasks([]);
+        setChannelAgents([]);
+        setChannelMembers([]);
         setChannelArtifacts([]);
         return;
       }
-      setIsLoading(true);
+      const cachedContext =
+        serverConversationContextCache.get(selectedServerId) ?? null;
+      if (cachedContext) {
+        setChannels(cachedContext.channels);
+        setMessagesByChannel(cachedContext.messagesByChannel);
+        setChannelAgentsByChannelId(cachedContext.channelAgentsByChannelId);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
       try {
         const nextChannels = await serversApi.listChannels(selectedServerId);
         setChannels(nextChannels);
@@ -1719,27 +1768,11 @@ export function ServerConversationPageClient({
         const nextChannelAgentsByChannelId =
           Object.fromEntries(channelAgentEntries);
         setChannelAgentsByChannelId(nextChannelAgentsByChannelId);
-
-        if (activeChannelId) {
-          const [nextTasks, nextMembers, nextArtifacts] =
-            await Promise.all([
-              channelTasksApi.listTasks(selectedServerId, activeChannelId),
-              serversApi.listChannelMembers(selectedServerId, activeChannelId),
-              serversApi.listChannelArtifacts(
-                selectedServerId,
-                activeChannelId,
-              ),
-            ]);
-          setTasks(nextTasks);
-          setChannelAgents(nextChannelAgentsByChannelId[activeChannelId] ?? []);
-          setChannelMembers(nextMembers);
-          setChannelArtifacts(nextArtifacts);
-        } else {
-          setTasks([]);
-          setChannelAgents([]);
-          setChannelMembers([]);
-          setChannelArtifacts([]);
-        }
+        serverConversationContextCache.set(selectedServerId, {
+          channels: nextChannels,
+          messagesByChannel: Object.fromEntries(previews),
+          channelAgentsByChannelId: nextChannelAgentsByChannelId,
+        });
       } catch (error) {
         console.error("[ServersWorkspace] load failed", error);
         toast.error(t("conversationView.toasts.loadFailed"));
@@ -1749,7 +1782,46 @@ export function ServerConversationPageClient({
     };
 
     void loadServerContext();
-  }, [activeChannelId, selectedServerId, t]);
+  }, [selectedServerId, t]);
+
+  React.useEffect(() => {
+    const loadActiveChannelContext = async () => {
+      if (!selectedServerId || !activeChannelId) {
+        setTasks([]);
+        setChannelAgents([]);
+        setChannelMembers([]);
+        setChannelArtifacts([]);
+        return;
+      }
+      try {
+        const [nextTasks, nextMembers, nextArtifacts] = await Promise.all([
+          channelTasksApi.listTasks(selectedServerId, activeChannelId),
+          serversApi.listChannelMembers(selectedServerId, activeChannelId),
+          serversApi.listChannelArtifacts(selectedServerId, activeChannelId),
+        ]);
+        setTasks(nextTasks);
+        setChannelAgents(channelAgentsByChannelId[activeChannelId] ?? []);
+        setChannelMembers(nextMembers);
+        setChannelArtifacts(nextArtifacts);
+      } catch (error) {
+        console.error("[ServersWorkspace] active channel load failed", error);
+        toast.error(t("conversationView.toasts.loadFailed"));
+      }
+    };
+
+    void loadActiveChannelContext();
+  }, [activeChannelId, channelAgentsByChannelId, selectedServerId, t]);
+
+  React.useEffect(() => {
+    if (!selectedServerId || channels.length === 0) {
+      return;
+    }
+    serverConversationContextCache.set(selectedServerId, {
+      channels,
+      messagesByChannel,
+      channelAgentsByChannelId,
+    });
+  }, [channelAgentsByChannelId, channels, messagesByChannel, selectedServerId]);
 
   React.useEffect(() => {
     if (mode === "colleagues") {
@@ -2971,6 +3043,7 @@ export function ServerConversationPageClient({
                       void handleRestartAgent(agentId)
                     }
                     onStopAgent={(agentId) => void handleStopAgent(agentId)}
+                    onUpdateAgentDescription={updateAgentDescription}
                     onRemoveAgentFromServer={(agentId) =>
                       void handleRemoveServerAgent(agentId)
                     }

@@ -27,6 +27,7 @@ from app.repositories.server_repository import ServerRepository
 from app.schemas.agent_identity import (
     AgentIdentityCreateRequest,
     AgentIdentityResponse,
+    AgentIdentityUpdateRequest,
     ChannelAgentMemberCreateRequest,
     ChannelAgentMemberResponse,
 )
@@ -177,6 +178,33 @@ class AgentIdentityService:
             AgentIdentity,
             AgentIdentityRepository.get_by_id(db, agent_identity.id),
         )
+        return self._to_agent_response(agent_identity)
+
+    def update_agent(
+        self,
+        db: Session,
+        current_user: User,
+        server_id: uuid.UUID,
+        agent_identity_id: uuid.UUID,
+        request: AgentIdentityUpdateRequest,
+    ) -> AgentIdentityResponse:
+        agent_identity = self._require_owner_agent(
+            db,
+            current_user,
+            server_id,
+            agent_identity_id,
+        )
+        if self._is_removed(agent_identity):
+            raise AppException(
+                error_code=ErrorCode.BAD_REQUEST,
+                message=f"Agent identity has been removed: {agent_identity_id}",
+            )
+        agent_identity.description = (
+            request.description.strip() if request.description else None
+        )
+        agent_identity.updated_by = current_user.id
+        db.commit()
+        db.refresh(agent_identity)
         return self._to_agent_response(agent_identity)
 
     def list_channel_agents(

@@ -232,7 +232,7 @@ export function MessageRow({
       ? executionMessage.content.session_id
       : null;
   const canCollapseMessage =
-    !compact && !executionMessage && Boolean(text) && message.messageType !== "task";
+    !executionMessage && Boolean(text) && message.messageType !== "task";
 
   const handleCopyMessage = React.useCallback(async () => {
     if (!text) {
@@ -279,7 +279,7 @@ export function MessageRow({
     <article
       className={cn(
         "group flex gap-4 border-b border-border px-6 py-5 last:border-b-0",
-        compact && "max-h-[26rem] overflow-hidden",
+        compact && "py-4",
       )}
     >
       {matchingAgent ? (
@@ -449,7 +449,6 @@ export function MessageRow({
               ref={agentMessageRef}
               className={cn(
                 "relative cursor-text select-text text-base leading-7 text-foreground",
-                compact && "max-h-[15rem] overflow-hidden",
                 canCollapseMessage &&
                   shouldCollapse &&
                   !isExpanded &&

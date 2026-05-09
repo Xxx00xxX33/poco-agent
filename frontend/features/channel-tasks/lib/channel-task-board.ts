@@ -14,7 +14,7 @@ export const CHANNEL_TASK_STATUS_ORDER: ChannelTaskStatus[] = [
 export function resolveChannelTaskView(
   value: string | null | undefined,
 ): ChannelTaskView {
-  return value === "board" ? "board" : "list";
+  return value === "list" ? "list" : "board";
 }
 
 export function buildChannelTaskColumns(

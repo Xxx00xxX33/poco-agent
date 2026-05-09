@@ -77,16 +77,7 @@ export function SearchPanel({
         </div>
       </div>
       <div className="border-b border-border px-6 py-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setMineOnly((value) => !value)}
-            className={`rounded-md border border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-foreground transition-colors ${
-              mineOnly ? "bg-primary/15" : "bg-card hover:bg-muted/20"
-            }`}
-          >
-            {t("conversationView.myMessages")}
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
           <Select
             value={timeFilter}
             onValueChange={(value) =>
@@ -105,6 +96,28 @@ export function SearchPanel({
               </SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1 rounded-md border border-border bg-card p-1">
+            <button
+              type="button"
+              onClick={() => setMineOnly(false)}
+              className={cn(
+                "rounded-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-foreground transition-colors",
+                !mineOnly ? "bg-primary text-primary-foreground" : "hover:bg-muted/30",
+              )}
+            >
+              {t("conversationView.all")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMineOnly(true)}
+              className={cn(
+                "rounded-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-foreground transition-colors",
+                mineOnly ? "bg-primary text-primary-foreground" : "hover:bg-muted/30",
+              )}
+            >
+              {t("conversationView.myMessages")}
+            </button>
+          </div>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto bg-background">

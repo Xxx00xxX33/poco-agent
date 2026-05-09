@@ -34,10 +34,11 @@ function createTask(overrides: Partial<ChannelTask> = {}): ChannelTask {
   };
 }
 
-test("resolveChannelTaskView falls back to list for unsupported values", () => {
+test("resolveChannelTaskView falls back to board for unsupported values", () => {
   assert.equal(resolveChannelTaskView("board"), "board");
-  assert.equal(resolveChannelTaskView("timeline"), "list");
-  assert.equal(resolveChannelTaskView(undefined), "list");
+  assert.equal(resolveChannelTaskView("list"), "list");
+  assert.equal(resolveChannelTaskView("timeline"), "board");
+  assert.equal(resolveChannelTaskView(undefined), "board");
 });
 
 test("buildChannelTaskColumns keeps the fixed workflow order", () => {

@@ -200,6 +200,28 @@ export function useServerMembership({
     [onSelectAgent, selectedServerId, t],
   );
 
+  const updateAgentDescription = React.useCallback(
+    async (agentId: string, description: string) => {
+      if (!selectedServerId) {
+        return;
+      }
+      try {
+        const agent = await serversApi.updateAgent(selectedServerId, agentId, {
+          description: description.trim() || null,
+        });
+        setServerAgents((current) =>
+          current.map((item) => (item.id === agent.id ? agent : item)),
+        );
+        toast.success(t("conversationView.toasts.agentUpdated"));
+      } catch (error) {
+        console.error("[ServersWorkspace] update server agent failed", error);
+        toast.error(t("conversationView.toasts.agentUpdateFailed"));
+        throw error;
+      }
+    },
+    [selectedServerId, t],
+  );
+
   const removeMember = React.useCallback(
     async (membershipId: number) => {
       if (!selectedServerId) {
@@ -230,6 +252,7 @@ export function useServerMembership({
     createInvite,
     copyInvite,
     createAgent,
+    updateAgentDescription,
     removeMember,
     refreshMembership,
   };

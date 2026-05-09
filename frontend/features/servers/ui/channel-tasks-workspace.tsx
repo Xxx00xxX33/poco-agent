@@ -41,10 +41,10 @@ export function ChannelTasksWorkspace({
   const { t } = useT("translation");
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
+    <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="grid min-w-0 grid-cols-1 items-center gap-3 border-b border-border px-6 py-4 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
         <Select value={activeChannelId ?? ""} onValueChange={onSelectChannel}>
-          <SelectTrigger className="w-fit min-w-[180px] border-border bg-background text-sm">
+          <SelectTrigger className="min-w-0 max-w-full border-border bg-background text-sm">
             <SelectValue placeholder={t("conversationView.channels")} />
           </SelectTrigger>
           <SelectContent>
@@ -55,25 +55,29 @@ export function ChannelTasksWorkspace({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-1 rounded-md border border-border bg-card p-1">
-          <Button
-            type="button"
-            variant={taskView === "board" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onUpdateView("board")}
-          >
-            <LayoutGrid className="size-4" />
-            {t("conversationView.boardView")}
-          </Button>
-          <Button
-            type="button"
-            variant={taskView === "list" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onUpdateView("list")}
-          >
-            <LayoutList className="size-4" />
-            {t("conversationView.listView")}
-          </Button>
+        <div className="min-w-0 justify-self-start sm:justify-self-end">
+          <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-md border border-border bg-card p-1">
+            <Button
+              type="button"
+              variant={taskView === "board" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => onUpdateView("board")}
+              className="shrink-0 whitespace-nowrap"
+            >
+              <LayoutGrid className="size-4" />
+              {t("conversationView.boardView")}
+            </Button>
+            <Button
+              type="button"
+              variant={taskView === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => onUpdateView("list")}
+              className="shrink-0 whitespace-nowrap"
+            >
+              <LayoutList className="size-4" />
+              {t("conversationView.listView")}
+            </Button>
+          </div>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">

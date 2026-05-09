@@ -34,6 +34,10 @@ class AgentIdentityCreateRequest(BaseModel):
     visibility: str = Field(default="server", max_length=50)
 
 
+class AgentIdentityUpdateRequest(BaseModel):
+    description: str | None = None
+
+
 class AgentIdentityResponse(BaseModel):
     agent_identity_id: UUID = Field(validation_alias="id")
     server_id: UUID

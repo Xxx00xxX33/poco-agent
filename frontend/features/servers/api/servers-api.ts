@@ -463,6 +463,22 @@ export const serversApi = {
     return mapAgent(agent);
   },
 
+  updateAgent: async (
+    serverId: string,
+    agentId: string,
+    input: {
+      description?: string | null;
+    },
+  ): Promise<ServerAgentItem> => {
+    const agent = await apiClient.patch<ServerAgentResponse>(
+      `/servers/${serverId}/agents/${agentId}`,
+      {
+        description: input.description ?? null,
+      },
+    );
+    return mapAgent(agent);
+  },
+
   stopAgent: async (
     serverId: string,
     agentId: string,
