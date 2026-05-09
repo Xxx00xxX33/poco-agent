@@ -207,6 +207,7 @@
     "myMessages": "我的消息",
     "anyTime": "任意时间",
     "today": "今天",
+    "yesterday": "昨天",
     "searchEverything": "搜索全部内容",
     "searchEverythingDescription": "搜索频道、私信、成员、Agent 和历史消息。",
     "activeCount": "{{count}} 个活跃项",

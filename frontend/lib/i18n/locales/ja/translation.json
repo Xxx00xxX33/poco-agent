@@ -207,6 +207,7 @@
     "myMessages": "自分のメッセージ",
     "anyTime": "任意の期間",
     "today": "今日",
+    "yesterday": "昨日",
     "searchEverything": "すべて検索",
     "searchEverythingDescription": "チャンネル、DM、メンバー、Agent、メッセージ履歴を検索します。",
     "activeCount": "{{count}} 件がアクティブ",

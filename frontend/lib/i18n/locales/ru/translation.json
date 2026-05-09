@@ -207,6 +207,7 @@
     "myMessages": "Мои сообщения",
     "anyTime": "Любое время",
     "today": "Сегодня",
+    "yesterday": "Вчера",
     "searchEverything": "Искать везде",
     "searchEverythingDescription": "Ищите по каналам, личным сообщениям, людям, агентам и истории сообщений.",
     "activeCount": "{{count}} активных",

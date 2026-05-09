@@ -207,6 +207,7 @@
     "myMessages": "Meine Nachrichten",
     "anyTime": "Beliebige Zeit",
     "today": "Heute",
+    "yesterday": "Gestern",
     "searchEverything": "Alles durchsuchen",
     "searchEverythingDescription": "Kanäle, Direktnachrichten, Personen, Agents und Nachrichtenverlauf durchsuchen.",
     "activeCount": "{{count}} aktiv",

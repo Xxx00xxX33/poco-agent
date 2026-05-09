@@ -207,6 +207,7 @@
     "myMessages": "Mes messages",
     "anyTime": "Toute période",
     "today": "Aujourd’hui",
+    "yesterday": "Hier",
     "searchEverything": "Tout rechercher",
     "searchEverythingDescription": "Recherchez dans les canaux, MP, personnes, agents et l’historique des messages.",
     "activeCount": "{{count}} actifs",
