@@ -13,7 +13,4 @@ export type {
 export { TeamShell } from "./ui/team-shell";
 export { TeamContentShell } from "./ui/team-content-shell";
 export { TeamLibraryShell } from "./ui/team-library-shell";
-export {
-  TeamMembersPageClient,
-  TeamPageClient,
-} from "./ui/team-pages";
+export { TeamMembersPageClient, TeamPageClient } from "./ui/team-pages";

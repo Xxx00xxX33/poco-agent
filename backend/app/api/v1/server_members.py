@@ -31,7 +31,9 @@ async def list_server_members(
     )
 
 
-@router.patch("/{membership_id}/role", response_model=ResponseSchema[ServerMemberResponse])
+@router.patch(
+    "/{membership_id}/role", response_model=ResponseSchema[ServerMemberResponse]
+)
 async def update_server_member_role(
     server_id: uuid.UUID,
     membership_id: int,

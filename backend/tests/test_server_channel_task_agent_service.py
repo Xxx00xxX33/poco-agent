@@ -6,10 +6,8 @@ from unittest.mock import MagicMock, patch
 from app.core.errors.exceptions import AppException
 from app.schemas.server_channel_task import ServerChannelTaskResponse
 from app.schemas.server_channel_task_agent import (
-    AgentChannelTaskClaimSelfRequest,
     AgentChannelTaskCommentRequest,
     AgentChannelTaskCreateRequest,
-    AgentChannelTaskStatusRequest,
 )
 from app.services.server_channel_task_agent_service import (
     ServerChannelTaskAgentService,
@@ -119,7 +117,9 @@ class ServerChannelTaskAgentServiceTests(unittest.TestCase):
 
         with (
             patch.object(self.service, "resolve_context", return_value=context),
-            patch.object(self.service._task_service, "create_task", return_value=task) as create_task,
+            patch.object(
+                self.service._task_service, "create_task", return_value=task
+            ) as create_task,
         ):
             result = self.service.create_task(
                 self.db,

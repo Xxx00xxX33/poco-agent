@@ -156,10 +156,14 @@ class ChannelArtifactServiceTests(unittest.TestCase):
 
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "api-specialist")
-        self.assertEqual(nodes[0].children[0].name, "plans")
-        self.assertEqual(nodes[0].children[0].children[0].name, "rate-limit-plan.md")
+        agent_children = nodes[0].children
+        assert agent_children is not None
+        plan_children = agent_children[0].children
+        assert plan_children is not None
+        self.assertEqual(agent_children[0].name, "plans")
+        self.assertEqual(plan_children[0].name, "rate-limit-plan.md")
         self.assertEqual(
-            nodes[0].children[0].children[0].url,
+            plan_children[0].url,
             "https://example.com/rate-limit-plan.md",
         )
 

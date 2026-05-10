@@ -60,7 +60,9 @@ export function moveChannelTask(
     return tasks;
   }
 
-  const sourceIndex = sourceColumn.findIndex((task) => task.taskId === move.taskId);
+  const sourceIndex = sourceColumn.findIndex(
+    (task) => task.taskId === move.taskId,
+  );
   if (sourceIndex === -1) {
     return tasks;
   }

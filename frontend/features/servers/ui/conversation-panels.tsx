@@ -102,7 +102,9 @@ export function SearchPanel({
               onClick={() => setMineOnly(false)}
               className={cn(
                 "rounded-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-foreground transition-colors",
-                !mineOnly ? "bg-primary text-primary-foreground" : "hover:bg-muted/30",
+                !mineOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted/30",
               )}
             >
               {t("conversationView.all")}
@@ -112,7 +114,9 @@ export function SearchPanel({
               onClick={() => setMineOnly(true)}
               className={cn(
                 "rounded-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-foreground transition-colors",
-                mineOnly ? "bg-primary text-primary-foreground" : "hover:bg-muted/30",
+                mineOnly
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted/30",
               )}
             >
               {t("conversationView.myMessages")}
@@ -175,9 +179,7 @@ export function FeedPanel({
   onToggleReaction?: (item: FeedItem, emoji: string) => void;
 }) {
   const { t } = useT("translation");
-  const [filter, setFilter] = React.useState<"all" | "unread" | "saved">(
-    "all",
-  );
+  const [filter, setFilter] = React.useState<"all" | "unread" | "saved">("all");
   const unreadItems = React.useMemo(
     () =>
       inboxItems.filter(

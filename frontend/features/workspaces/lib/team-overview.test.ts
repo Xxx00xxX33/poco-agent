@@ -2,10 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import type { WorkspaceInvite } from "../model/types.ts";
-import {
-  countActiveInvites,
-  getInviteState,
-} from "./team-overview.ts";
+import { countActiveInvites, getInviteState } from "./team-overview.ts";
 
 function createInvite(
   overrides: Partial<WorkspaceInvite> = {},

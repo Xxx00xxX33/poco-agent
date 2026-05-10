@@ -21,7 +21,9 @@ class InternalChannelArtifactsApiTests(unittest.TestCase):
         self.app.dependency_overrides.clear()
 
     @patch("app.api.v1.internal_channel_artifacts.service.list_runtime_artifacts")
-    def test_list_internal_channel_artifacts_returns_runtime_contract(self, list_runtime):
+    def test_list_internal_channel_artifacts_returns_runtime_contract(
+        self, list_runtime
+    ):
         list_runtime.return_value.model_dump.return_value = {
             "artifacts": [
                 {

@@ -34,7 +34,9 @@ def upgrade() -> None:
 
     op.create_table(
         "activity_logs",
-        sa.Column("id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False),
+        sa.Column(
+            "id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False
+        ),
         sa.Column("workspace_id", sa.Uuid(), nullable=False),
         sa.Column("actor_user_id", sa.String(length=255), nullable=True),
         sa.Column("action", sa.String(length=255), nullable=False),
@@ -48,7 +50,9 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.ForeignKeyConstraint(["actor_user_id"], ["users.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["workspace_id"], ["workspaces.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["workspace_id"], ["workspaces.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.execute(
@@ -61,7 +65,9 @@ def upgrade() -> None:
         ["target_type", "target_id"],
         unique=False,
     )
-    op.create_index(op.f("ix_activity_logs_action"), "activity_logs", ["action"], unique=False)
+    op.create_index(
+        op.f("ix_activity_logs_action"), "activity_logs", ["action"], unique=False
+    )
     op.create_index(
         op.f("ix_activity_logs_actor_user_id"),
         "activity_logs",

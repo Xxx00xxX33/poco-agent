@@ -23,7 +23,9 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.add_column(
         "workspace_issues",
-        sa.Column("position", sa.Integer(), server_default=sa.text("0"), nullable=False),
+        sa.Column(
+            "position", sa.Integer(), server_default=sa.text("0"), nullable=False
+        ),
     )
     op.execute(
         """

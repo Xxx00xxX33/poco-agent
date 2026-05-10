@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Literal, cast
 
 from croniter import croniter
 from sqlalchemy.orm import Session
@@ -44,7 +45,9 @@ class AgentAssignmentService:
         self._task_service = task_service or TaskService()
         self._session_service = session_service or SessionService()
         self._prompt_builder = prompt_builder or PromptBuilder()
-        self._executor_manager_client = executor_manager_client or ExecutorManagerClient()
+        self._executor_manager_client = (
+            executor_manager_client or ExecutorManagerClient()
+        )
         self._audit_rules = get_settings().audit_rules
 
     @staticmethod
@@ -60,7 +63,10 @@ class AgentAssignmentService:
         assignment: AgentAssignment,
         metadata: dict | None = None,
     ) -> None:
-        if self._audit_rules.get(action, self._audit_rules.get("default", True)) is False:
+        if (
+            self._audit_rules.get(action, self._audit_rules.get("default", True))
+            is False
+        ):
             return
         ActivityLogRepository.create(
             db,
@@ -129,12 +135,16 @@ class AgentAssignmentService:
             return False
         if SessionQueueItemRepository.has_active_items(db, assignment.session_id):
             return True
-        return RunRepository.get_blocking_by_session(db, assignment.session_id) is not None
+        return (
+            RunRepository.get_blocking_by_session(db, assignment.session_id) is not None
+        )
 
     def _resolve_container_mode(self, db: Session, assignment: AgentAssignment) -> str:
         if assignment.trigger_mode == "persistent_sandbox":
             return "persistent"
-        preset = self._resolve_preset_for_user(db, assignment.created_by, assignment.preset_id)
+        preset = self._resolve_preset_for_user(
+            db, assignment.created_by, assignment.preset_id
+        )
         return preset.container_mode or "ephemeral"
 
     def _require_issue_for_user(
@@ -168,7 +178,10 @@ class AgentAssignmentService:
                 message="Agent assignment already has an active execution",
             )
 
-        container_mode = self._resolve_container_mode(db, assignment)
+        container_mode = cast(
+            Literal["ephemeral", "persistent"],
+            self._resolve_container_mode(db, assignment),
+        )
         task_request = TaskEnqueueRequest(
             prompt=assignment.prompt,
             session_id=assignment.session_id,
@@ -204,7 +217,9 @@ class AgentAssignmentService:
                 "issue_id": str(issue.id),
                 "preset_id": assignment.preset_id,
                 "trigger_mode": assignment.trigger_mode,
-                "session_id": str(assignment.session_id) if assignment.session_id else None,
+                "session_id": str(assignment.session_id)
+                if assignment.session_id
+                else None,
             },
         )
         db.commit()
@@ -260,7 +275,9 @@ class AgentAssignmentService:
             )
             existing.status = "cancelled"
             existing.container_id = None
-            existing.prompt = self._build_prompt(db, issue, prompt_override or existing.prompt)
+            existing.prompt = self._build_prompt(
+                db, issue, prompt_override or existing.prompt
+            )
             issue.assignee_preset_id = None
             if issue.status != "done":
                 issue.status = "todo"
@@ -283,9 +300,7 @@ class AgentAssignmentService:
 
         prompt = self._build_prompt(db, issue, prompt_override)
         cron_value = (
-            self._validate_cron(schedule_cron)
-            if mode == "scheduled_task"
-            else None
+            self._validate_cron(schedule_cron) if mode == "scheduled_task" else None
         )
 
         created = existing is None
@@ -572,8 +587,13 @@ class AgentAssignmentService:
                 if issue is None:
                     errors += 1
                     continue
-                if assignment.last_triggered_at is not None:
-                    itr = croniter(assignment.schedule_cron, assignment.last_triggered_at)
+                if (
+                    assignment.last_triggered_at is not None
+                    and assignment.schedule_cron is not None
+                ):
+                    itr = croniter(
+                        assignment.schedule_cron, assignment.last_triggered_at
+                    )
                     next_run_at = itr.get_next(datetime)
                     if next_run_at.tzinfo is None:
                         next_run_at = next_run_at.replace(tzinfo=timezone.utc)

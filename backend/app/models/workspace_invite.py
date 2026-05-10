@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 class WorkspaceInvite(Base, TimestampMixin):
     __tablename__ = "workspace_invites"
-    __table_args__ = (
-        UniqueConstraint("token", name="uq_workspace_invites_token"),
-    )
+    __table_args__ = (UniqueConstraint("token", name="uq_workspace_invites_token"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

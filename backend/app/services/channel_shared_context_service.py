@@ -194,10 +194,12 @@ class ChannelSharedContextService:
             limit=self.MAX_RECENT_MESSAGES,
         )
         recent_messages = list(reversed(recent_messages))
-        artifacts = ChannelArtifactRepository.list_by_channel(db, channel_id=channel_id)[
-            : self.MAX_ARTIFACTS
-        ]
-        human_memberships = ServerChannelMemberRepository.list_by_channel(db, channel_id)
+        artifacts = ChannelArtifactRepository.list_by_channel(
+            db, channel_id=channel_id
+        )[: self.MAX_ARTIFACTS]
+        human_memberships = ServerChannelMemberRepository.list_by_channel(
+            db, channel_id
+        )
         humans_by_id = UserRepository.list_by_ids(
             db,
             [membership.user_id for membership in human_memberships],
@@ -218,9 +220,11 @@ class ChannelSharedContextService:
             is not None
         ]
 
-        actor_label = getattr(current_user, "display_name", None) or getattr(
-            current_user, "primary_email", None
-        ) or getattr(current_user, "id", "User")
+        actor_label = (
+            getattr(current_user, "display_name", None)
+            or getattr(current_user, "primary_email", None)
+            or getattr(current_user, "id", "User")
+        )
 
         lines = [
             f"You are {agent_display_name}.",
@@ -270,7 +274,7 @@ class ChannelSharedContextService:
                 "- If you mention someone for handoff, say that you are handing off and avoid duplicating their work.",
                 "- If you mention someone for collaboration, give your own partial answer first, then clearly ask for what you need.",
                 "",
-            "Recent conversation context:",
+                "Recent conversation context:",
             ]
         )
 

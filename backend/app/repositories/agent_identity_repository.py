@@ -31,12 +31,9 @@ class AgentIdentityRepository:
         *,
         include_removed: bool = True,
     ) -> AgentIdentity | None:
-        query = (
-            session_db.query(AgentIdentity)
-            .filter(
-                AgentIdentity.server_id == server_id,
-                AgentIdentity.handle == handle,
-            )
+        query = session_db.query(AgentIdentity).filter(
+            AgentIdentity.server_id == server_id,
+            AgentIdentity.handle == handle,
         )
         if not include_removed:
             query = query.filter(AgentIdentity.removed_at.is_(None))

@@ -286,7 +286,11 @@ class WorkspaceManager:
         return str(workspace_dir / "workspace")
 
     def _write_if_missing_or_empty(self, path: Path, content: str) -> None:
-        if path.exists() and path.is_file() and path.read_text(encoding="utf-8").strip():
+        if (
+            path.exists()
+            and path.is_file()
+            and path.read_text(encoding="utf-8").strip()
+        ):
             return
         path.write_text(content, encoding="utf-8")
 

@@ -395,7 +395,9 @@ class ProjectService:
             created_by=user_id,
             updated_by=user_id,
             access_policy=request.access_policy
-            or ("workspace_write" if request.target_scope == "workspace" else "private"),
+            or (
+                "workspace_write" if request.target_scope == "workspace" else "private"
+            ),
             forked_from_project_id=source.id,
             name=(request.name or source.name).strip(),
             description=source.description,

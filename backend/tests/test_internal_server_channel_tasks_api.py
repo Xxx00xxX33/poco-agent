@@ -52,7 +52,9 @@ class InternalServerChannelTasksApiTests(unittest.TestCase):
         self.app.dependency_overrides.clear()
 
     @patch("app.api.v1.internal_server_channel_tasks.service.create_task")
-    def test_create_internal_server_channel_task_returns_payload(self, create_task) -> None:
+    def test_create_internal_server_channel_task_returns_payload(
+        self, create_task
+    ) -> None:
         task = build_task_response(server_id=self.server_id, channel_id=self.channel_id)
         create_task.return_value = {
             "action": "create_channel_task",
@@ -73,7 +75,9 @@ class InternalServerChannelTasksApiTests(unittest.TestCase):
         create_task.assert_called_once()
 
     @patch("app.api.v1.internal_server_channel_tasks.service.comment_on_task")
-    def test_comment_internal_server_channel_task_returns_payload(self, comment_on_task) -> None:
+    def test_comment_internal_server_channel_task_returns_payload(
+        self, comment_on_task
+    ) -> None:
         task = build_task_response(server_id=self.server_id, channel_id=self.channel_id)
         comment_on_task.return_value = {
             "action": "comment_on_channel_task",

@@ -106,6 +106,7 @@ class ServerChannelTaskServiceTests(unittest.TestCase):
             patch.object(service, "_move_task_within_channel") as move_task,
             patch.object(service, "_create_system_message") as create_system_message,
         ):
+
             def apply_move(_db, moved_task, *, target_status, target_position):
                 moved_task.status = target_status
                 moved_task.position = target_position

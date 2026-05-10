@@ -7,6 +7,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Literal, cast
 
 from claude_agent_sdk import ClaudeAgentOptions
 from claude_agent_sdk.types import (
@@ -276,9 +277,13 @@ class AgentExecutor:
                 "bypassPermissions",
             }:
                 normalized_permission_mode = "default"
+            sdk_permission_mode = cast(
+                Literal["default", "acceptEdits", "plan", "bypassPermissions"],
+                normalized_permission_mode,
+            )
 
             permission_handler = self._build_tool_permission_handler(
-                normalized_permission_mode
+                sdk_permission_mode
             )
 
             mcp_servers = dict(config.mcp_config or {})
@@ -354,7 +359,7 @@ class AgentExecutor:
                             "Task",
                         ],
                         mcp_servers=mcp_servers,
-                        permission_mode=normalized_permission_mode,
+                        permission_mode=sdk_permission_mode,
                         model=selected_model,
                         can_use_tool=controller.can_use_tool,
                         hooks={
@@ -371,7 +376,7 @@ class AgentExecutor:
                     config=config,
                     cwd=ctx.cwd,
                     selected_model=selected_model,
-                    permission_mode=normalized_permission_mode,
+                    permission_mode=sdk_permission_mode,
                     extra_allowed_dirs=extra_allowed_dirs,
                     mcp_servers=mcp_servers,
                     agents=agents,
@@ -693,7 +698,9 @@ class AgentExecutor:
             artifact_ids = references.get("artifact_ids") or []
             task_ids = references.get("task_ids") or []
             lines.append(f"- reference_message_ids: {', '.join(message_ids) or 'none'}")
-            lines.append(f"- reference_artifact_ids: {', '.join(artifact_ids) or 'none'}")
+            lines.append(
+                f"- reference_artifact_ids: {', '.join(artifact_ids) or 'none'}"
+            )
             lines.append(f"- reference_task_ids: {', '.join(task_ids) or 'none'}")
 
         handoff = context.get("handoff")

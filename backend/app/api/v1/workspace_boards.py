@@ -13,7 +13,9 @@ from app.schemas.workspace_board import (
 )
 from app.services.workspace_board_service import WorkspaceBoardService
 
-router = APIRouter(prefix="/workspaces/{workspace_id}/boards", tags=["workspace-boards"])
+router = APIRouter(
+    prefix="/workspaces/{workspace_id}/boards", tags=["workspace-boards"]
+)
 
 service = WorkspaceBoardService()
 
@@ -25,7 +27,9 @@ async def list_workspace_boards(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     result = service.list_boards(db, current_user, workspace_id)
-    return Response.success(data=result, message="Workspace boards retrieved successfully")
+    return Response.success(
+        data=result, message="Workspace boards retrieved successfully"
+    )
 
 
 @router.post("", response_model=ResponseSchema[WorkspaceBoardResponse])

@@ -10,7 +10,9 @@ from app.schemas.agent_assignment import (
 from app.schemas.response import Response, ResponseSchema
 from app.services.agent_assignment_service import AgentAssignmentService
 
-router = APIRouter(prefix="/internal/agent-assignments", tags=["internal-agent-assignments"])
+router = APIRouter(
+    prefix="/internal/agent-assignments", tags=["internal-agent-assignments"]
+)
 
 service = AgentAssignmentService()
 

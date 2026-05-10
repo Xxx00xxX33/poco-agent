@@ -1,10 +1,4 @@
 {
   "title": "Environment Configuration",
-  "pages": [
-    "backend",
-    "executor-manager",
-    "executor",
-    "frontend",
-    "storage"
-  ]
+  "pages": ["backend", "executor-manager", "executor", "frontend", "storage"]
 }

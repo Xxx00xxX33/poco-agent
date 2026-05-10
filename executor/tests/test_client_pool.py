@@ -1,6 +1,8 @@
 import asyncio
 import unittest
+from typing import Any, Callable, cast
 
+from claude_agent_sdk.client import ClaudeSDKClient
 from app.core.client_pool import ClaudeSDKClientPool
 
 
@@ -42,7 +44,7 @@ class ClaudeSDKClientPoolTests(unittest.IsolatedAsyncioTestCase):
             enabled=enabled,
             ttl_seconds=60,
             max_clients=4,
-            client_factory=factory,
+            client_factory=cast(Callable[[Any], ClaudeSDKClient], factory),
         )
 
     async def test_reuses_healthy_client_for_same_key_and_fingerprint(self) -> None:
@@ -57,7 +59,7 @@ class ClaudeSDKClientPoolTests(unittest.IsolatedAsyncioTestCase):
             options_factory=options_factory,
             delegate=Delegate(),
         ) as first:
-            first_client = first.client
+            first_client = cast(FakeClient, first.client)
             self.assertFalse(first.cache_hit)
 
         async with await pool.acquire(
@@ -111,7 +113,7 @@ class ClaudeSDKClientPoolTests(unittest.IsolatedAsyncioTestCase):
             options_factory=options_factory,
             delegate=Delegate(),
         ) as first:
-            first_client = first.client
+            first_client = cast(FakeClient, first.client)
 
         first_client._query = None
         async with await pool.acquire(
@@ -135,7 +137,7 @@ class ClaudeSDKClientPoolTests(unittest.IsolatedAsyncioTestCase):
             options_factory=lambda controller: {"controller": controller},
             delegate=Delegate(),
         ) as lease:
-            client = lease.client
+            client = cast(FakeClient, lease.client)
             self.assertTrue(client.connected)
             self.assertTrue(lease.disconnect_on_release)
 

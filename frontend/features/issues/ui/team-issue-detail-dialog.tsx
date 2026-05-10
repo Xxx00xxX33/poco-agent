@@ -15,7 +15,9 @@ interface TeamIssueDetailDialogProps {
   issueId: string | null;
   onClose: () => void;
   onDeleted: (issueId: string) => void;
-  onUpdated: (issue: import("@/features/issues/model/types").WorkspaceIssue) => void;
+  onUpdated: (
+    issue: import("@/features/issues/model/types").WorkspaceIssue,
+  ) => void;
 }
 
 export function TeamIssueDetailDialog({

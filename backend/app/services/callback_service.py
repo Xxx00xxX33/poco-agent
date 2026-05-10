@@ -393,9 +393,13 @@ class CallbackService:
 
         return {
             "channel_id": parse_uuid(snapshot.get("channel_id")),
-            "projection_message_id": parse_uuid(snapshot.get("channel_projection_message_id")),
+            "projection_message_id": parse_uuid(
+                snapshot.get("channel_projection_message_id")
+            ),
             "trigger_message_id": parse_uuid(snapshot.get("trigger_message_id")),
-            "thread_root_message_id": parse_uuid(snapshot.get("thread_root_message_id")),
+            "thread_root_message_id": parse_uuid(
+                snapshot.get("thread_root_message_id")
+            ),
             "agent_identity_id": parse_uuid(snapshot.get("agent_identity_id")),
             "queue_item_id": parse_uuid(snapshot.get("queue_item_id")),
         }
@@ -404,8 +408,8 @@ class CallbackService:
         self,
         db: Session,
         *,
-        db_session: AgentSession,
-        db_run: AgentRun | None,
+        db_session: Any,
+        db_run: Any | None,
         callback: AgentCallbackRequest,
     ) -> bool:
         projection_context = self._resolve_server_channel_projection_context(
@@ -448,7 +452,9 @@ class CallbackService:
 
         content.update(
             {
-                "run_id": str(db_run.id) if db_run is not None else content.get("run_id"),
+                "run_id": str(db_run.id)
+                if db_run is not None
+                else content.get("run_id"),
                 "queue_item_id": content.get("queue_item_id")
                 or (
                     str(projection_context["queue_item_id"])
@@ -481,7 +487,9 @@ class CallbackService:
 
         replacement_text = full_text or existing_final_text or summary
         if callback.status == CallbackStatus.COMPLETED and replacement_text:
-            agent_label = str(content.get("actor_label") or content.get("agent_label") or "Agent")
+            agent_label = str(
+                content.get("actor_label") or content.get("agent_label") or "Agent"
+            )
             placeholder.text_preview = replacement_text
             placeholder.content = {
                 "text": replacement_text,
@@ -508,9 +516,9 @@ class CallbackService:
         self,
         db: Session,
         *,
-        db_session: AgentSession,
-        db_run: AgentRun | None,
-        db_message: AgentMessage,
+        db_session: Any,
+        db_run: Any | None,
+        db_message: Any,
     ) -> None:
         if db_message.role != "assistant":
             return
@@ -548,15 +556,17 @@ class CallbackService:
                 agent_handle = (agent.handle or "").strip() or None
                 agent_visual_key = (agent.visual_key or "").strip() or None
 
-        existing_placeholder = ServerChannelMessageRepository.find_execution_placeholder(
-            db,
-            channel_id=channel_id,
-            session_id=db_session.id,
-            projection_message_id=projection_context["projection_message_id"],
-            run_id=db_run.id if db_run is not None else None,
-            queue_item_id=projection_context["queue_item_id"],
-            trigger_message_id=trigger_message_id,
-            thread_root_message_id=thread_root_message_id,
+        existing_placeholder = (
+            ServerChannelMessageRepository.find_execution_placeholder(
+                db,
+                channel_id=channel_id,
+                session_id=db_session.id,
+                projection_message_id=projection_context["projection_message_id"],
+                run_id=db_run.id if db_run is not None else None,
+                queue_item_id=projection_context["queue_item_id"],
+                trigger_message_id=trigger_message_id,
+                thread_root_message_id=thread_root_message_id,
+            )
         )
         if existing_placeholder is not None:
             existing_placeholder.text_preview = text
@@ -751,11 +761,13 @@ class CallbackService:
             CallbackStatus.COMPLETED,
             CallbackStatus.FAILED,
         }:
-            placeholder_replaced_with_final_message = self._sync_execution_placeholder_to_server_channel(
-                db,
-                db_session=db_session,
-                db_run=db_run,
-                callback=callback,
+            placeholder_replaced_with_final_message = (
+                self._sync_execution_placeholder_to_server_channel(
+                    db,
+                    db_session=db_session,
+                    db_run=db_run,
+                    callback=callback,
+                )
             )
         should_apply_workspace_export = self._should_apply_workspace_export(
             db,

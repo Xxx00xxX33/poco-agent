@@ -62,9 +62,9 @@ class PresetCopyRequest(BaseModel):
     target_scope: Literal["personal", "workspace"]
     workspace_id: UUID | None = None
     name: str | None = Field(default=None, min_length=1, max_length=255)
-    access_policy: Literal[
-        "private", "workspace_read", "workspace_write", "admins_only"
-    ] | None = None
+    access_policy: (
+        Literal["private", "workspace_read", "workspace_write", "admins_only"] | None
+    ) = None
 
 
 class PresetResponse(BaseModel):

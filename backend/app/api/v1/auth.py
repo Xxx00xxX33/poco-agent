@@ -85,6 +85,7 @@ async def get_current_account(
         message="Current user retrieved successfully",
     )
 
+
 @router.post("/logout", response_model=ResponseSchema[dict[str, bool]])
 async def logout(
     request: Request,

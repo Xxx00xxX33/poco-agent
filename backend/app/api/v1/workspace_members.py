@@ -13,7 +13,9 @@ from app.schemas.workspace_member import (
 )
 from app.services.workspace_member_service import WorkspaceMemberService
 
-router = APIRouter(prefix="/workspaces/{workspace_id}/members", tags=["workspace-members"])
+router = APIRouter(
+    prefix="/workspaces/{workspace_id}/members", tags=["workspace-members"]
+)
 
 service = WorkspaceMemberService()
 

@@ -1,6 +1,8 @@
 import type { ServerConversationMessage } from "@/features/servers/model/types";
 
-export function getServerMessageText(message: ServerConversationMessage): string {
+export function getServerMessageText(
+  message: ServerConversationMessage,
+): string {
   const text = message.content.text;
   if (typeof text === "string" && text.trim()) {
     return text.trim();

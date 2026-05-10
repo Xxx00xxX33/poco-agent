@@ -74,7 +74,9 @@ async def update_server_agent(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
-    result = service.update_agent(db, current_user, server_id, agent_identity_id, request)
+    result = service.update_agent(
+        db, current_user, server_id, agent_identity_id, request
+    )
     return Response.success(data=result, message="Server agent updated successfully")
 
 

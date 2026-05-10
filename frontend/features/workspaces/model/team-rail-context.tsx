@@ -9,11 +9,7 @@ interface TeamRailContextValue {
 
 const TeamRailContext = React.createContext<TeamRailContextValue | null>(null);
 
-export function TeamRailProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function TeamRailProvider({ children }: { children: React.ReactNode }) {
   const [railContent, setRailContent] = React.useState<React.ReactNode>(null);
 
   const value = React.useMemo(

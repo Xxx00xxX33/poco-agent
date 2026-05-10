@@ -25,7 +25,10 @@ import {
 import { useLanguage } from "@/hooks/use-language";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
-import { buildTeamSections, type TeamSectionId } from "@/features/workspaces/lib/team-sections";
+import {
+  buildTeamSections,
+  type TeamSectionId,
+} from "@/features/workspaces/lib/team-sections";
 import { formatWorkspaceKind } from "@/features/workspaces/lib/format";
 import { useWorkspaceContext } from "@/features/workspaces/model/workspace-context";
 
@@ -187,7 +190,10 @@ export function TeamShell({
                 </div>
               </div>
 
-              <nav className="flex flex-wrap gap-2" aria-label={t("sidebar.team")}>
+              <nav
+                className="flex flex-wrap gap-2"
+                aria-label={t("sidebar.team")}
+              >
                 {sections.map((section) => {
                   const label =
                     section.id === "issues"
@@ -199,7 +205,9 @@ export function TeamShell({
                       key={section.id}
                       asChild
                       size="sm"
-                      variant={section.id === activePage ? "default" : "outline"}
+                      variant={
+                        section.id === activePage ? "default" : "outline"
+                      }
                       className={cn(
                         "rounded-full",
                         section.id === activePage && "shadow-sm",
@@ -223,10 +231,7 @@ export function TeamShell({
         </div>
       </main>
 
-      <CreateWorkspaceDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
+      <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }

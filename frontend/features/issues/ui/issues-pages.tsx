@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { KanbanSquare, MoreHorizontal, Plus, RefreshCw, Ticket, ChevronDown, Flag } from "lucide-react";
+import {
+  KanbanSquare,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  Ticket,
+  ChevronDown,
+  Flag,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -152,7 +160,8 @@ function CreateIssueDialog({
     setIsSaving(false);
   };
 
-  const selectedPriority = PRIORITY_OPTIONS.find((o) => o.value === priority) ?? PRIORITY_OPTIONS[1];
+  const selectedPriority =
+    PRIORITY_OPTIONS.find((o) => o.value === priority) ?? PRIORITY_OPTIONS[1];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -236,11 +245,15 @@ export function TeamIssuesPageClient() {
   const [issues, setIssues] = React.useState<WorkspaceIssue[]>([]);
   const [boardDialogOpen, setBoardDialogOpen] = React.useState(false);
   const [issueBoardId, setIssueBoardId] = React.useState<string | null>(null);
-  const [boardSettingsId, setBoardSettingsId] = React.useState<string | null>(null);
+  const [boardSettingsId, setBoardSettingsId] = React.useState<string | null>(
+    null,
+  );
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [hasLoadedBoards, setHasLoadedBoards] = React.useState(false);
   const [loadFailed, setLoadFailed] = React.useState(false);
-  const [pendingIssueId, setPendingIssueId] = React.useState<string | null>(null);
+  const [pendingIssueId, setPendingIssueId] = React.useState<string | null>(
+    null,
+  );
   const [presets, setPresets] = React.useState<Preset[]>([]);
 
   const presetMap = React.useMemo(
@@ -257,7 +270,10 @@ export function TeamIssuesPageClient() {
     [boards, queryBoardId],
   );
   const selectedBoard = React.useMemo(
-    () => boards.find((board) => board.board_id === selectedBoardId) ?? boards[0] ?? null,
+    () =>
+      boards.find((board) => board.board_id === selectedBoardId) ??
+      boards[0] ??
+      null,
     [boards, selectedBoardId],
   );
   const settingsBoard = React.useMemo(
@@ -276,7 +292,9 @@ export function TeamIssuesPageClient() {
   const boardStats = React.useMemo(
     () =>
       boards.map((board) => {
-        const boardIssues = issues.filter((issue) => issue.board_id === board.board_id);
+        const boardIssues = issues.filter(
+          (issue) => issue.board_id === board.board_id,
+        );
         const pendingCount = boardIssues.filter(
           (issue) => issue.status !== "done" && issue.status !== "canceled",
         ).length;
@@ -433,7 +451,11 @@ export function TeamIssuesPageClient() {
   );
 
   React.useEffect(() => {
-    if (boards.length > 0 && selectedBoardId && !boardIdSet.has(selectedBoardId)) {
+    if (
+      boards.length > 0 &&
+      selectedBoardId &&
+      !boardIdSet.has(selectedBoardId)
+    ) {
       selectBoard(boards[0].board_id);
       return;
     }
@@ -539,10 +561,14 @@ export function TeamIssuesPageClient() {
     try {
       await issuesApi.deleteBoard(currentWorkspace.id, settingsBoard.board_id);
       setBoards((previousBoards) =>
-        previousBoards.filter((board) => board.board_id !== settingsBoard.board_id),
+        previousBoards.filter(
+          (board) => board.board_id !== settingsBoard.board_id,
+        ),
       );
       setIssues((previousIssues) =>
-        previousIssues.filter((issue) => issue.board_id !== settingsBoard.board_id),
+        previousIssues.filter(
+          (issue) => issue.board_id !== settingsBoard.board_id,
+        ),
       );
       setBoardSettingsId(null);
       closeIssue();
@@ -562,9 +588,16 @@ export function TeamIssuesPageClient() {
 
       setPendingIssueId(issueId);
       try {
-        const updated = await issuesApi.updateIssue(issue.board_id, issue.issue_id, {
-          status: issue.status === "done" || issue.status === "canceled" ? "todo" : "done",
-        });
+        const updated = await issuesApi.updateIssue(
+          issue.board_id,
+          issue.issue_id,
+          {
+            status:
+              issue.status === "done" || issue.status === "canceled"
+                ? "todo"
+                : "done",
+          },
+        );
         mergeIssue(updated);
       } catch (error) {
         console.error("[Issues] toggle issue status failed", error);
@@ -594,7 +627,9 @@ export function TeamIssuesPageClient() {
                       <Ticket className="size-5" />
                     </EmptyMedia>
                     <EmptyHeader>
-                      <EmptyTitle>{t("issues.states.loadErrorTitle")}</EmptyTitle>
+                      <EmptyTitle>
+                        {t("issues.states.loadErrorTitle")}
+                      </EmptyTitle>
                       <EmptyDescription>
                         {t("issues.states.loadErrorDescription")}
                       </EmptyDescription>
@@ -660,7 +695,9 @@ export function TeamIssuesPageClient() {
                 selectedBoardId={selectedBoardId}
                 presetMap={presetMap}
                 onOpenIssue={openIssue}
-                onToggleIssueStatus={(issueId) => void toggleIssueStatus(issueId)}
+                onToggleIssueStatus={(issueId) =>
+                  void toggleIssueStatus(issueId)
+                }
                 pendingIssueId={pendingIssueId}
               />
             </section>

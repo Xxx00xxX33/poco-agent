@@ -250,9 +250,7 @@ export function UserMessage({
                     <dl className="grid gap-2 border-t border-border px-3 py-2 text-xs sm:grid-cols-[max-content_minmax(0,1fr)]">
                       {triggerContextRows.map((row) => (
                         <React.Fragment key={row.label}>
-                          <dt className="text-muted-foreground">
-                            {row.label}
-                          </dt>
+                          <dt className="text-muted-foreground">{row.label}</dt>
                           <dd className="min-w-0 break-words font-mono text-foreground">
                             {row.value}
                           </dd>

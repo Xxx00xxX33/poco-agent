@@ -120,7 +120,9 @@ function CreateTaskDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("channelTasks.create.title")}</DialogTitle>
-          <DialogDescription>{t("channelTasks.create.description")}</DialogDescription>
+          <DialogDescription>
+            {t("channelTasks.create.description")}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Input
@@ -143,7 +145,9 @@ function CreateTaskDialog({
             disabled={isSaving || !title.trim()}
             onClick={() => {
               setIsSaving(true);
-              void onCreate({ title, description }).finally(() => setIsSaving(false));
+              void onCreate({ title, description }).finally(() =>
+                setIsSaving(false),
+              );
             }}
           >
             {t("channelTasks.actions.createTask")}
@@ -168,7 +172,8 @@ function TaskCard({
   onOpenTask?: (taskId: string) => void;
 }) {
   const { t } = useT("translation");
-  const priorityTone = PRIORITY_TONE[task.priority ?? "medium"] ?? PRIORITY_TONE.medium;
+  const priorityTone =
+    PRIORITY_TONE[task.priority ?? "medium"] ?? PRIORITY_TONE.medium;
 
   return (
     <article
@@ -214,7 +219,11 @@ function TaskCard({
         ) : null}
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="secondary">{t("channelTasks.threadReady")}</Badge>
-          <span>{t("channelTasks.updatedAt", { date: formatDateTime(task.updatedAt) })}</span>
+          <span>
+            {t("channelTasks.updatedAt", {
+              date: formatDateTime(task.updatedAt),
+            })}
+          </span>
         </div>
       </div>
     </article>
@@ -239,14 +248,21 @@ export function ChannelTaskPageClient({
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [draggingTaskId, setDraggingTaskId] = React.useState<string | null>(null);
+  const [draggingTaskId, setDraggingTaskId] = React.useState<string | null>(
+    null,
+  );
 
   const view = resolveChannelTaskView(searchParams.get("view"));
   const selectedTaskId = searchParams.get("task");
-  const selectedServer = servers.find((server) => server.id === serverId) ?? null;
-  const selectedChannel = channels.find((channel) => channel.id === channelId) ?? null;
+  const selectedServer =
+    servers.find((server) => server.id === serverId) ?? null;
+  const selectedChannel =
+    channels.find((channel) => channel.id === channelId) ?? null;
   const columns = React.useMemo(() => buildChannelTaskColumns(tasks), [tasks]);
-  const listGroups = React.useMemo(() => buildChannelTaskListGroups(tasks), [tasks]);
+  const listGroups = React.useMemo(
+    () => buildChannelTaskListGroups(tasks),
+    [tasks],
+  );
 
   const loadPage = React.useCallback(async () => {
     setIsLoading(true);
@@ -274,17 +290,23 @@ export function ChannelTaskPageClient({
   const updateView = (nextView: ChannelTaskView) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("view", nextView);
-    router.replace(`/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`, {
-      scroll: false,
-    });
+    router.replace(
+      `/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`,
+      {
+        scroll: false,
+      },
+    );
   };
 
   const openTask = (taskId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("task", taskId);
-    router.replace(`/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`, {
-      scroll: false,
-    });
+    router.replace(
+      `/${lng}/servers/${serverId}/channels/${channelId}?${params.toString()}`,
+      {
+        scroll: false,
+      },
+    );
   };
 
   const closeTask = () => {
@@ -389,7 +411,9 @@ export function ChannelTaskPageClient({
               onClick={() => void handleRefresh()}
               disabled={isRefreshing}
             >
-              <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+              <RefreshCw
+                className={cn("size-4", isRefreshing && "animate-spin")}
+              />
               {t("channelTasks.actions.refresh")}
             </Button>
             <Button type="button" size="sm" onClick={() => setDialogOpen(true)}>
@@ -414,7 +438,11 @@ export function ChannelTaskPageClient({
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {statusCounts.map((item) => (
-                  <Badge key={item.status} variant="secondary" className="gap-1.5">
+                  <Badge
+                    key={item.status}
+                    variant="secondary"
+                    className="gap-1.5"
+                  >
                     <StatusIcon status={item.status} />
                     {t(`channelTasks.statuses.${item.status}`)}
                     <span className="tabular-nums">{item.count}</span>
@@ -459,7 +487,9 @@ export function ChannelTaskPageClient({
                 </EmptyMedia>
                 <EmptyHeader>
                   <EmptyTitle>{t("channelTasks.empty.title")}</EmptyTitle>
-                  <EmptyDescription>{t("channelTasks.empty.description")}</EmptyDescription>
+                  <EmptyDescription>
+                    {t("channelTasks.empty.description")}
+                  </EmptyDescription>
                 </EmptyHeader>
               </EmptyContent>
             </Empty>
@@ -530,7 +560,10 @@ export function ChannelTaskPageClient({
                         view="board"
                         onDragStart={(taskId) => setDraggingTaskId(taskId)}
                         onDropBefore={(targetTaskId, status) => {
-                          if (!draggingTaskId || draggingTaskId === targetTaskId) {
+                          if (
+                            !draggingTaskId ||
+                            draggingTaskId === targetTaskId
+                          ) {
                             return;
                           }
                           void moveTask({
@@ -598,7 +631,9 @@ export function ChannelTaskPageClient({
         taskId={selectedTaskId}
         onTaskUpdated={(nextTask) => {
           setTasks((current) =>
-            current.map((task) => (task.taskId === nextTask.taskId ? nextTask : task)),
+            current.map((task) =>
+              task.taskId === nextTask.taskId ? nextTask : task,
+            ),
           );
         }}
       />

@@ -362,10 +362,15 @@ class ContainerPool:
             return None
         agent_identity_id = str(task_config.get("agent_identity_id") or "").strip()
         agent_runtime_mode = str(task_config.get("agent_runtime_mode") or "").strip()
-        if not agent_identity_id or agent_runtime_mode not in {"persistent", "temporary"}:
+        if not agent_identity_id or agent_runtime_mode not in {
+            "persistent",
+            "temporary",
+        }:
             return None
         if agent_runtime_mode == "persistent":
-            source = self.workspace_manager.get_agent_state_dir(agent_identity_id, create=True)
+            source = self.workspace_manager.get_agent_state_dir(
+                agent_identity_id, create=True
+            )
             mode = "rw"
         else:
             source = self.workspace_manager.create_agent_state_snapshot(

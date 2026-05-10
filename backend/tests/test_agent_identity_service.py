@@ -239,9 +239,11 @@ class AgentIdentityServiceTests(unittest.TestCase):
             user_id=agent_identity.created_by,
             reason="Agent restarted",
         )
-        self.assertEqual(agent_identity.persistent_state.runtime_status, "idle")
-        self.assertIsNone(agent_identity.persistent_state.active_session_id)
-        self.assertIsNone(agent_identity.persistent_state.active_task_id)
+        persistent_state = agent_identity.persistent_state
+        assert persistent_state is not None
+        self.assertEqual(persistent_state.runtime_status, "idle")
+        self.assertIsNone(persistent_state.active_session_id)
+        self.assertIsNone(persistent_state.active_task_id)
         self.assertEqual(result.agent_identity_id, agent_identity.id)
         self.db.commit.assert_called_once()
 

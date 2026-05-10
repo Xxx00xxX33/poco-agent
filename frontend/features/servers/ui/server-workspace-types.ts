@@ -1,4 +1,7 @@
-import type { ServerChannelItem, ServerConversationMessage } from "@/features/servers/model/types";
+import type {
+  ServerChannelItem,
+  ServerConversationMessage,
+} from "@/features/servers/model/types";
 
 export type ColleagueSelection =
   | { kind: "agent"; id: string }

@@ -130,7 +130,8 @@ export function isExecutionMessage(
   content: ServerExecutionMessageContent;
 } {
   return (
-    message.messageType === "system" && message.content.source === "agent_execution"
+    message.messageType === "system" &&
+    message.content.source === "agent_execution"
   );
 }
 
@@ -220,7 +221,8 @@ export function MessageRow({
               ? message.content.actor_label.trim().toLowerCase()
               : "";
           return (
-            (contentHandle && agent.handle.trim().toLowerCase() === contentHandle) ||
+            (contentHandle &&
+              agent.handle.trim().toLowerCase() === contentHandle) ||
             (contentActor &&
               agent.displayName.trim().toLowerCase() === contentActor)
           );
@@ -286,7 +288,11 @@ export function MessageRow({
         <button
           type="button"
           onClick={() => {
-            if (canOpenExecutionFromAvatar && drilldownSessionId && onOpenExecution) {
+            if (
+              canOpenExecutionFromAvatar &&
+              drilldownSessionId &&
+              onOpenExecution
+            ) {
               onOpenExecution(drilldownSessionId);
               return;
             }
@@ -411,7 +417,9 @@ export function MessageRow({
                   <span
                     className={cn(
                       "size-2 rounded-full",
-                      getExecutionStatusTone(executionMessage.content.execution_status),
+                      getExecutionStatusTone(
+                        executionMessage.content.execution_status,
+                      ),
                     )}
                   />
                   {t(
@@ -494,7 +502,9 @@ export function MessageRow({
               const actorNames = reaction.actors
                 .map(getReactionActorName)
                 .filter(Boolean);
-              const visibleActorNames = actorNames.map(truncateReactionActorName);
+              const visibleActorNames = actorNames.map(
+                truncateReactionActorName,
+              );
               const label = selected
                 ? t("conversationView.reactions.removeEmoji", {
                     emoji: reaction.emoji,

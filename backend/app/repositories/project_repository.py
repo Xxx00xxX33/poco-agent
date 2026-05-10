@@ -52,10 +52,7 @@ class ProjectRepository:
             .filter(
                 Project.id == project_id,
                 Project.is_deleted.is_(False),
-                (
-                    (Project.user_id == user_id)
-                    | (WorkspaceMember.id.is_not(None))
-                ),
+                ((Project.user_id == user_id) | (WorkspaceMember.id.is_not(None))),
             )
             .first()
         )
@@ -98,10 +95,7 @@ class ProjectRepository:
             )
             .filter(
                 Project.is_deleted.is_(False),
-                (
-                    (Project.user_id == user_id)
-                    | (WorkspaceMember.id.is_not(None))
-                ),
+                ((Project.user_id == user_id) | (WorkspaceMember.id.is_not(None))),
             )
             .order_by(Project.created_at.desc())
             .all()

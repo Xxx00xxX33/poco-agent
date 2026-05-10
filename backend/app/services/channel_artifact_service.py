@@ -1,6 +1,6 @@
 import uuid
 from pathlib import PurePosixPath
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
@@ -8,7 +8,6 @@ from app.core.errors.error_codes import ErrorCode
 from app.core.errors.exceptions import AppException
 from app.models.agent_session import AgentSession
 from app.models.channel_artifact import ChannelArtifact
-from app.models.user import User
 from app.repositories.agent_identity_repository import AgentIdentityRepository
 from app.repositories.channel_artifact_repository import ChannelArtifactRepository
 from app.repositories.server_channel_agent_member_repository import (
@@ -61,7 +60,9 @@ class ChannelArtifactService:
         config_snapshot = db_session.config_snapshot or {}
         server_id_raw = str(config_snapshot.get("server_id") or "").strip()
         channel_id_raw = str(config_snapshot.get("channel_id") or "").strip()
-        agent_identity_id_raw = str(config_snapshot.get("agent_identity_id") or "").strip()
+        agent_identity_id_raw = str(
+            config_snapshot.get("agent_identity_id") or ""
+        ).strip()
         if not server_id_raw or not channel_id_raw:
             return None
         server_id = uuid.UUID(server_id_raw)
@@ -193,7 +194,10 @@ class ChannelArtifactService:
     ) -> int:
         if (db_session.workspace_export_status or "").strip().lower() != "ready":
             return 0
-        if not db_session.workspace_manifest_key or not db_session.workspace_files_prefix:
+        if (
+            not db_session.workspace_manifest_key
+            or not db_session.workspace_files_prefix
+        ):
             return 0
 
         scope = self._parse_scope_ids(db_session)
@@ -290,7 +294,10 @@ class ChannelArtifactService:
             )
 
         read_limit = min(max_bytes or self.DEFAULT_READ_BYTES, self.MAX_READ_BYTES)
-        if artifact.size_bytes is not None and artifact.size_bytes > self.MAX_READ_BYTES:
+        if (
+            artifact.size_bytes is not None
+            and artifact.size_bytes > self.MAX_READ_BYTES
+        ):
             return AgentChannelArtifactReadResponse(
                 artifact=metadata,
                 metadata_only=True,
@@ -364,7 +371,7 @@ class ChannelArtifactService:
         self,
         db: Session,
         *,
-        current_user: User,
+        current_user: Any,
         server_id: uuid.UUID,
         channel_id: uuid.UUID,
     ) -> list[FileNode]:
@@ -378,7 +385,9 @@ class ChannelArtifactService:
         for artifact in artifacts:
             if artifact.agent_identity_id is not None:
                 group_key = f"agent:{artifact.agent_identity_id}"
-                agent = AgentIdentityRepository.get_by_id(db, artifact.agent_identity_id)
+                agent = AgentIdentityRepository.get_by_id(
+                    db, artifact.agent_identity_id
+                )
                 group_name = (
                     agent.display_name
                     if agent is not None and agent.display_name
@@ -413,11 +422,14 @@ class ChannelArtifactService:
         roots: list[FileNode] = []
         for group_key, group in grouped_entries.items():
             raw_nodes = build_nodes_from_file_entries(group["files"])
+            url_map = cast(dict[str, str], group["url_map"])
+
+            def build_artifact_url(file_path: str) -> str | None:
+                return url_map.get(normalize_manifest_path(file_path) or file_path)
+
             nodes = build_workspace_file_nodes(
                 raw_nodes,
-                file_url_builder=lambda file_path, url_map=group["url_map"]: url_map.get(
-                    normalize_manifest_path(file_path) or file_path
-                ),
+                file_url_builder=build_artifact_url,
             )
             roots.append(
                 FileNode(

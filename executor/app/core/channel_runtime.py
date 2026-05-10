@@ -211,12 +211,8 @@ def create_channel_runtime_mcp_server(
     async def read_channel_artifact(args: dict[str, Any]) -> dict[str, Any]:
         artifact_id = args.get("artifact_id")
         logical_path = args.get("logical_path")
-        if (
-            not isinstance(artifact_id, str)
-            or not artifact_id.strip()
-        ) and (
-            not isinstance(logical_path, str)
-            or not logical_path.strip()
+        if (not isinstance(artifact_id, str) or not artifact_id.strip()) and (
+            not isinstance(logical_path, str) or not logical_path.strip()
         ):
             return _format_tool_error(
                 "read_channel_artifact",
@@ -235,7 +231,9 @@ def create_channel_runtime_mcp_server(
         return await _run_tool(
             "read_channel_artifact",
             runtime_client.read_artifact(
-                artifact_id=artifact_id.strip() if isinstance(artifact_id, str) else None,
+                artifact_id=artifact_id.strip()
+                if isinstance(artifact_id, str)
+                else None,
                 logical_path=(
                     logical_path.strip() if isinstance(logical_path, str) else None
                 ),
@@ -366,7 +364,9 @@ def create_channel_runtime_mcp_server(
             runtime_client.request_collaboration(
                 agent_handle=agent_handle.strip(),
                 request_text=request_text.strip(),
-                reason=reason.strip() if isinstance(reason, str) and reason.strip() else None,
+                reason=reason.strip()
+                if isinstance(reason, str) and reason.strip()
+                else None,
                 mode=mode,
                 thread_root_message_id=(
                     thread_root_message_id.strip()
@@ -410,7 +410,9 @@ def create_channel_runtime_mcp_server(
             "create_channel_task",
             runtime_client.create_task(
                 title=title.strip(),
-                description=description.strip() if isinstance(description, str) else None,
+                description=description.strip()
+                if isinstance(description, str)
+                else None,
                 priority=priority.strip() if isinstance(priority, str) else None,
             ),
         )

@@ -1,10 +1,7 @@
 import type { TFunction } from "i18next";
 import type { WorkspaceRole } from "@/features/workspaces/model/types";
 
-export function formatWorkspaceRole(
-  t: TFunction,
-  role: WorkspaceRole,
-): string {
+export function formatWorkspaceRole(t: TFunction, role: WorkspaceRole): string {
   return t(`workspaces.roles.${role}`);
 }
 

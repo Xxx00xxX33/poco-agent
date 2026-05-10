@@ -1,11 +1,13 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class AgentPersistentStateResponse(BaseModel):
-    persistent_state_id: UUID = Field(validation_alias="id")
+    persistent_state_id: UUID = Field(
+        validation_alias=AliasChoices("id", "persistent_state_id")
+    )
     agent_identity_id: UUID
     state_root_path: str
     profile_path: str
@@ -39,7 +41,9 @@ class AgentIdentityUpdateRequest(BaseModel):
 
 
 class AgentIdentityResponse(BaseModel):
-    agent_identity_id: UUID = Field(validation_alias="id")
+    agent_identity_id: UUID = Field(
+        validation_alias=AliasChoices("id", "agent_identity_id")
+    )
     server_id: UUID
     preset_id: int
     handle: str
@@ -65,7 +69,7 @@ class ChannelAgentMemberCreateRequest(BaseModel):
 
 
 class ChannelAgentMemberResponse(BaseModel):
-    membership_id: int = Field(validation_alias="id")
+    membership_id: int = Field(validation_alias=AliasChoices("id", "membership_id"))
     channel_id: UUID
     agent_identity_id: UUID
     role: str

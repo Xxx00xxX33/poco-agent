@@ -1,6 +1,7 @@
 import unittest
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from app.models.preset import Preset
@@ -421,12 +422,12 @@ class WorkspaceIssueServiceTests(unittest.TestCase):
         )
 
     @staticmethod
-    def _stamp_issue(issue):
+    def _stamp_issue(issue: Any) -> Any:
         now = datetime.now(UTC)
         if getattr(issue, "id", None) is None:
-            issue.id = uuid.uuid4()
-        issue.created_at = now
-        issue.updated_at = now
+            setattr(issue, "id", uuid.uuid4())
+        setattr(issue, "created_at", now)
+        setattr(issue, "updated_at", now)
         return issue
 
 

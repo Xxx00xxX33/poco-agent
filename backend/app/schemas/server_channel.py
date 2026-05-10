@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from app.schemas.user_profile import UserPublicProfileResponse
 
@@ -34,7 +34,7 @@ class DirectMessageCreateRequest(BaseModel):
 
 
 class ServerChannelResponse(BaseModel):
-    channel_id: UUID = Field(validation_alias="id")
+    channel_id: UUID = Field(validation_alias=AliasChoices("id", "channel_id"))
     server_id: UUID
     name: str
     slug: str
@@ -52,7 +52,7 @@ class ServerChannelResponse(BaseModel):
 
 
 class ServerChannelMemberResponse(BaseModel):
-    membership_id: int = Field(validation_alias="id")
+    membership_id: int = Field(validation_alias=AliasChoices("id", "membership_id"))
     channel_id: UUID
     user_id: str
     user: UserPublicProfileResponse | None = None

@@ -65,7 +65,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
-        sa.ForeignKeyConstraint(["workspace_id"], ["workspaces.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["workspace_id"], ["workspaces.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(
             ["issue_id"], ["workspace_issues.id"], ondelete="CASCADE"
         ),
@@ -101,6 +103,8 @@ def downgrade() -> None:
     op.drop_index(
         "ix_agent_assignments_trigger_mode_status", table_name="agent_assignments"
     )
-    op.drop_index("ix_agent_assignments_workspace_status", table_name="agent_assignments")
+    op.drop_index(
+        "ix_agent_assignments_workspace_status", table_name="agent_assignments"
+    )
     op.drop_table("agent_assignments")
     op.drop_column("presets", "container_mode")

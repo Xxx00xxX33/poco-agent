@@ -1,10 +1,12 @@
 import uuid
 from types import SimpleNamespace
+from typing import cast
 
 from sqlalchemy.orm import Session
 
 from app.core.errors.error_codes import ErrorCode
 from app.core.errors.exceptions import AppException
+from app.models.user import User
 from app.repositories.agent_identity_repository import AgentIdentityRepository
 from app.repositories.session_repository import SessionRepository
 from app.schemas.server_channel_task_agent import (
@@ -88,11 +90,14 @@ class ServerChannelTaskAgentService:
             thread_root_message_id=thread_root_message_id,
         )
 
-    def _load_actor_user(self, context: AgentChannelTaskContext) -> SimpleNamespace:
-        return SimpleNamespace(
-            id=context.user_id,
-            display_name=context.agent_label,
-            primary_email=context.user_id,
+    def _load_actor_user(self, context: AgentChannelTaskContext) -> User:
+        return cast(
+            User,
+            SimpleNamespace(
+                id=context.user_id,
+                display_name=context.agent_label,
+                primary_email=context.user_id,
+            ),
         )
 
     def _build_actor_context(

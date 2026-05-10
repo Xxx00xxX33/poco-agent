@@ -1,5 +1,6 @@
 import unittest
 import uuid
+from typing import Any, cast
 
 from pydantic import ValidationError
 
@@ -45,7 +46,7 @@ class AgentTriggerEnvelopeSchemaTests(unittest.TestCase):
     def test_invalid_trigger_type_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             AgentTriggerEnvelope(
-                trigger_type="plain_text",
+                trigger_type=cast(Any, "plain_text"),
                 server_id=uuid.uuid4(),
                 channel_id=uuid.uuid4(),
                 trigger_message_id=uuid.uuid4(),

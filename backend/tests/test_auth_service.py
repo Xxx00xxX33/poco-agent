@@ -207,12 +207,10 @@ class AuthServiceTests(unittest.TestCase):
                 "app.services.auth_service.AuthIdentityRepository.create"
             ) as create_identity,
         ):
-            create_user.side_effect = (
-                lambda _db, *, user_id, primary_email, **_kwargs: (
-                    self._build_user(
-                        user_id=user_id,
-                        primary_email=primary_email,
-                    )
+            create_user.side_effect = lambda _db, *, user_id, primary_email, **_kwargs: (
+                self._build_user(
+                    user_id=user_id,
+                    primary_email=primary_email,
                 )
             )
 
@@ -292,12 +290,10 @@ class AuthServiceTests(unittest.TestCase):
             patch("app.services.auth_service.UserRepository.create") as create_user,
             patch("app.services.auth_service.AuthIdentityRepository.create"),
         ):
-            create_user.side_effect = (
-                lambda _db, *, user_id, primary_email, **_kwargs: (
-                    self._build_user(
-                        user_id=user_id,
-                        primary_email=primary_email,
-                    )
+            create_user.side_effect = lambda _db, *, user_id, primary_email, **_kwargs: (
+                self._build_user(
+                    user_id=user_id,
+                    primary_email=primary_email,
                 )
             )
 

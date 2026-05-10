@@ -42,7 +42,9 @@ class PromptBuilder:
                 WorkspaceIssueFieldValue.field_id == WorkspaceBoardField.id,
             )
             .filter(WorkspaceIssueFieldValue.issue_id == issue.id)
-            .order_by(WorkspaceBoardField.sort_order.asc(), WorkspaceBoardField.label.asc())
+            .order_by(
+                WorkspaceBoardField.sort_order.asc(), WorkspaceBoardField.label.asc()
+            )
             .all()
         )
         if field_rows:

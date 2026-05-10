@@ -32,7 +32,9 @@ service = ServerChannelMessageService()
 reaction_service = ServerChannelMessageReactionService()
 
 
-@router.get("/messages", response_model=ResponseSchema[list[ServerChannelMessageResponse]])
+@router.get(
+    "/messages", response_model=ResponseSchema[list[ServerChannelMessageResponse]]
+)
 async def list_channel_messages(
     server_id: uuid.UUID,
     channel_id: uuid.UUID,

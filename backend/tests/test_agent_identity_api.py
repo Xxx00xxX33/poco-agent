@@ -62,7 +62,9 @@ class AgentIdentityApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body["code"], 0)
-        self.assertEqual(body["data"]["agent_identity_id"], str(agent.agent_identity_id))
+        self.assertEqual(
+            body["data"]["agent_identity_id"], str(agent.agent_identity_id)
+        )
         create_agent.assert_called_once()
 
     @patch("app.api.v1.server_agents.service.list_agents")

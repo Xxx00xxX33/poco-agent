@@ -92,7 +92,9 @@ class ChannelRuntimeService:
             )
 
         if not request.message_ids and request.thread_root_message_id is None:
-            default_message_id = scope.thread_root_message_id or scope.trigger_message_id
+            default_message_id = (
+                scope.thread_root_message_id or scope.trigger_message_id
+            )
             if default_message_id is not None:
                 messages.append(
                     self._require_message_in_scope(

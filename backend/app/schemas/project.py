@@ -32,18 +32,18 @@ class ProjectUpdateRequest(BaseModel):
     repo_url: str | None = None
     git_branch: str | None = None
     git_token_env_key: str | None = None
-    access_policy: Literal[
-        "private", "workspace_read", "workspace_write", "admins_only"
-    ] | None = None
+    access_policy: (
+        Literal["private", "workspace_read", "workspace_write", "admins_only"] | None
+    ) = None
 
 
 class ProjectCopyRequest(BaseModel):
     target_scope: Literal["personal", "workspace"]
     workspace_id: UUID | None = None
     name: str | None = Field(default=None, min_length=1, max_length=255)
-    access_policy: Literal[
-        "private", "workspace_read", "workspace_write", "admins_only"
-    ] | None = None
+    access_policy: (
+        Literal["private", "workspace_read", "workspace_write", "admins_only"] | None
+    ) = None
 
 
 class ProjectResponse(BaseModel):

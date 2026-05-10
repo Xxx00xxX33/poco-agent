@@ -91,7 +91,10 @@ class ServerChannelMessageApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"][0]["message_id"], str(message.message_id))
-        self.assertEqual(body["data"][0]["author_user"]["avatar_url"], "https://example.com/alice.png")
+        self.assertEqual(
+            body["data"][0]["author_user"]["avatar_url"],
+            "https://example.com/alice.png",
+        )
         list_messages.assert_called_once()
 
     @patch("app.api.v1.server_channel_messages.service.get_thread")
@@ -103,7 +106,9 @@ class ServerChannelMessageApiTests(unittest.TestCase):
             channel_id=channel_id,
             thread_root_message_id=root.message_id,
         )
-        get_thread.return_value = ServerChannelThreadResponse(root=root, replies=[reply])
+        get_thread.return_value = ServerChannelThreadResponse(
+            root=root, replies=[reply]
+        )
 
         response = self.client.get(
             f"/api/v1/servers/{server_id}/channels/{channel_id}/threads/{root.message_id}",
@@ -113,7 +118,9 @@ class ServerChannelMessageApiTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["code"], 0)
         self.assertEqual(body["data"]["root"]["message_id"], str(root.message_id))
-        self.assertEqual(body["data"]["replies"][0]["message_id"], str(reply.message_id))
+        self.assertEqual(
+            body["data"]["replies"][0]["message_id"], str(reply.message_id)
+        )
         self.assertEqual(body["data"]["root"]["author_user"]["display_name"], "Alice")
         get_thread.assert_called_once()
 

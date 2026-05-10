@@ -29,7 +29,10 @@ import {
   buildTeamSections,
   type TeamSectionId,
 } from "@/features/workspaces/lib/team-sections";
-import { TeamRailProvider, useTeamRailContext } from "@/features/workspaces/model/team-rail-context";
+import {
+  TeamRailProvider,
+  useTeamRailContext,
+} from "@/features/workspaces/model/team-rail-context";
 import { useWorkspaceContext } from "@/features/workspaces/model/workspace-context";
 import { TeamSectionRail } from "@/features/workspaces/ui/team-section-rail";
 
@@ -217,9 +220,7 @@ function TeamLibraryShellContent({ children }: TeamLibraryShellProps) {
               <p className="text-base font-semibold leading-tight">
                 {headerTitle}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {headerSubtitle}
-              </p>
+              <p className="text-xs text-muted-foreground">{headerSubtitle}</p>
             </div>
           </div>
         }
@@ -263,18 +264,14 @@ function TeamLibraryShellContent({ children }: TeamLibraryShellProps) {
           onSelect={handleSelectSection}
           footer={railContent ?? defaultRailFooter}
         />
-        <main className="min-h-0 overflow-y-auto">
-          {children}
-        </main>
+        <main className="min-h-0 overflow-y-auto">{children}</main>
       </div>
 
       {/* Mobile: section list or detail */}
       <div className="flex min-h-0 flex-1 md:hidden">
         {isMobileDetail ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {children}
-            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -289,10 +286,7 @@ function TeamLibraryShellContent({ children }: TeamLibraryShellProps) {
         )}
       </div>
 
-      <CreateWorkspaceDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
+      <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }

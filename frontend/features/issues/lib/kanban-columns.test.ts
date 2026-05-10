@@ -48,9 +48,9 @@ test("buildKanbanColumns keeps the default status order and sorts issues by posi
     KANBAN_COLUMN_ORDER,
   );
   assert.deepEqual(
-    columns.find((column) => column.status === "todo")?.issues.map(
-      (issue) => issue.issue_id,
-    ),
+    columns
+      .find((column) => column.status === "todo")
+      ?.issues.map((issue) => issue.issue_id),
     ["issue-3", "issue-2"],
   );
 });

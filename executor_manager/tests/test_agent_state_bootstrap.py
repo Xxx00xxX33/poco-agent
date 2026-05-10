@@ -2,7 +2,6 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from app.core.settings import Settings
 from app.services.workspace_manager import WorkspaceManager
@@ -33,7 +32,9 @@ class WorkspaceManagerAgentStateBootstrapTests(unittest.TestCase):
             self.assertEqual(profile_data["runtime"]["mode"], "persistent")
 
             self.assertTrue((agent_dir / "MEMORY.md").read_text().strip())
-            self.assertTrue((agent_dir / "notes" / "active-context.md").read_text().strip())
+            self.assertTrue(
+                (agent_dir / "notes" / "active-context.md").read_text().strip()
+            )
 
             task_state = json.loads(
                 (agent_dir / "state" / "task-state.json").read_text()

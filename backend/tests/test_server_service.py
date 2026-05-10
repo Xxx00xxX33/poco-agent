@@ -182,6 +182,7 @@ class ServerChannelServiceTests(unittest.TestCase):
                 "app.services.server_channel_service.ServerChannelMemberRepository.create"
             ) as create_member,
         ):
+
             def build_channel(_db, channel):
                 channel.id = uuid.uuid4()
                 channel.created_at = datetime.now(UTC)
@@ -355,6 +356,7 @@ class ServerChannelServiceTests(unittest.TestCase):
                 "app.services.server_channel_service.ServerChannelMemberRepository.create"
             ) as create_member,
         ):
+
             def build_member(_db, membership):
                 now = datetime.now(UTC)
                 membership.id = 1
@@ -569,6 +571,7 @@ class ServerInviteServiceTests(unittest.TestCase):
                 "app.services.server_invite_service.ServerMemberRepository.create"
             ) as create_membership,
         ):
+
             def build_membership(_db, membership):
                 now = datetime.now(UTC)
                 membership.id = 1

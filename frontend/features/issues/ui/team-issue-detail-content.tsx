@@ -37,11 +37,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,9 +68,7 @@ import {
   type IssueDetailFormData,
   type IssueDetailLoadState,
 } from "@/features/issues/lib/issue-detail-form";
-import {
-  formatAssignmentStatus,
-} from "@/features/issues/lib/issue-presentation";
+import { formatAssignmentStatus } from "@/features/issues/lib/issue-presentation";
 import type {
   AgentAssignment,
   WorkspaceIssue,
@@ -246,7 +240,8 @@ export function TeamIssueDetailContent({
     scheduleCron: "0 * * * *",
     prompt: "",
   });
-  const [loadState, setLoadState] = React.useState<IssueDetailLoadState>("loading");
+  const [loadState, setLoadState] =
+    React.useState<IssueDetailLoadState>("loading");
   const [isSaving, setIsSaving] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -272,9 +267,12 @@ export function TeamIssueDetailContent({
     });
   }, []);
 
-  const updateForm = React.useCallback((patch: Partial<IssueDetailFormData>) => {
-    setForm((prev) => ({ ...prev, ...patch }));
-  }, []);
+  const updateForm = React.useCallback(
+    (patch: Partial<IssueDetailFormData>) => {
+      setForm((prev) => ({ ...prev, ...patch }));
+    },
+    [],
+  );
 
   const loadIssue = React.useCallback(async () => {
     setLoadState("loading");
@@ -287,7 +285,8 @@ export function TeamIssueDetailContent({
       ]);
       setIssue(nextIssue);
       setBoardName(
-        nextBoards.find((board) => board.board_id === nextIssue.board_id)?.name ?? null,
+        nextBoards.find((board) => board.board_id === nextIssue.board_id)
+          ?.name ?? null,
       );
       setPresets(
         nextPresets.filter((item) => item.scope !== "personal" || item.user_id),
@@ -313,7 +312,8 @@ export function TeamIssueDetailContent({
       const nextBoards = await issuesApi.listBoards(nextIssue.workspace_id);
       setIssue(nextIssue);
       setBoardName(
-        nextBoards.find((board) => board.board_id === nextIssue.board_id)?.name ?? null,
+        nextBoards.find((board) => board.board_id === nextIssue.board_id)
+          ?.name ?? null,
       );
       skipNextAutoSaveRef.current = true;
       setForm((prev) => ({
@@ -325,55 +325,60 @@ export function TeamIssueDetailContent({
     }
   }, [issueId, t]);
 
-  const autoSave = React.useCallback(async (currentForm: IssueDetailFormData) => {
-    const currentIssue = issueRef.current;
-    if (!currentIssue || isSavingRef.current) return;
-    isSavingRef.current = true;
-    setIsSaving(true);
-    try {
-      const updated = await issuesApi.updateIssue(
-        currentIssue.board_id,
-        currentIssue.issue_id,
-        {
-          status: currentForm.status,
-          priority: currentForm.priority,
-          related_project_id:
-            currentForm.relatedProjectId === "none"
-              ? null
-              : currentForm.relatedProjectId,
-          assignee_preset_id:
-            currentForm.selectedPresetId === "none"
-              ? null
-              : Number(currentForm.selectedPresetId),
-          trigger_mode:
-            currentForm.selectedPresetId === "none"
-              ? undefined
-              : currentForm.triggerMode,
-          schedule_cron:
-            currentForm.selectedPresetId === "none" ||
-            currentForm.triggerMode !== "scheduled_task"
-              ? null
-              : currentForm.scheduleCron,
-          assignment_prompt:
-            currentForm.selectedPresetId === "none"
-              ? null
-              : currentForm.prompt,
-        },
-      );
-      setIssue(updated);
-      issueRef.current = updated;
-      onUpdatedRef.current(updated);
-    } catch (error) {
-      console.error("[Issues] auto-save failed", error);
-      toast.error(t("issues.toasts.issueUpdateFailed"));
-    } finally {
-      isSavingRef.current = false;
-      setIsSaving(false);
-    }
-  }, [t]);
+  const autoSave = React.useCallback(
+    async (currentForm: IssueDetailFormData) => {
+      const currentIssue = issueRef.current;
+      if (!currentIssue || isSavingRef.current) return;
+      isSavingRef.current = true;
+      setIsSaving(true);
+      try {
+        const updated = await issuesApi.updateIssue(
+          currentIssue.board_id,
+          currentIssue.issue_id,
+          {
+            status: currentForm.status,
+            priority: currentForm.priority,
+            related_project_id:
+              currentForm.relatedProjectId === "none"
+                ? null
+                : currentForm.relatedProjectId,
+            assignee_preset_id:
+              currentForm.selectedPresetId === "none"
+                ? null
+                : Number(currentForm.selectedPresetId),
+            trigger_mode:
+              currentForm.selectedPresetId === "none"
+                ? undefined
+                : currentForm.triggerMode,
+            schedule_cron:
+              currentForm.selectedPresetId === "none" ||
+              currentForm.triggerMode !== "scheduled_task"
+                ? null
+                : currentForm.scheduleCron,
+            assignment_prompt:
+              currentForm.selectedPresetId === "none"
+                ? null
+                : currentForm.prompt,
+          },
+        );
+        setIssue(updated);
+        issueRef.current = updated;
+        onUpdatedRef.current(updated);
+      } catch (error) {
+        console.error("[Issues] auto-save failed", error);
+        toast.error(t("issues.toasts.issueUpdateFailed"));
+      } finally {
+        isSavingRef.current = false;
+        setIsSaving(false);
+      }
+    },
+    [t],
+  );
 
   React.useEffect(() => {
-    if (!shouldScheduleIssueDetailAutoSave(loadState, skipNextAutoSaveRef.current)) {
+    if (
+      !shouldScheduleIssueDetailAutoSave(loadState, skipNextAutoSaveRef.current)
+    ) {
       skipNextAutoSaveRef.current = false;
       return;
     }
@@ -424,16 +429,17 @@ export function TeamIssueDetailContent({
   const executionMeta = getAssignmentExecutionMeta(assignment);
   const selectedPreset =
     form.selectedPresetId !== "none"
-      ? presets.find((preset) => String(preset.preset_id) === form.selectedPresetId) ?? null
+      ? (presets.find(
+          (preset) => String(preset.preset_id) === form.selectedPresetId,
+        ) ?? null)
       : null;
   const relatedProject =
     form.relatedProjectId !== "none"
-      ? projects.find((project) => project.id === form.relatedProjectId) ?? null
+      ? (projects.find((project) => project.id === form.relatedProjectId) ??
+        null)
       : null;
   const collaboratorLabel =
-    selectedPreset?.name ??
-    issue?.assignee_user_id ??
-    t("issues.unassigned");
+    selectedPreset?.name ?? issue?.assignee_user_id ?? t("issues.unassigned");
   const collaboratorFallback = collaboratorLabel.charAt(0).toUpperCase() || "?";
 
   const copyText = React.useCallback(
@@ -486,20 +492,29 @@ export function TeamIssueDetailContent({
                       <MoreHorizontal className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 rounded-xl p-2">
-                    <DropdownMenuItem onSelect={() => void copyText(issue.issue_id)}>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-xl p-2"
+                  >
+                    <DropdownMenuItem
+                      onSelect={() => void copyText(issue.issue_id)}
+                    >
                       <Copy className="size-4" />
                       {t("issues.actions.copyIssueId")}
                     </DropdownMenuItem>
                     {relatedProject ? (
                       <DropdownMenuItem
-                        onSelect={() => router.push(`/${lng}/projects/${relatedProject.id}`)}
+                        onSelect={() =>
+                          router.push(`/${lng}/projects/${relatedProject.id}`)
+                        }
                       >
                         <FolderOpen className="size-4" />
                         {t("issues.actions.viewRelatedProject")}
                       </DropdownMenuItem>
                     ) : null}
-                    <DropdownMenuItem onSelect={() => void copyText(window.location.href)}>
+                    <DropdownMenuItem
+                      onSelect={() => void copyText(window.location.href)}
+                    >
                       <ExternalLink className="size-4" />
                       {t("issues.actions.copyShareLink")}
                     </DropdownMenuItem>
@@ -587,7 +602,9 @@ export function TeamIssueDetailContent({
                       <Ticket className="size-5" />
                     </EmptyMedia>
                     <EmptyHeader>
-                      <EmptyTitle>{t("issues.states.loadErrorTitle")}</EmptyTitle>
+                      <EmptyTitle>
+                        {t("issues.states.loadErrorTitle")}
+                      </EmptyTitle>
                       <EmptyDescription>
                         {t("issues.states.loadErrorDescription")}
                       </EmptyDescription>
@@ -606,28 +623,31 @@ export function TeamIssueDetailContent({
             </Card>
           ) : issue ? (
             <div className="space-y-1">
-                <section className="border-b border-border/60">
-                  <button
-                    type="button"
-                    onClick={() => toggleSection("collaboration")}
-                    className="flex w-full items-center gap-2 py-4 text-left"
-                  >
-                    <ChevronRight
-                      className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                        expandedSections.has("collaboration") ? "rotate-90" : ""
-                      }`}
-                    />
-                    <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                      {t("issues.sections.collaboration")}
-                    </h3>
-                  </button>
-                  {expandedSections.has("collaboration") && (
+              <section className="border-b border-border/60">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("collaboration")}
+                  className="flex w-full items-center gap-2 py-4 text-left"
+                >
+                  <ChevronRight
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                      expandedSections.has("collaboration") ? "rotate-90" : ""
+                    }`}
+                  />
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                    {t("issues.sections.collaboration")}
+                  </h3>
+                </button>
+                {expandedSections.has("collaboration") && (
                   <div className="space-y-6 pb-7">
                     <div className="grid gap-5 md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)_minmax(0,0.75fr)]">
                       <div className="flex items-center gap-4">
                         {selectedPreset ? (
                           <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/20">
-                            <PresetGlyph preset={selectedPreset} variant="picker" />
+                            <PresetGlyph
+                              preset={selectedPreset}
+                              variant="picker"
+                            />
                           </div>
                         ) : (
                           <Avatar className="size-14 border border-border/60 bg-muted/50">
@@ -646,9 +666,13 @@ export function TeamIssueDetailContent({
                                 {t("issues.fields.agentPreset")}
                               </Badge>
                             ) : (
-                              <Badge variant="outline">{t("issues.unassigned")}</Badge>
+                              <Badge variant="outline">
+                                {t("issues.unassigned")}
+                              </Badge>
                             )}
-                            {assignment ? <AssignmentBadge assignment={assignment} /> : null}
+                            {assignment ? (
+                              <AssignmentBadge assignment={assignment} />
+                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -670,218 +694,263 @@ export function TeamIssueDetailContent({
                       </div>
                     </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
-                        >
-                          <div className="flex w-full flex-col gap-4 text-left">
-                            <DetailFieldHeader
-                              icon={renderStatusIcon(form.status)}
-                              label={t("issues.fields.status")}
-                            />
-                            <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
-                              <span>{t(`issues.statuses.${form.status}`)}</span>
-                              <ChevronDown className="size-4 text-muted-foreground" />
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
+                          >
+                            <div className="flex w-full flex-col gap-4 text-left">
+                              <DetailFieldHeader
+                                icon={renderStatusIcon(form.status)}
+                                label={t("issues.fields.status")}
+                              />
+                              <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
+                                <span>
+                                  {t(`issues.statuses.${form.status}`)}
+                                </span>
+                                <ChevronDown className="size-4 text-muted-foreground" />
+                              </div>
                             </div>
-                          </div>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[80] min-w-40">
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ status: "todo" })}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[80] min-w-40"
                         >
-                          {renderStatusOption(t, "todo")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ status: "in_progress" })}
-                        >
-                          {renderStatusOption(t, "in_progress")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ status: "done" })}
-                        >
-                          {renderStatusOption(t, "done")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ status: "canceled" })}
-                        >
-                          {renderStatusOption(t, "canceled")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
-                        >
-                          <div className="flex w-full flex-col gap-4 text-left">
-                            <DetailFieldHeader
-                              icon={renderPriorityIcon(
-                                getIssueDetailPrioritySelectValue(form.priority),
-                              )}
-                              label={t("issues.fields.priority")}
-                            />
-                            <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
-                              <span>
-                                {t(
-                                  `issues.priorities.${getIssueDetailPrioritySelectValue(
+                          <DropdownMenuItem
+                            onSelect={() => updateForm({ status: "todo" })}
+                          >
+                            {renderStatusOption(t, "todo")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              updateForm({ status: "in_progress" })
+                            }
+                          >
+                            {renderStatusOption(t, "in_progress")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => updateForm({ status: "done" })}
+                          >
+                            {renderStatusOption(t, "done")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => updateForm({ status: "canceled" })}
+                          >
+                            {renderStatusOption(t, "canceled")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
+                          >
+                            <div className="flex w-full flex-col gap-4 text-left">
+                              <DetailFieldHeader
+                                icon={renderPriorityIcon(
+                                  getIssueDetailPrioritySelectValue(
                                     form.priority,
-                                  )}`,
+                                  ),
                                 )}
-                              </span>
-                              <ChevronDown className="size-4 text-muted-foreground" />
+                                label={t("issues.fields.priority")}
+                              />
+                              <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
+                                <span>
+                                  {t(
+                                    `issues.priorities.${getIssueDetailPrioritySelectValue(
+                                      form.priority,
+                                    )}`,
+                                  )}
+                                </span>
+                                <ChevronDown className="size-4 text-muted-foreground" />
+                              </div>
                             </div>
-                          </div>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[80] min-w-40">
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ priority: "high" })}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[80] min-w-40"
                         >
-                          {renderPriorityOption(t, "high")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ priority: "medium" })}
-                        >
-                          {renderPriorityOption(t, "medium")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ priority: "low" })}
-                        >
-                          {renderPriorityOption(t, "low")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
-                        >
-                          <div className="flex w-full flex-col gap-4 text-left">
-                            <DetailFieldHeader
-                              icon={<FolderOpen className="size-3.5" />}
-                              label={t("issues.fields.project")}
-                            />
-                            <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
-                              <span>{relatedProject?.name ?? t("issues.none")}</span>
-                              <ChevronDown className="size-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[80] min-w-40">
-                        <DropdownMenuItem onSelect={() => updateForm({ relatedProjectId: "none" })}>
-                          {t("issues.none")}
-                        </DropdownMenuItem>
-                        {projects.map((project) => (
                           <DropdownMenuItem
-                            key={project.id}
-                            onSelect={() => updateForm({ relatedProjectId: project.id })}
+                            onSelect={() => updateForm({ priority: "high" })}
                           >
-                            {project.name}
+                            {renderPriorityOption(t, "high")}
                           </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
-                        >
-                          <div className="flex w-full flex-col gap-4 text-left">
-                            <DetailFieldHeader
-                              icon={<Sparkles className="size-3.5" />}
-                              label={t("issues.fields.agentPreset")}
-                            />
-                            <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
-                              <span>{selectedPreset?.name ?? t("issues.none")}</span>
-                              <ChevronDown className="size-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[80] min-w-40">
-                        <DropdownMenuItem onSelect={() => updateForm({ selectedPresetId: "none" })}>
-                          {t("issues.none")}
-                        </DropdownMenuItem>
-                        {presets.map((preset) => (
                           <DropdownMenuItem
-                            key={preset.preset_id}
-                            onSelect={() => updateForm({ selectedPresetId: String(preset.preset_id) })}
+                            onSelect={() => updateForm({ priority: "medium" })}
                           >
-                            {preset.name}
+                            {renderPriorityOption(t, "medium")}
                           </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
-                        >
-                          <div className="flex w-full flex-col gap-4 text-left">
-                            <DetailFieldHeader
-                              icon={<TimerReset className="size-3.5" />}
-                              label={t("issues.fields.triggerMode")}
-                            />
-                            <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
-                              <span>{t(`issues.triggerModes.${form.triggerMode}`)}</span>
-                              <ChevronDown className="size-4 text-muted-foreground" />
+                          <DropdownMenuItem
+                            onSelect={() => updateForm({ priority: "low" })}
+                          >
+                            {renderPriorityOption(t, "low")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
+                          >
+                            <div className="flex w-full flex-col gap-4 text-left">
+                              <DetailFieldHeader
+                                icon={<FolderOpen className="size-3.5" />}
+                                label={t("issues.fields.project")}
+                              />
+                              <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
+                                <span>
+                                  {relatedProject?.name ?? t("issues.none")}
+                                </span>
+                                <ChevronDown className="size-4 text-muted-foreground" />
+                              </div>
                             </div>
-                          </div>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[80] min-w-40">
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ triggerMode: "persistent_sandbox" })}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[80] min-w-40"
                         >
-                          {t("issues.triggerModes.persistent_sandbox")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => updateForm({ triggerMode: "scheduled_task" })}
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              updateForm({ relatedProjectId: "none" })
+                            }
+                          >
+                            {t("issues.none")}
+                          </DropdownMenuItem>
+                          {projects.map((project) => (
+                            <DropdownMenuItem
+                              key={project.id}
+                              onSelect={() =>
+                                updateForm({ relatedProjectId: project.id })
+                              }
+                            >
+                              {project.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
+                          >
+                            <div className="flex w-full flex-col gap-4 text-left">
+                              <DetailFieldHeader
+                                icon={<Sparkles className="size-3.5" />}
+                                label={t("issues.fields.agentPreset")}
+                              />
+                              <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
+                                <span>
+                                  {selectedPreset?.name ?? t("issues.none")}
+                                </span>
+                                <ChevronDown className="size-4 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[80] min-w-40"
                         >
-                          {t("issues.triggerModes.scheduled_task")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  </div>
-                  )}
-                </section>
-
-                <section className="border-b border-border/60">
-                  <button
-                    type="button"
-                    onClick={() => toggleSection("triggerSetup")}
-                    className="flex w-full items-center gap-2 py-4 text-left"
-                  >
-                    <ChevronRight
-                      className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                        expandedSections.has("triggerSetup") ? "rotate-90" : ""
-                      }`}
-                    />
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                        {t("issues.sections.triggerSetup")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("issues.sections.triggerSetupDescription")}
-                      </p>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              updateForm({ selectedPresetId: "none" })
+                            }
+                          >
+                            {t("issues.none")}
+                          </DropdownMenuItem>
+                          {presets.map((preset) => (
+                            <DropdownMenuItem
+                              key={preset.preset_id}
+                              onSelect={() =>
+                                updateForm({
+                                  selectedPresetId: String(preset.preset_id),
+                                })
+                              }
+                            >
+                              {preset.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto rounded-2xl border border-border/50 bg-background/80 px-4 py-3 hover:bg-accent/20"
+                          >
+                            <div className="flex w-full flex-col gap-4 text-left">
+                              <DetailFieldHeader
+                                icon={<TimerReset className="size-3.5" />}
+                                label={t("issues.fields.triggerMode")}
+                              />
+                              <div className="flex w-full items-center justify-end gap-2 text-sm font-medium text-foreground">
+                                <span>
+                                  {t(`issues.triggerModes.${form.triggerMode}`)}
+                                </span>
+                                <ChevronDown className="size-4 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[80] min-w-40"
+                        >
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              updateForm({ triggerMode: "persistent_sandbox" })
+                            }
+                          >
+                            {t("issues.triggerModes.persistent_sandbox")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              updateForm({ triggerMode: "scheduled_task" })
+                            }
+                          >
+                            {t("issues.triggerModes.scheduled_task")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  </button>
-                  {expandedSections.has("triggerSetup") && (
+                  </div>
+                )}
+              </section>
+
+              <section className="border-b border-border/60">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("triggerSetup")}
+                  className="flex w-full items-center gap-2 py-4 text-left"
+                >
+                  <ChevronRight
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                      expandedSections.has("triggerSetup") ? "rotate-90" : ""
+                    }`}
+                  />
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                      {t("issues.sections.triggerSetup")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t("issues.sections.triggerSetupDescription")}
+                    </p>
+                  </div>
+                </button>
+                {expandedSections.has("triggerSetup") && (
                   <div className="space-y-4 pb-7">
                     <div className="space-y-2">
                       <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -889,7 +958,9 @@ export function TeamIssueDetailContent({
                       </p>
                       <Input
                         value={form.scheduleCron}
-                        onChange={(e) => updateForm({ scheduleCron: e.target.value })}
+                        onChange={(e) =>
+                          updateForm({ scheduleCron: e.target.value })
+                        }
                         disabled={form.triggerMode !== "scheduled_task"}
                         placeholder="0 * * * *"
                         className="h-11 rounded-2xl border-border/50 bg-background/80 shadow-none"
@@ -908,30 +979,30 @@ export function TeamIssueDetailContent({
                       />
                     </div>
                   </div>
-                  )}
-                </section>
+                )}
+              </section>
 
-                <section>
-                  <button
-                    type="button"
-                    onClick={() => toggleSection("executionStatus")}
-                    className="flex w-full items-center gap-2 py-4 text-left"
-                  >
-                    <ChevronRight
-                      className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
-                        expandedSections.has("executionStatus") ? "rotate-90" : ""
-                      }`}
-                    />
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                        {t("issues.sections.executionStatus")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("issues.sections.executionStatusDescription")}
-                      </p>
-                    </div>
-                  </button>
-                  {expandedSections.has("executionStatus") && (
+              <section>
+                <button
+                  type="button"
+                  onClick={() => toggleSection("executionStatus")}
+                  className="flex w-full items-center gap-2 py-4 text-left"
+                >
+                  <ChevronRight
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                      expandedSections.has("executionStatus") ? "rotate-90" : ""
+                    }`}
+                  />
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                      {t("issues.sections.executionStatus")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t("issues.sections.executionStatusDescription")}
+                    </p>
+                  </div>
+                </button>
+                {expandedSections.has("executionStatus") && (
                   <div className="space-y-6 pb-7">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-2xl border border-border/50 bg-background/80 px-4 py-3">
@@ -992,7 +1063,11 @@ export function TeamIssueDetailContent({
                       </div>
                     </div>
                     <div className="grid gap-3">
-                      <Button type="button" className="h-11 rounded-xl" onClick={() => void runAction("trigger")}>
+                      <Button
+                        type="button"
+                        className="h-11 rounded-xl"
+                        onClick={() => void runAction("trigger")}
+                      >
                         {t("issues.actions.trigger")}
                       </Button>
                       <Button
@@ -1033,8 +1108,8 @@ export function TeamIssueDetailContent({
                       ) : null}
                     </div>
                   </div>
-                  )}
-                </section>
+                )}
+              </section>
             </div>
           ) : null}
         </div>

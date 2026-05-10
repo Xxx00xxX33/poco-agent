@@ -86,12 +86,7 @@ export function TeamIssueCard({
       </button>
 
       <div className="flex shrink-0 items-center gap-2.5">
-        {preset ? (
-          <PresetGlyph
-            preset={preset}
-            variant="status"
-          />
-        ) : null}
+        {preset ? <PresetGlyph preset={preset} variant="status" /> : null}
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock3 className="size-3" />
           {formatRelativeTime(issue.created_at)}

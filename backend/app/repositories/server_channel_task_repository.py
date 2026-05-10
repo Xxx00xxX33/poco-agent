@@ -51,11 +51,8 @@ class ServerChannelTaskRepository:
         )
         if exclude_task_id is not None:
             query = query.filter(ServerChannelTask.id != exclude_task_id)
-        return (
-            query.order_by(
-                ServerChannelTask.position.asc(),
-                ServerChannelTask.created_at.asc(),
-                ServerChannelTask.id.asc(),
-            )
-            .all()
-        )
+        return query.order_by(
+            ServerChannelTask.position.asc(),
+            ServerChannelTask.created_at.asc(),
+            ServerChannelTask.id.asc(),
+        ).all()

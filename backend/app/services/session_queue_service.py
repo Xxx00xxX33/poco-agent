@@ -93,7 +93,7 @@ class SessionQueueService:
         self,
         db: Session,
         *,
-        db_session: AgentSession,
+        db_session: Any,
         item: AgentSessionQueueItem,
     ) -> AgentRun:
         run_snapshot = (
@@ -218,7 +218,7 @@ class SessionQueueService:
         self,
         db: Session,
         *,
-        db_session: AgentSession,
+        db_session: Any,
         prompt: str,
         permission_mode: str,
         schedule_mode: str,
@@ -231,7 +231,7 @@ class SessionQueueService:
         self.clear_cancellation_state(db_session)
         db_session.config_snapshot = self.extract_session_config(run_config_snapshot)
 
-        user_message_content = {
+        user_message_content: dict[str, Any] = {
             "_type": "UserMessage",
             "content": [{"_type": "TextBlock", "text": normalized_prompt}],
         }

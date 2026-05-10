@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 WorkspaceRole = Literal["owner", "admin", "member"]
 
@@ -12,7 +12,7 @@ class WorkspaceMemberRoleUpdateRequest(BaseModel):
 
 
 class WorkspaceMemberResponse(BaseModel):
-    membership_id: int = Field(validation_alias="id")
+    membership_id: int = Field(validation_alias=AliasChoices("id", "membership_id"))
     workspace_id: UUID
     user_id: str
     role: WorkspaceRole

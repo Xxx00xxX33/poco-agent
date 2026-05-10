@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 class Workspace(Base, TimestampMixin):
     __tablename__ = "workspaces"
-    __table_args__ = (
-        UniqueConstraint("slug", name="uq_workspaces_slug"),
-    )
+    __table_args__ = (UniqueConstraint("slug", name="uq_workspaces_slug"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

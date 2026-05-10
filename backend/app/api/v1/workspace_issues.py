@@ -20,7 +20,9 @@ from app.schemas.workspace_issue import (
 from app.services.agent_assignment_service import AgentAssignmentService
 from app.services.workspace_issue_service import WorkspaceIssueService
 
-router = APIRouter(prefix="/workspace-boards/{board_id}/issues", tags=["workspace-issues"])
+router = APIRouter(
+    prefix="/workspace-boards/{board_id}/issues", tags=["workspace-issues"]
+)
 detail_router = APIRouter(prefix="/workspace-issues", tags=["workspace-issues"])
 
 service = WorkspaceIssueService()
@@ -34,7 +36,9 @@ async def list_workspace_issues(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     result = service.list_issues(db, current_user, board_id)
-    return Response.success(data=result, message="Workspace issues retrieved successfully")
+    return Response.success(
+        data=result, message="Workspace issues retrieved successfully"
+    )
 
 
 @router.post("", response_model=ResponseSchema[WorkspaceIssueResponse])
@@ -80,10 +84,14 @@ async def get_workspace_issue(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     result = service.get_issue(db, current_user, issue_id)
-    return Response.success(data=result, message="Workspace issue retrieved successfully")
+    return Response.success(
+        data=result, message="Workspace issue retrieved successfully"
+    )
 
 
-@detail_router.post("/{issue_id}/move", response_model=ResponseSchema[WorkspaceIssueResponse])
+@detail_router.post(
+    "/{issue_id}/move", response_model=ResponseSchema[WorkspaceIssueResponse]
+)
 async def move_workspace_issue(
     issue_id: uuid.UUID,
     request: WorkspaceIssueMoveRequest,
@@ -108,7 +116,9 @@ async def get_issue_agent_assignment(
         current_user=current_user,
         issue_id=issue_id,
     )
-    return Response.success(data=result, message="Agent assignment retrieved successfully")
+    return Response.success(
+        data=result, message="Agent assignment retrieved successfully"
+    )
 
 
 @detail_router.post(
@@ -125,7 +135,9 @@ async def trigger_issue_agent_assignment(
         current_user=current_user,
         issue_id=issue_id,
     )
-    return Response.success(data=result, message="Agent assignment triggered successfully")
+    return Response.success(
+        data=result, message="Agent assignment triggered successfully"
+    )
 
 
 @detail_router.post(
@@ -142,7 +154,9 @@ async def retry_issue_agent_assignment(
         current_user=current_user,
         issue_id=issue_id,
     )
-    return Response.success(data=result, message="Agent assignment retried successfully")
+    return Response.success(
+        data=result, message="Agent assignment retried successfully"
+    )
 
 
 @detail_router.post(
@@ -159,7 +173,9 @@ async def cancel_issue_agent_assignment(
         current_user=current_user,
         issue_id=issue_id,
     )
-    return Response.success(data=result, message="Agent assignment cancelled successfully")
+    return Response.success(
+        data=result, message="Agent assignment cancelled successfully"
+    )
 
 
 @detail_router.post(

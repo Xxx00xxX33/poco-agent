@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 TaskStatus = Literal["todo", "in_progress", "in_review", "done"]
 TaskPriority = Literal["low", "medium", "high", "urgent"]
@@ -54,7 +54,7 @@ class ServerChannelTaskClaimRequest(BaseModel):
 
 
 class ServerChannelTaskResponse(BaseModel):
-    task_id: UUID = Field(validation_alias="id")
+    task_id: UUID = Field(validation_alias=AliasChoices("id", "task_id"))
     server_id: UUID
     channel_id: UUID
     title: str

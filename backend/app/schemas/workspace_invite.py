@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from app.schemas.workspace_member import WorkspaceRole
 
 
@@ -20,7 +20,7 @@ class WorkspaceInviteRevokeRequest(BaseModel):
 
 
 class WorkspaceInviteResponse(BaseModel):
-    invite_id: UUID = Field(validation_alias="id")
+    invite_id: UUID = Field(validation_alias=AliasChoices("id", "invite_id"))
     workspace_id: UUID
     token: str
     role: WorkspaceRole

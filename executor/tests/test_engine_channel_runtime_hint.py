@@ -5,7 +5,9 @@ from app.schemas.request import TaskConfig
 
 
 class AgentExecutorChannelRuntimeHintTests(unittest.TestCase):
-    def test_compose_prompt_includes_message_and_collaboration_runtime_tools(self) -> None:
+    def test_compose_prompt_includes_message_and_collaboration_runtime_tools(
+        self,
+    ) -> None:
         executor = AgentExecutor.__new__(AgentExecutor)
 
         prompt = executor._compose_user_prompt(

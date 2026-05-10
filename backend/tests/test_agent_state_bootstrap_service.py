@@ -55,10 +55,14 @@ class AgentStateBootstrapServiceTests(unittest.TestCase):
                 base_dir=Path(temp_dir),
             )
 
-            profile_data = json.loads((root / "profile.json").read_text(encoding="utf-8"))
+            profile_data = json.loads(
+                (root / "profile.json").read_text(encoding="utf-8")
+            )
             self.assertEqual(profile_data["schema_version"], 1)
             self.assertEqual(profile_data["agent"]["handle"], "backend-specialist")
-            self.assertEqual(profile_data["agent"]["display_name"], "Backend Specialist")
+            self.assertEqual(
+                profile_data["agent"]["display_name"], "Backend Specialist"
+            )
             self.assertEqual(profile_data["preset"]["preset_id"], 7)
             self.assertEqual(profile_data["runtime"]["mode"], "persistent")
             self.assertEqual(profile_data["paths"]["memory"], "/agent_state/MEMORY.md")

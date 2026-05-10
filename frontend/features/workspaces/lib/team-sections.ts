@@ -1,9 +1,5 @@
 import type * as React from "react";
-import {
-  Building2,
-  Ticket,
-  Users,
-} from "lucide-react";
+import { Building2, Ticket, Users } from "lucide-react";
 
 export type TeamSectionId = "overview" | "members" | "issues";
 
@@ -14,13 +10,12 @@ export interface TeamSection {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-const TEAM_SECTION_IDS: TeamSectionId[] = [
-  "overview",
-  "members",
-  "issues",
-];
+const TEAM_SECTION_IDS: TeamSectionId[] = ["overview", "members", "issues"];
 
-const TEAM_SECTION_ICONS: Record<TeamSectionId, React.ComponentType<{ className?: string }>> = {
+const TEAM_SECTION_ICONS: Record<
+  TeamSectionId,
+  React.ComponentType<{ className?: string }>
+> = {
   overview: Building2,
   members: Users,
   issues: Ticket,
@@ -54,6 +49,8 @@ export function buildTeamSections(
   }));
 }
 
-export function getTeamSectionIcon(sectionId: TeamSectionId): React.ComponentType<{ className?: string }> {
+export function getTeamSectionIcon(
+  sectionId: TeamSectionId,
+): React.ComponentType<{ className?: string }> {
   return TEAM_SECTION_ICONS[sectionId];
 }

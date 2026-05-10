@@ -4,9 +4,7 @@ import * as React from "react";
 import { ArrowLeft, Files } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DocumentViewer,
-} from "@/features/chat/components/execution/file-panel/document-viewer";
+import { DocumentViewer } from "@/features/chat/components/execution/file-panel/document-viewer";
 import {
   FileSidebar,
   downloadFileFromUrl,
@@ -44,7 +42,9 @@ export function SharedArtifactsDrawer({
   fileListLayoutClassName?: string;
 }) {
   const { t } = useT("translation");
-  const [selectedFile, setSelectedFile] = React.useState<FileNode | undefined>();
+  const [selectedFile, setSelectedFile] = React.useState<
+    FileNode | undefined
+  >();
 
   React.useEffect(() => {
     const nextFile = findFirstFile(files) ?? undefined;

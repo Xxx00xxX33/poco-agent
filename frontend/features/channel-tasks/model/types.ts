@@ -1,8 +1,4 @@
-export type ChannelTaskStatus =
-  | "todo"
-  | "in_progress"
-  | "in_review"
-  | "done";
+export type ChannelTaskStatus = "todo" | "in_progress" | "in_review" | "done";
 
 export type ChannelTaskView = "list" | "board";
 

@@ -254,9 +254,7 @@ class WorkspaceIssueService:
             "assignee_user_id": args["request"].assignee_user_id,
             "assignee_preset_id": args["request"].assignee_preset_id,
             "assignee_type": (
-                "preset"
-                if args["request"].assignee_preset_id is not None
-                else "user"
+                "preset" if args["request"].assignee_preset_id is not None else "user"
             ),
         },
         condition=lambda args, _result: (

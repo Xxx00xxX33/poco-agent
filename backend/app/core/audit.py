@@ -77,7 +77,9 @@ def auditable(
                 return result
 
             current_user = bound_args.get("current_user")
-            actor_user_id = getattr(current_user, "id", None) or bound_args.get("user_id")
+            actor_user_id = getattr(current_user, "id", None) or bound_args.get(
+                "user_id"
+            )
             if not actor_user_id:
                 return result
 

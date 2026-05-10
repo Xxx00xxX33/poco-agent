@@ -15,7 +15,9 @@ class ActivityLogger:
     def __init__(self, audit_config: AuditConfig | None = None) -> None:
         self._audit_config = audit_config or AuditConfig()
 
-    def log_activity(self, db: Session, event: AuditEvent) -> ActivityLogResponse | None:
+    def log_activity(
+        self, db: Session, event: AuditEvent
+    ) -> ActivityLogResponse | None:
         if not self._audit_config.is_enabled(event.action):
             return None
 

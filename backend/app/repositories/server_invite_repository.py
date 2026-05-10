@@ -14,9 +14,7 @@ class ServerInviteRepository:
     @staticmethod
     def get_by_token(session_db: Session, token: str) -> ServerInvite | None:
         return (
-            session_db.query(ServerInvite)
-            .filter(ServerInvite.token == token)
-            .first()
+            session_db.query(ServerInvite).filter(ServerInvite.token == token).first()
         )
 
     @staticmethod
@@ -52,7 +50,5 @@ class ServerInviteRepository:
         invite_id: uuid.UUID,
     ) -> ServerInvite | None:
         return (
-            session_db.query(ServerInvite)
-            .filter(ServerInvite.id == invite_id)
-            .first()
+            session_db.query(ServerInvite).filter(ServerInvite.id == invite_id).first()
         )

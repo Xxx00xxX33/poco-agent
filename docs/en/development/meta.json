@@ -1,9 +1,4 @@
 {
   "title": "Development",
-  "pages": [
-    "commands",
-    "tech-stack",
-    "repository-structure",
-    "conventions"
-  ]
+  "pages": ["commands", "tech-stack", "repository-structure", "conventions"]
 }

@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from typing import Any, cast
 
 from app.core.engine import AgentExecutor
 from app.schemas.request import TaskConfig
@@ -38,7 +39,10 @@ class AgentExecutorChannelReactionTests(unittest.TestCase):
 
     def test_inject_channel_runtime_mcp_only_when_configured(self) -> None:
         executor = AgentExecutor.__new__(AgentExecutor)
-        executor.channel_runtime_mcp_server = SimpleNamespace(name="runtime-server")
+        executor.channel_runtime_mcp_server = cast(
+            Any,
+            SimpleNamespace(name="runtime-server"),
+        )
 
         injected = executor._inject_channel_runtime_mcp({})
 

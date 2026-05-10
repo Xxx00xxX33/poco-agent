@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { CheckCheck, ChevronRight, CircleDashed, LoaderCircle, Save } from "lucide-react";
+import {
+  CheckCheck,
+  ChevronRight,
+  CircleDashed,
+  LoaderCircle,
+  Save,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -48,11 +54,7 @@ function formatDateTime(value: string): string {
   }).format(date);
 }
 
-function ActivityItem({
-  message,
-}: {
-  message: ChannelTaskActivityMessage;
-}) {
+function ActivityItem({ message }: { message: ChannelTaskActivityMessage }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
@@ -85,7 +87,9 @@ export function ChannelTaskDetailDialog({
 }) {
   const { t } = useT("translation");
   const [task, setTask] = React.useState<ChannelTask | null>(null);
-  const [activity, setActivity] = React.useState<ChannelTaskActivityMessage[]>([]);
+  const [activity, setActivity] = React.useState<ChannelTaskActivityMessage[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [title, setTitle] = React.useState("");
@@ -97,7 +101,11 @@ export function ChannelTaskDetailDialog({
     }
     setIsLoading(true);
     try {
-      const nextTask = await channelTasksApi.getTask(serverId, channelId, taskId);
+      const nextTask = await channelTasksApi.getTask(
+        serverId,
+        channelId,
+        taskId,
+      );
       setTask(nextTask);
       setTitle(nextTask.title);
       setDescription(nextTask.description ?? "");
@@ -137,10 +145,15 @@ export function ChannelTaskDetailDialog({
     }
     setIsSaving(true);
     try {
-      const nextTask = await channelTasksApi.updateTask(serverId, channelId, taskId, {
-        title,
-        description,
-      });
+      const nextTask = await channelTasksApi.updateTask(
+        serverId,
+        channelId,
+        taskId,
+        {
+          title,
+          description,
+        },
+      );
       syncTask(nextTask);
       toast.success(t("channelTasks.toasts.updated"));
     } catch (error) {
@@ -207,7 +220,9 @@ export function ChannelTaskDetailDialog({
       <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t("channelTasks.detail.title")}</DialogTitle>
-          <DialogDescription>{t("channelTasks.detail.description")}</DialogDescription>
+          <DialogDescription>
+            {t("channelTasks.detail.description")}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading || !task ? (
@@ -229,7 +244,10 @@ export function ChannelTaskDetailDialog({
                       {t("channelTasks.detail.overviewDescription")}
                     </p>
                   </div>
-                  <Input value={title} onChange={(event) => setTitle(event.target.value)} />
+                  <Input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                  />
                   <Textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
@@ -237,7 +255,9 @@ export function ChannelTaskDetailDialog({
                     className="rounded-2xl border-border/60 bg-background/80 shadow-none"
                   />
                   <div className="flex flex-wrap gap-2">
-                    {(["todo", "in_progress", "in_review", "done"] as const).map((status) => (
+                    {(
+                      ["todo", "in_progress", "in_review", "done"] as const
+                    ).map((status) => (
                       <Button
                         key={status}
                         type="button"
@@ -252,7 +272,11 @@ export function ChannelTaskDetailDialog({
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" onClick={() => void handleSave()} disabled={isSaving}>
+                    <Button
+                      type="button"
+                      onClick={() => void handleSave()}
+                      disabled={isSaving}
+                    >
                       <Save className="size-4" />
                       {t("channelTasks.actions.save")}
                     </Button>

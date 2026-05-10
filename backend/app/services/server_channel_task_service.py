@@ -73,7 +73,9 @@ class ServerChannelTaskService:
 
     @staticmethod
     def _actor_label(current_user: User) -> str:
-        return current_user.display_name or current_user.primary_email or current_user.id
+        return (
+            current_user.display_name or current_user.primary_email or current_user.id
+        )
 
     def _build_actor_context(
         self,
@@ -438,8 +440,7 @@ class ServerChannelTaskService:
                 task=task,
                 event="task.status_changed",
                 text_preview=(
-                    f"{actor.actor_label} moved task to "
-                    f"{task.status.replace('_', ' ')}"
+                    f"{actor.actor_label} moved task to {task.status.replace('_', ' ')}"
                 ),
                 extra_content={
                     "from_status": previous_status,

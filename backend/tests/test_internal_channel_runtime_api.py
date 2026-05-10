@@ -39,7 +39,9 @@ class InternalChannelRuntimeApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         read_messages.assert_called_once()
         self.assertEqual(read_messages.call_args.kwargs["session_id"], session_id)
-        self.assertEqual(read_messages.call_args.kwargs["request"].message_ids, [message_id])
+        self.assertEqual(
+            read_messages.call_args.kwargs["request"].message_ids, [message_id]
+        )
 
     @patch("app.api.v1.internal_channel_runtime.runtime_service.list_agents")
     def test_list_agents_uses_session_scope(self, list_agents) -> None:
@@ -56,7 +58,9 @@ class InternalChannelRuntimeApiTests(unittest.TestCase):
         self.assertEqual(list_agents.call_args.kwargs["session_id"], session_id)
 
     @patch("app.api.v1.internal_channel_runtime.runtime_service.request_collaboration")
-    def test_request_collaboration_uses_session_scope(self, request_collaboration) -> None:
+    def test_request_collaboration_uses_session_scope(
+        self, request_collaboration
+    ) -> None:
         session_id = uuid.uuid4()
         target_agent_id = uuid.uuid4()
         request_collaboration.return_value = AgentChannelCollaborationResponse(
@@ -78,7 +82,9 @@ class InternalChannelRuntimeApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         request_collaboration.assert_called_once()
-        self.assertEqual(request_collaboration.call_args.kwargs["session_id"], session_id)
+        self.assertEqual(
+            request_collaboration.call_args.kwargs["session_id"], session_id
+        )
         self.assertEqual(
             request_collaboration.call_args.kwargs["request"].request_text,
             "Please review this.",

@@ -3,7 +3,10 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import type { TeamSection, TeamSectionId } from "@/features/workspaces/lib/team-sections";
+import type {
+  TeamSection,
+  TeamSectionId,
+} from "@/features/workspaces/lib/team-sections";
 
 interface TeamSectionRailProps {
   sections: TeamSection[];
@@ -67,9 +70,7 @@ export function TeamSectionRail({
 
       <nav className={verticalNavClassName}>
         {header ? (
-          <div className="mb-3 flex items-center gap-2 px-3">
-            {header}
-          </div>
+          <div className="mb-3 flex items-center gap-2 px-3">{header}</div>
         ) : null}
         <div className="space-y-1">
           {sections.map((section) => {

@@ -45,8 +45,12 @@ class AgentExecutorTriggerContextPromptTests(unittest.TestCase):
 
         self.assertIn("Channel trigger context:", prompt)
         self.assertIn("trigger_type: channel_mention", prompt)
-        self.assertIn("trigger_message_id: 00000000-0000-0000-0000-000000000004", prompt)
-        self.assertIn("thread_root_message_id: 00000000-0000-0000-0000-000000000005", prompt)
+        self.assertIn(
+            "trigger_message_id: 00000000-0000-0000-0000-000000000004", prompt
+        )
+        self.assertIn(
+            "thread_root_message_id: 00000000-0000-0000-0000-000000000005", prompt
+        )
         self.assertIn("target_agent_handle: reviewer", prompt)
         self.assertIn("source_actor: user Alice (user-1)", prompt)
         self.assertIn("Use read_channel_messages", prompt)

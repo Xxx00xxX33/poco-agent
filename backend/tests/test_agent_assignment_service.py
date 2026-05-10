@@ -62,7 +62,9 @@ class AgentAssignmentServiceTests(unittest.TestCase):
                 "app.services.agent_assignment_service.PresetRepository.get_visible_by_id",
                 return_value=preset,
             ),
-            patch.object(service, "_enqueue_run", return_value=MagicMock()) as enqueue_run,
+            patch.object(
+                service, "_enqueue_run", return_value=MagicMock()
+            ) as enqueue_run,
             patch.object(
                 service._prompt_builder,
                 "build_issue_prompt",
@@ -83,7 +85,9 @@ class AgentAssignmentServiceTests(unittest.TestCase):
         self.assertIsNotNone(assignment)
         self.assertEqual(assignment.trigger_mode, "persistent_sandbox")
         self.assertEqual(issue.status, "in_progress")
-        self.assertEqual(assignment.prompt, "Add rate limiting\n\nProtect every API endpoint.")
+        self.assertEqual(
+            assignment.prompt, "Add rate limiting\n\nProtect every API endpoint."
+        )
         enqueue_run.assert_called_once()
 
     def test_sync_callback_status_marks_issue_done(self) -> None:

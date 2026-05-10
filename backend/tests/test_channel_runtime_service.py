@@ -198,7 +198,9 @@ class ChannelRuntimeServiceTests(unittest.TestCase):
 
         self.assertIn("hop depth", str(context.exception))
 
-    def test_request_collaboration_enqueues_target_agent_with_trigger_context(self) -> None:
+    def test_request_collaboration_enqueues_target_agent_with_trigger_context(
+        self,
+    ) -> None:
         target_agent_id = uuid.uuid4()
         active_session_id = uuid.uuid4()
         target_agent = SimpleNamespace(
@@ -257,12 +259,18 @@ class ChannelRuntimeServiceTests(unittest.TestCase):
             )
 
         self.task_service.enqueue_task.assert_called_once()
-        _, owner_user_id, enqueue_request = self.task_service.enqueue_task.call_args.args
+        _, owner_user_id, enqueue_request = (
+            self.task_service.enqueue_task.call_args.args
+        )
         self.assertEqual(owner_user_id, "api-owner")
-        self.assertEqual(enqueue_request.prompt, "Please review the auth-specific part.")
+        self.assertEqual(
+            enqueue_request.prompt, "Please review the auth-specific part."
+        )
         self.assertEqual(enqueue_request.session_id, active_session_id)
         self.assertEqual(enqueue_request.config.trigger_type, "agent_collaboration")
-        self.assertEqual(enqueue_request.config.trigger_context.trigger_type, "agent_collaboration")
+        self.assertEqual(
+            enqueue_request.config.trigger_context.trigger_type, "agent_collaboration"
+        )
         self.assertEqual(result.status, "queued")
         create_placeholder.assert_called_once()
 

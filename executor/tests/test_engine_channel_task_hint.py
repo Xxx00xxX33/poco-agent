@@ -5,7 +5,9 @@ from app.schemas.request import TaskConfig
 
 
 class AgentExecutorChannelTaskHintTests(unittest.TestCase):
-    def test_compose_prompt_includes_channel_task_hint_for_channel_scoped_agent(self) -> None:
+    def test_compose_prompt_includes_channel_task_hint_for_channel_scoped_agent(
+        self,
+    ) -> None:
         executor = AgentExecutor.__new__(AgentExecutor)
 
         prompt = executor._compose_user_prompt(

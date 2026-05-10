@@ -48,7 +48,10 @@ export const presetsService = {
     );
   },
 
-  copyPreset: async (presetId: number, input: PresetCopyInput): Promise<Preset> => {
+  copyPreset: async (
+    presetId: number,
+    input: PresetCopyInput,
+  ): Promise<Preset> => {
     return apiClient.post<Preset>(API_ENDPOINTS.presetCopy(presetId), input);
   },
 

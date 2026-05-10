@@ -136,7 +136,9 @@ export function TeamBoardSettingsDialog({
                   {t("issues.actions.deleteBoard")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {t("issues.dialogs.deleteBoardDescription", { count: issueCount })}
+                  {t("issues.dialogs.deleteBoardDescription", {
+                    count: issueCount,
+                  })}
                 </p>
               </div>
               <Button
@@ -152,7 +154,11 @@ export function TeamBoardSettingsDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
               {t("common.cancel")}
             </Button>
             <Button
@@ -169,9 +175,13 @@ export function TeamBoardSettingsDialog({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("issues.dialogs.deleteBoardTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("issues.dialogs.deleteBoardTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("issues.dialogs.deleteBoardDescription", { count: issueCount })}
+              {t("issues.dialogs.deleteBoardDescription", {
+                count: issueCount,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

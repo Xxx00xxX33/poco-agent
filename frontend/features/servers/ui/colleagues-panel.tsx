@@ -113,7 +113,10 @@ export function ColleaguesPanel({
                                   onOpenActiveChannel(activeChannelId);
                                 }}
                                 onKeyDown={(event) => {
-                                  if (event.key === "Enter" || event.key === " ") {
+                                  if (
+                                    event.key === "Enter" ||
+                                    event.key === " "
+                                  ) {
                                     event.preventDefault();
                                     event.stopPropagation();
                                     onOpenActiveChannel(activeChannelId);

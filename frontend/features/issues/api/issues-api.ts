@@ -10,7 +10,9 @@ import type {
 
 export const issuesApi = {
   listBoards: async (workspaceId: string): Promise<WorkspaceBoard[]> => {
-    return apiClient.get<WorkspaceBoard[]>(API_ENDPOINTS.workspaceBoards(workspaceId));
+    return apiClient.get<WorkspaceBoard[]>(
+      API_ENDPOINTS.workspaceBoards(workspaceId),
+    );
   },
 
   createBoard: async (
@@ -44,7 +46,9 @@ export const issuesApi = {
   },
 
   listIssues: async (boardId: string): Promise<WorkspaceIssue[]> => {
-    return apiClient.get<WorkspaceIssue[]>(API_ENDPOINTS.workspaceIssues(boardId));
+    return apiClient.get<WorkspaceIssue[]>(
+      API_ENDPOINTS.workspaceIssues(boardId),
+    );
   },
 
   createIssue: async (
@@ -67,7 +71,9 @@ export const issuesApi = {
   },
 
   getIssue: async (issueId: string): Promise<WorkspaceIssue> => {
-    return apiClient.get<WorkspaceIssue>(API_ENDPOINTS.workspaceIssueDetail(issueId));
+    return apiClient.get<WorkspaceIssue>(
+      API_ENDPOINTS.workspaceIssueDetail(issueId),
+    );
   },
 
   updateIssue: async (

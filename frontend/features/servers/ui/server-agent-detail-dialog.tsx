@@ -1,6 +1,13 @@
 "use client";
 
-import { Clock3, Container, FolderKanban, FolderRoot, MemoryStick, Sparkles } from "lucide-react";
+import {
+  Clock3,
+  Container,
+  FolderKanban,
+  FolderRoot,
+  MemoryStick,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +56,8 @@ export function ServerAgentDetailDialog({
         <DialogHeader>
           <DialogTitle>{agent.displayName}</DialogTitle>
           <DialogDescription>
-            @{agent.handle} · {t("servers.agents.preset", { id: agent.presetId })}
+            @{agent.handle} ·{" "}
+            {t("servers.agents.preset", { id: agent.presetId })}
           </DialogDescription>
         </DialogHeader>
 
@@ -79,7 +87,8 @@ export function ServerAgentDetailDialog({
                   <span>{t("servers.agents.runtimeStatus")}</span>
                 </div>
                 <p className="mt-2 text-sm font-semibold text-foreground">
-                  {agent.persistentState?.runtimeStatus ?? t("servers.agents.unknown")}
+                  {agent.persistentState?.runtimeStatus ??
+                    t("servers.agents.unknown")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
@@ -133,7 +142,8 @@ export function ServerAgentDetailDialog({
                   <span>{t("servers.agents.stateRoot")}</span>
                 </div>
                 <p className="mt-2 break-all text-foreground">
-                  {agent.persistentState?.stateRootPath ?? t("servers.agents.emptyValue")}
+                  {agent.persistentState?.stateRootPath ??
+                    t("servers.agents.emptyValue")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
@@ -142,7 +152,8 @@ export function ServerAgentDetailDialog({
                   <span>{t("servers.agents.memoryFile")}</span>
                 </div>
                 <p className="mt-2 break-all text-foreground">
-                  {agent.persistentState?.memoryPath ?? t("servers.agents.emptyValue")}
+                  {agent.persistentState?.memoryPath ??
+                    t("servers.agents.emptyValue")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
@@ -151,7 +162,8 @@ export function ServerAgentDetailDialog({
                   <span>{t("servers.agents.activeTask")}</span>
                 </div>
                 <p className="mt-2 break-all text-foreground">
-                  {agent.persistentState?.activeTaskId ?? t("servers.agents.emptyValue")}
+                  {agent.persistentState?.activeTaskId ??
+                    t("servers.agents.emptyValue")}
                 </p>
               </div>
             </div>

@@ -152,10 +152,7 @@ class AuthService:
         auth_mode = getattr(settings, "auth_mode", "oauth_required")
         if auth_mode in {"disabled", "single_user"}:
             return True
-        return (
-            auth_mode == "oauth_optional"
-            and not self.get_configured_providers()
-        )
+        return auth_mode == "oauth_optional" and not self.get_configured_providers()
 
     def is_login_required(self) -> bool:
         return not self.is_single_user_mode_effective()
@@ -168,6 +165,8 @@ class AuthService:
         settings = self._get_settings()
         auth_mode = getattr(settings, "auth_mode", "oauth_required")
         mode = "single_user" if auth_mode == "disabled" else auth_mode
+        if mode not in {"oauth_required", "oauth_optional", "single_user"}:
+            mode = "oauth_required"
         return AuthConfigResponse(
             mode=mode,
             login_required=self.is_login_required(),

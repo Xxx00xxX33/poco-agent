@@ -7,6 +7,8 @@ from app.schemas.server_channel_task import (
     ServerChannelTaskCreateRequest,
     ServerChannelTaskResponse,
     ServerChannelTaskStatusUpdateRequest,
+    TaskPriority,
+    TaskStatus,
 )
 
 
@@ -25,14 +27,14 @@ class AgentChannelTaskContext(BaseModel):
 class AgentChannelTaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
-    priority: str | None = "medium"
-    status: str = "todo"
+    priority: TaskPriority | None = "medium"
+    status: TaskStatus = "todo"
     thread_root_message_id: UUID | None = None
 
 
 class AgentChannelTaskStatusRequest(BaseModel):
     task_id: UUID
-    status: str
+    status: TaskStatus
     position: int = Field(default=0, ge=0)
 
 

@@ -1,8 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class UserPublicProfileResponse(BaseModel):
-    user_id: str = Field(validation_alias="id")
+    user_id: str = Field(validation_alias=AliasChoices("id", "user_id"))
     display_name: str | None = None
     avatar_url: str | None = None
 

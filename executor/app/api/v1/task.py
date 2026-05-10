@@ -63,7 +63,9 @@ async def run_task(req: TaskRun, background_tasks: BackgroundTasks) -> dict:
     )
     channel_runtime_client = (
         ChannelRuntimeClient(base_url=base_url, session_id=req.session_id)
-        if req.config.server_id and req.config.channel_id and req.config.agent_identity_id
+        if req.config.server_id
+        and req.config.channel_id
+        and req.config.agent_identity_id
         else None
     )
     hooks: list[AgentHook] = [

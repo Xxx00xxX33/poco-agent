@@ -127,10 +127,8 @@ export function ColleagueDetail({
     React.useState(false);
   const [restartAgentConfirmOpen, setRestartAgentConfirmOpen] =
     React.useState(false);
-  const [stopAgentConfirmOpen, setStopAgentConfirmOpen] =
-    React.useState(false);
-  const [isEditingDescription, setIsEditingDescription] =
-    React.useState(false);
+  const [stopAgentConfirmOpen, setStopAgentConfirmOpen] = React.useState(false);
+  const [isEditingDescription, setIsEditingDescription] = React.useState(false);
   const [descriptionDraft, setDescriptionDraft] = React.useState("");
   const [isSavingDescription, setIsSavingDescription] = React.useState(false);
   const selectedAgentChannelNames = selectedAgent
@@ -391,12 +389,9 @@ export function ColleagueDetail({
                       <AlertDialogHeader>
                         <AlertDialogTitle>
                           {selectedAgentStopped
-                            ? t(
-                                "conversationView.colleagues.startAgentTitle",
-                                {
-                                  name: selectedAgent.displayName,
-                                },
-                              )
+                            ? t("conversationView.colleagues.startAgentTitle", {
+                                name: selectedAgent.displayName,
+                              })
                             : t(
                                 "conversationView.colleagues.restartAgentTitle",
                                 {
@@ -443,7 +438,9 @@ export function ColleagueDetail({
                           })}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t("conversationView.colleagues.stopAgentDescription")}
+                          {t(
+                            "conversationView.colleagues.stopAgentDescription",
+                          )}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -466,53 +463,53 @@ export function ColleagueDetail({
                       open={removeAgentConfirmOpen}
                       onOpenChange={setRemoveAgentConfirmOpen}
                     >
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setRemoveAgentConfirmOpen(true)}
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="size-4" />
-                      {t("conversationView.colleagues.remove")}
-                    </Button>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          {t("conversationView.colleagues.removeAgentTitle", {
-                            name: selectedAgent.displayName,
-                          })}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {selectedAgentChannelNames.length > 0
-                            ? t(
-                                "conversationView.colleagues.removeAgentDescription",
-                                {
-                                  channels: selectedAgentChannelNames
-                                    .slice(0, 3)
-                                    .join(", "),
-                                },
-                              )
-                            : t(
-                                "conversationView.colleagues.removeAgentDescriptionUnknown",
-                              )}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>
-                          {t("common.cancel")}
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => {
-                            onRemoveAgentFromServer(selectedAgent.id);
-                            setRemoveAgentConfirmOpen(false);
-                          }}
-                        >
-                          {t("conversationView.colleagues.remove")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRemoveAgentConfirmOpen(true)}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                        {t("conversationView.colleagues.remove")}
+                      </Button>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {t("conversationView.colleagues.removeAgentTitle", {
+                              name: selectedAgent.displayName,
+                            })}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {selectedAgentChannelNames.length > 0
+                              ? t(
+                                  "conversationView.colleagues.removeAgentDescription",
+                                  {
+                                    channels: selectedAgentChannelNames
+                                      .slice(0, 3)
+                                      .join(", "),
+                                  },
+                                )
+                              : t(
+                                  "conversationView.colleagues.removeAgentDescriptionUnknown",
+                                )}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            {t("common.cancel")}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                              onRemoveAgentFromServer(selectedAgent.id);
+                              setRemoveAgentConfirmOpen(false);
+                            }}
+                          >
+                            {t("conversationView.colleagues.remove")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
                     </AlertDialog>
                   ) : null}
                 </>

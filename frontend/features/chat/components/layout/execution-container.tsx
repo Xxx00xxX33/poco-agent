@@ -132,8 +132,9 @@ export function ExecutionContainer({
     return "computer";
   }, [showArtifactsTab, showComputerTab]);
   const [rightTab, setRightTab] = React.useState<string>(defaultRightTab);
-  const [isRightPanelCollapsed, setIsRightPanelCollapsed] =
-    React.useState(defaultRightPanelCollapsed);
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = React.useState(
+    defaultRightPanelCollapsed,
+  );
   const effectiveRightPanelCollapsed = isRightPanelCollapsed || !showFilePanel;
   const didManualSwitchRef = React.useRef(false);
   const prevDefaultRef = React.useRef<string>(defaultRightTab);

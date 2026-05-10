@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from app.schemas.user_profile import UserPublicProfileResponse
 
@@ -14,7 +14,7 @@ class ServerMemberRoleUpdateRequest(BaseModel):
 
 
 class ServerMemberResponse(BaseModel):
-    membership_id: int = Field(validation_alias="id")
+    membership_id: int = Field(validation_alias=AliasChoices("id", "membership_id"))
     server_id: UUID
     user_id: str
     user: UserPublicProfileResponse | None = None

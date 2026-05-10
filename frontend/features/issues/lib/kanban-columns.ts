@@ -1,7 +1,4 @@
-import type {
-  WorkspaceIssue,
-  WorkspaceIssueStatus,
-} from "../model/types.ts";
+import type { WorkspaceIssue, WorkspaceIssueStatus } from "../model/types.ts";
 
 export const KANBAN_COLUMN_ORDER: WorkspaceIssueStatus[] = [
   "todo",
@@ -73,9 +70,7 @@ export function moveKanbanIssue(
     return issues;
   }
 
-  const grouped = groupIssuesByStatus(
-    issues.map((issue) => ({ ...issue })),
-  );
+  const grouped = groupIssuesByStatus(issues.map((issue) => ({ ...issue })));
   const sourceColumn = grouped.get(sourceIssue.status);
   const targetColumn = grouped.get(move.status);
   if (!sourceColumn || !targetColumn) {

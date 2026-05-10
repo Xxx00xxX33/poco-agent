@@ -6,5 +6,7 @@ export default async function ServerChannelPage({
   params: Promise<{ serverId: string; channelId: string }>;
 }) {
   const { serverId, channelId } = await params;
-  return <ServerConversationPageClient serverId={serverId} channelId={channelId} />;
+  return (
+    <ServerConversationPageClient serverId={serverId} channelId={channelId} />
+  );
 }

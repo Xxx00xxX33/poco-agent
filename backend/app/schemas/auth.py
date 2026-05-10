@@ -16,6 +16,7 @@ class CurrentUserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+
 class AuthProviderStatus(BaseModel):
     name: AuthProviderName
     enabled: bool

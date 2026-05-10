@@ -22,7 +22,11 @@ class WorkspaceIssueRepository:
 
     @staticmethod
     def get_by_id(session_db: Session, issue_id: uuid.UUID) -> WorkspaceIssue | None:
-        return session_db.query(WorkspaceIssue).filter(WorkspaceIssue.id == issue_id).first()
+        return (
+            session_db.query(WorkspaceIssue)
+            .filter(WorkspaceIssue.id == issue_id)
+            .first()
+        )
 
     @staticmethod
     def list_by_board(
@@ -55,10 +59,8 @@ class WorkspaceIssueRepository:
         )
         if exclude_issue_id is not None:
             query = query.filter(WorkspaceIssue.id != exclude_issue_id)
-        return (
-            query.order_by(
-                WorkspaceIssue.position.asc(),
-                WorkspaceIssue.updated_at.desc(),
-                WorkspaceIssue.created_at.desc(),
-            ).all()
-        )
+        return query.order_by(
+            WorkspaceIssue.position.asc(),
+            WorkspaceIssue.updated_at.desc(),
+            WorkspaceIssue.created_at.desc(),
+        ).all()

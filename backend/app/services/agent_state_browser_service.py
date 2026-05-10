@@ -58,7 +58,13 @@ class AgentStateBrowserService:
             agent_identity_id=agent_identity_id,
             current_user_id=current_user_id,
         )
-        root_relative = Path(agent.persistent_state.state_root_path)
+        persistent_state = agent.persistent_state
+        if persistent_state is None:
+            raise AppException(
+                error_code=ErrorCode.NOT_FOUND,
+                message="Agent persistent state is not initialized",
+            )
+        root_relative = Path(persistent_state.state_root_path)
         root_path = (self.BASE_DIR / root_relative).resolve(strict=False)
         counter = {"count": 0}
         return [
@@ -95,9 +101,15 @@ class AgentStateBrowserService:
             agent_identity_id=agent_identity_id,
             current_user_id=current_user_id,
         )
-        root_path = (
-            self.BASE_DIR / Path(agent.persistent_state.state_root_path)
-        ).resolve(strict=False)
+        persistent_state = agent.persistent_state
+        if persistent_state is None:
+            raise AppException(
+                error_code=ErrorCode.NOT_FOUND,
+                message="Agent persistent state is not initialized",
+            )
+        root_path = (self.BASE_DIR / Path(persistent_state.state_root_path)).resolve(
+            strict=False
+        )
         target = self._resolve_candidate(
             root_path=root_path,
             agent_identity_id=agent_identity_id,

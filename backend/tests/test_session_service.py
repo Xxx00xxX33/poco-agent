@@ -15,7 +15,9 @@ class SessionServiceCancellationProjectionTests(unittest.TestCase):
         self.session_id = uuid.uuid4()
         self.channel_id = uuid.uuid4()
 
-    def test_sync_channel_execution_cancellation_marks_placeholder_canceled(self) -> None:
+    def test_sync_channel_execution_cancellation_marks_placeholder_canceled(
+        self,
+    ) -> None:
         placeholder = ServerChannelMessage(
             id=uuid.uuid4(),
             channel_id=self.channel_id,
@@ -51,7 +53,9 @@ class SessionServiceCancellationProjectionTests(unittest.TestCase):
         self.assertEqual(placeholder.content["summary"], "Execution canceled.")
         self.assertEqual(placeholder.text_preview, "Execution canceled.")
 
-    def test_sync_channel_execution_cancellation_rewrites_agent_session_projection(self) -> None:
+    def test_sync_channel_execution_cancellation_rewrites_agent_session_projection(
+        self,
+    ) -> None:
         projection = ServerChannelMessage(
             id=uuid.uuid4(),
             channel_id=self.channel_id,
@@ -89,7 +93,9 @@ class SessionServiceCancellationProjectionTests(unittest.TestCase):
         self.assertEqual(projection.content["agent_handle"], "coworker")
         self.assertEqual(projection.content["summary"], "Execution canceled.")
 
-    def test_sync_channel_execution_cancellation_updates_all_open_projections_for_session(self) -> None:
+    def test_sync_channel_execution_cancellation_updates_all_open_projections_for_session(
+        self,
+    ) -> None:
         first_projection = ServerChannelMessage(
             id=uuid.uuid4(),
             channel_id=self.channel_id,
@@ -142,7 +148,9 @@ class SessionServiceCancellationProjectionTests(unittest.TestCase):
             self.assertEqual(projection.content["summary"], "Execution canceled.")
             self.assertEqual(projection.text_preview, "Execution canceled.")
 
-    def test_release_agent_runtime_on_cancellation_releases_persistent_session(self) -> None:
+    def test_release_agent_runtime_on_cancellation_releases_persistent_session(
+        self,
+    ) -> None:
         db_session = SimpleNamespace(
             id=self.session_id,
             config_snapshot={

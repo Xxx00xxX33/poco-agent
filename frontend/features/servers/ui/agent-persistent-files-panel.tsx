@@ -40,7 +40,9 @@ export function AgentPersistentFilesPanel({
   fileListLayoutClassName?: string;
 }) {
   const { t } = useT("translation");
-  const [selectedFile, setSelectedFile] = React.useState<FileNode | undefined>();
+  const [selectedFile, setSelectedFile] = React.useState<
+    FileNode | undefined
+  >();
 
   React.useEffect(() => {
     const nextFile = findFirstFile(files) ?? undefined;

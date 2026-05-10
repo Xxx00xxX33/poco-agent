@@ -95,9 +95,9 @@ function isServerScopedSession(session: SessionResponse): boolean {
 
   return Boolean(
     serverId ||
-      channelId ||
-      triggerType === "channel_mention" ||
-      triggerType === "agent_dm",
+    channelId ||
+    triggerType === "channel_mention" ||
+    triggerType === "agent_dm",
   );
 }
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class ServerCreateRequest(BaseModel):
@@ -13,7 +13,7 @@ class ServerOwnershipTransferRequest(BaseModel):
 
 
 class ServerResponse(BaseModel):
-    server_id: UUID = Field(validation_alias="id")
+    server_id: UUID = Field(validation_alias=AliasChoices("id", "server_id"))
     name: str
     slug: str
     kind: str

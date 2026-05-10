@@ -16,7 +16,9 @@ from app.schemas.workspace_invite import (
 from app.schemas.workspace_member import WorkspaceMemberResponse
 from app.services.workspace_invite_service import WorkspaceInviteService
 
-router = APIRouter(prefix="/workspaces/{workspace_id}/invites", tags=["workspace-invites"])
+router = APIRouter(
+    prefix="/workspaces/{workspace_id}/invites", tags=["workspace-invites"]
+)
 accept_router = APIRouter(prefix="/workspace-invites", tags=["workspace-invites"])
 
 service = WorkspaceInviteService()
@@ -43,7 +45,9 @@ async def create_workspace_invite(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     result = service.create_invite(db, current_user, workspace_id, request)
-    return Response.success(data=result, message="Workspace invite created successfully")
+    return Response.success(
+        data=result, message="Workspace invite created successfully"
+    )
 
 
 @router.post(

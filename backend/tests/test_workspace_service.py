@@ -394,6 +394,7 @@ class WorkspaceInviteServiceTests(unittest.TestCase):
                 "app.services.workspace_invite_service.WorkspaceInviteRepository.create"
             ) as create_invite,
         ):
+
             def build_invite(_db, invite):
                 invite.id = uuid.uuid4()
                 invite.created_at = datetime.now(UTC)
@@ -446,6 +447,7 @@ class WorkspaceInviteServiceTests(unittest.TestCase):
                 "app.services.workspace_invite_service.WorkspaceMemberRepository.create"
             ) as create_membership,
         ):
+
             def build_membership(_db, membership):
                 now = datetime.now(UTC)
                 membership.id = 1

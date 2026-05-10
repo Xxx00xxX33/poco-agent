@@ -146,7 +146,7 @@ class SessionService:
     @classmethod
     def _set_cancellation_scope(
         cls,
-        db_session: AgentSession,
+        db_session: Any,
         scope: str,
     ) -> None:
         config_snapshot = dict(db_session.config_snapshot or {})
@@ -186,7 +186,7 @@ class SessionService:
     def _sync_channel_execution_cancellation(
         db: Session,
         *,
-        db_session: AgentSession,
+        db_session: Any,
         execution_status: str,
         projection_message_id: uuid.UUID | None = None,
         run_id: uuid.UUID | None = None,
@@ -204,13 +204,15 @@ class SessionService:
             return
 
         projections = []
-        exact_projection = ServerChannelMessageRepository.find_session_projection_by_run(
-            db,
-            channel_id=channel_id,
-            session_id=db_session.id,
-            projection_message_id=projection_message_id,
-            run_id=run_id,
-            queue_item_id=queue_item_id,
+        exact_projection = (
+            ServerChannelMessageRepository.find_session_projection_by_run(
+                db,
+                channel_id=channel_id,
+                session_id=db_session.id,
+                projection_message_id=projection_message_id,
+                run_id=run_id,
+                queue_item_id=queue_item_id,
+            )
         )
         if exact_projection is not None:
             projections = [exact_projection]
@@ -247,7 +249,7 @@ class SessionService:
     def _release_agent_runtime_on_cancellation(
         db: Session,
         *,
-        db_session: AgentSession,
+        db_session: Any,
         callback_status: str,
     ) -> None:
         config_snapshot = db_session.config_snapshot or {}
@@ -854,7 +856,9 @@ class SessionService:
 
         promoted_run = None
         if cancellation_scope == self.CANCELLATION_SCOPE_CURRENT_RUN:
-            promoted_run = SessionQueueService().promote_next_if_available(db, db_session)
+            promoted_run = SessionQueueService().promote_next_if_available(
+                db, db_session
+            )
             if promoted_run is not None:
                 db_session.status = "pending"
             else:

@@ -207,13 +207,26 @@ export const API_ENDPOINTS = {
     `/servers/${serverId}/channels/${channelId}/tasks`,
   serverChannelTask: (serverId: string, channelId: string, taskId: string) =>
     `/servers/${serverId}/channels/${channelId}/tasks/${taskId}`,
-  serverChannelTaskStatus: (serverId: string, channelId: string, taskId: string) =>
-    `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/status`,
-  serverChannelTaskClaim: (serverId: string, channelId: string, taskId: string) =>
-    `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/claim`,
-  serverChannelTaskUnclaim: (serverId: string, channelId: string, taskId: string) =>
-    `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/unclaim`,
-  serverChannelThread: (serverId: string, channelId: string, threadRootMessageId: string) =>
+  serverChannelTaskStatus: (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ) => `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/status`,
+  serverChannelTaskClaim: (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ) => `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/claim`,
+  serverChannelTaskUnclaim: (
+    serverId: string,
+    channelId: string,
+    taskId: string,
+  ) => `/servers/${serverId}/channels/${channelId}/tasks/${taskId}/unclaim`,
+  serverChannelThread: (
+    serverId: string,
+    channelId: string,
+    threadRootMessageId: string,
+  ) =>
     `/servers/${serverId}/channels/${channelId}/threads/${threadRootMessageId}`,
 
   // Workspaces
@@ -233,8 +246,7 @@ export const API_ENDPOINTS = {
     `/workspaces/${workspaceId}/invites/${inviteId}/revoke`,
   workspaceActivity: (workspaceId: string) =>
     `/workspaces/${workspaceId}/activity`,
-  workspaceBoards: (workspaceId: string) =>
-    `/workspaces/${workspaceId}/boards`,
+  workspaceBoards: (workspaceId: string) => `/workspaces/${workspaceId}/boards`,
   workspaceBoard: (workspaceId: string, boardId: string) =>
     `/workspaces/${workspaceId}/boards/${boardId}`,
   workspaceIssues: (boardId: string) => `/workspace-boards/${boardId}/issues`,

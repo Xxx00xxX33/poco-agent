@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class WorkspaceCreateRequest(BaseModel):
@@ -13,7 +13,7 @@ class WorkspaceOwnershipTransferRequest(BaseModel):
 
 
 class WorkspaceResponse(BaseModel):
-    workspace_id: UUID = Field(validation_alias="id")
+    workspace_id: UUID = Field(validation_alias=AliasChoices("id", "workspace_id"))
     name: str
     slug: str
     kind: str

@@ -11,13 +11,14 @@ function toggleReactionGroups(
   currentUser?: ServerUserPublicProfile | null,
 ): ServerConversationMessageReactionGroup[] {
   const existing = groups.find((group) => group.emoji === emoji);
-  const currentActor: ServerConversationMessageReactionActor | null = currentUser
-    ? {
-        actorType: "user",
-        userId: currentUser.userId,
-        user: currentUser,
-      }
-    : null;
+  const currentActor: ServerConversationMessageReactionActor | null =
+    currentUser
+      ? {
+          actorType: "user",
+          userId: currentUser.userId,
+          user: currentUser,
+        }
+      : null;
   if (!existing) {
     return [
       ...groups,
@@ -60,7 +61,8 @@ function toggleReactionGroups(
             currentActor &&
             !group.actors.some(
               (actor) =>
-                actor.actorType === "user" && actor.userId === currentUser?.userId,
+                actor.actorType === "user" &&
+                actor.userId === currentUser?.userId,
             )
               ? [...group.actors, currentActor]
               : group.actors,
@@ -76,7 +78,11 @@ export function toggleMessageReaction(
 ): ServerConversationMessage {
   return {
     ...message,
-    reactions: toggleReactionGroups(message.reactions ?? [], emoji, currentUser),
+    reactions: toggleReactionGroups(
+      message.reactions ?? [],
+      emoji,
+      currentUser,
+    ),
   };
 }
 

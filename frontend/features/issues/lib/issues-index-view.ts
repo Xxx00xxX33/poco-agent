@@ -60,7 +60,9 @@ export function buildBoardLanes(
     const boardIssues = issues
       .filter((issue) => issue.board_id === board.board_id)
       .sort(sortIssues);
-    const pendingIssues = boardIssues.filter((issue) => !isCompletedIssue(issue));
+    const pendingIssues = boardIssues.filter(
+      (issue) => !isCompletedIssue(issue),
+    );
     const completedIssues = boardIssues.filter(isCompletedIssue);
 
     const pendingSections = BOARD_PRIORITY_ORDER.map((priority) => ({

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from app.schemas.server_channel_message_reaction import (
     ServerChannelMessageReactionGroupResponse,
@@ -21,7 +21,7 @@ class ServerChannelMessageCreateRequest(BaseModel):
 
 
 class ServerChannelMessageResponse(BaseModel):
-    message_id: UUID = Field(validation_alias="id")
+    message_id: UUID = Field(validation_alias=AliasChoices("id", "message_id"))
     channel_id: UUID
     author_user_id: str | None
     author_user: UserPublicProfileResponse | None = None

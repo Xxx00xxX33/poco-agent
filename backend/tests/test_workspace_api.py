@@ -104,7 +104,9 @@ class WorkspaceApiTests(unittest.TestCase):
         list_workspaces.assert_called_once()
 
     @patch("app.api.v1.workspace_invites.service.accept_invite")
-    def test_accept_workspace_invite_returns_member_payload(self, accept_invite) -> None:
+    def test_accept_workspace_invite_returns_member_payload(
+        self, accept_invite
+    ) -> None:
         workspace_id = uuid.uuid4()
         accept_invite.return_value = build_member_response(workspace_id)
 
@@ -121,7 +123,9 @@ class WorkspaceApiTests(unittest.TestCase):
         accept_invite.assert_called_once()
 
     @patch("app.api.v1.workspace_invites.service.create_invite")
-    def test_create_workspace_invite_returns_invite_payload(self, create_invite) -> None:
+    def test_create_workspace_invite_returns_invite_payload(
+        self, create_invite
+    ) -> None:
         workspace_id = uuid.uuid4()
         invite = build_invite_response(workspace_id)
         create_invite.return_value = invite
@@ -233,7 +237,9 @@ class WorkspaceApiTests(unittest.TestCase):
         list_workspace_activity.assert_called_once()
 
     @patch("app.api.v1.workspace_invites.service.revoke_invite")
-    def test_revoke_workspace_invite_returns_invite_payload(self, revoke_invite) -> None:
+    def test_revoke_workspace_invite_returns_invite_payload(
+        self, revoke_invite
+    ) -> None:
         workspace_id = uuid.uuid4()
         invite = build_invite_response(workspace_id)
         revoke_invite.return_value = invite

@@ -13,7 +13,11 @@ class WorkspaceBoardRepository:
 
     @staticmethod
     def get_by_id(session_db: Session, board_id: uuid.UUID) -> WorkspaceBoard | None:
-        return session_db.query(WorkspaceBoard).filter(WorkspaceBoard.id == board_id).first()
+        return (
+            session_db.query(WorkspaceBoard)
+            .filter(WorkspaceBoard.id == board_id)
+            .first()
+        )
 
     @staticmethod
     def list_by_workspace(

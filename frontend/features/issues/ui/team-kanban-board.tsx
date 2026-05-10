@@ -5,7 +5,10 @@ import { ChevronDown } from "lucide-react";
 
 import type { Preset } from "@/features/capabilities/presets/lib/preset-types";
 import { buildBoardLanes } from "@/features/issues/lib/issues-index-view";
-import type { WorkspaceBoard, WorkspaceIssue } from "@/features/issues/model/types";
+import type {
+  WorkspaceBoard,
+  WorkspaceIssue,
+} from "@/features/issues/model/types";
 import { useT } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +28,7 @@ function resolvePreset(
   presetMap: Map<number, Preset>,
 ): Preset | null {
   return issue.assignee_preset_id
-    ? presetMap.get(issue.assignee_preset_id) ?? null
+    ? (presetMap.get(issue.assignee_preset_id) ?? null)
     : null;
 }
 
@@ -59,8 +62,12 @@ export function TeamKanbanBoard({
   pendingIssueId,
 }: TeamKanbanBoardProps) {
   const { t } = useT("translation");
-  const lanes = React.useMemo(() => buildBoardLanes(boards, issues), [boards, issues]);
-  const lane = lanes.find((l) => l.board.board_id === selectedBoardId) ?? lanes[0];
+  const lanes = React.useMemo(
+    () => buildBoardLanes(boards, issues),
+    [boards, issues],
+  );
+  const lane =
+    lanes.find((l) => l.board.board_id === selectedBoardId) ?? lanes[0];
 
   if (!lane) {
     return null;
@@ -68,7 +75,8 @@ export function TeamKanbanBoard({
 
   return (
     <div className="space-y-4">
-      {lane.pendingSections.length === 0 && lane.completedIssues.length === 0 ? (
+      {lane.pendingSections.length === 0 &&
+      lane.completedIssues.length === 0 ? (
         <div className="flex min-h-48 items-center justify-center rounded-[28px] border border-dashed border-border/70 bg-card px-6 py-12 text-center">
           <div className="space-y-1.5">
             <p className="text-sm font-medium text-foreground">

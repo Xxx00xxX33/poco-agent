@@ -15,7 +15,9 @@ if TYPE_CHECKING:
 class AgentIdentity(Base, TimestampMixin):
     __tablename__ = "agent_identities"
     __table_args__ = (
-        UniqueConstraint("server_id", "handle", name="uq_agent_identities_server_handle"),
+        UniqueConstraint(
+            "server_id", "handle", name="uq_agent_identities_server_handle"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

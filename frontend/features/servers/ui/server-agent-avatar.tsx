@@ -41,7 +41,9 @@ export function ServerAgentAvatar({
 
   return (
     <Avatar className={cn("rounded-md border border-border", className)}>
-      {avatarUrl ? <AvatarImage src={avatarUrl} alt={agent.displayName} /> : null}
+      {avatarUrl ? (
+        <AvatarImage src={avatarUrl} alt={agent.displayName} />
+      ) : null}
       <AvatarFallback
         className={cn(
           "rounded-md bg-muted text-xs font-semibold text-foreground",

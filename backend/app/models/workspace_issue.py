@@ -57,8 +57,12 @@ class WorkspaceIssue(Base, TimestampMixin):
         server_default=text("'medium'"),
         index=True,
     )
-    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    assignee_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    due_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    assignee_user_id: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
     assignee_preset_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("presets.id", ondelete="SET NULL"),
@@ -71,7 +75,9 @@ class WorkspaceIssue(Base, TimestampMixin):
         nullable=True,
         index=True,
     )
-    creator_user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    creator_user_id: Mapped[str] = mapped_column(
+        String(255), nullable=False, index=True
+    )
     updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     board: Mapped["WorkspaceBoard"] = relationship(back_populates="issues")

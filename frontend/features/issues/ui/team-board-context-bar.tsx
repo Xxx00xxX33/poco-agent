@@ -37,7 +37,9 @@ export function TeamBoardContextBar({
 }: TeamBoardContextBarProps) {
   const { t } = useT("translation");
   const boardColor = selectedBoard
-    ? LANE_COLORS[Math.abs(hashCode(selectedBoard.board_id)) % LANE_COLORS.length]
+    ? LANE_COLORS[
+        Math.abs(hashCode(selectedBoard.board_id)) % LANE_COLORS.length
+      ]
     : undefined;
 
   return (
@@ -71,7 +73,9 @@ export function TeamBoardContextBar({
               <DropdownMenuContent align="start">
                 {boards.map((board) => {
                   const color =
-                    LANE_COLORS[Math.abs(hashCode(board.board_id)) % LANE_COLORS.length];
+                    LANE_COLORS[
+                      Math.abs(hashCode(board.board_id)) % LANE_COLORS.length
+                    ];
                   const isActive = selectedBoard?.board_id === board.board_id;
                   return (
                     <DropdownMenuItem

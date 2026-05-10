@@ -87,7 +87,10 @@ function mapActivityMessage(
 }
 
 export const channelTasksApi = {
-  listTasks: async (serverId: string, channelId: string): Promise<ChannelTask[]> => {
+  listTasks: async (
+    serverId: string,
+    channelId: string,
+  ): Promise<ChannelTask[]> => {
     const tasks = await apiClient.get<ChannelTaskResponse[]>(
       API_ENDPOINTS.serverChannelTasks(serverId, channelId),
     );
@@ -173,7 +176,11 @@ export const channelTasksApi = {
     threadRootMessageId: string,
   ): Promise<ChannelTaskActivityMessage[]> => {
     const thread = await apiClient.get<ChannelTaskThreadResponse>(
-      API_ENDPOINTS.serverChannelThread(serverId, channelId, threadRootMessageId),
+      API_ENDPOINTS.serverChannelThread(
+        serverId,
+        channelId,
+        threadRootMessageId,
+      ),
     );
     return [thread.root, ...thread.replies].map(mapActivityMessage);
   },

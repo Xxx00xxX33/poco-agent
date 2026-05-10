@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from app.schemas.server_member import ServerRole
 
@@ -21,7 +21,7 @@ class ServerInviteRevokeRequest(BaseModel):
 
 
 class ServerInviteResponse(BaseModel):
-    invite_id: UUID = Field(validation_alias="id")
+    invite_id: UUID = Field(validation_alias=AliasChoices("id", "invite_id"))
     server_id: UUID
     token: str
     role: ServerRole

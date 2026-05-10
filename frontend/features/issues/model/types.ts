@@ -1,8 +1,4 @@
-export type WorkspaceIssueStatus =
-  | "todo"
-  | "in_progress"
-  | "done"
-  | "canceled";
+export type WorkspaceIssueStatus = "todo" | "in_progress" | "done" | "canceled";
 
 export interface WorkspaceBoardInput {
   name: string;

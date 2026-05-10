@@ -78,11 +78,7 @@ function formatDateTime(value: string): string {
   }).format(date);
 }
 
-function WorkspaceMembersPreview({
-  members,
-}: {
-  members: WorkspaceMember[];
-}) {
+function WorkspaceMembersPreview({ members }: { members: WorkspaceMember[] }) {
   const { t } = useT("translation");
 
   if (members.length === 0) {
@@ -241,7 +237,10 @@ function CreateInviteDialog({
             {t("workspaces.invites.createDescription")}
           </DialogDescription>
         </DialogHeader>
-        <Select value={role} onValueChange={(value) => setRole(value as WorkspaceRole)}>
+        <Select
+          value={role}
+          onValueChange={(value) => setRole(value as WorkspaceRole)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -254,7 +253,11 @@ function CreateInviteDialog({
           </SelectContent>
         </Select>
         <DialogFooter>
-          <Button type="button" onClick={() => void handleCreate()} disabled={isSaving}>
+          <Button
+            type="button"
+            onClick={() => void handleCreate()}
+            disabled={isSaving}
+          >
             <Ticket className="size-4" />
             {t("workspaces.invites.createAction")}
           </Button>
@@ -395,7 +398,9 @@ export function TeamPageClient() {
           <Card className="border-border/60 shadow-none">
             <CardHeader>
               <CardTitle>{t("workspaces.members.title")}</CardTitle>
-              <CardDescription>{t("workspaces.members.description")}</CardDescription>
+              <CardDescription>
+                {t("workspaces.members.description")}
+              </CardDescription>
             </CardHeader>
             <CardContent className="pb-6">
               <WorkspaceMembersPreview members={members} />
@@ -470,7 +475,10 @@ export function TeamPageClient() {
                       {t("pagination.previous")}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {t("pagination.pageOf", { current: activityPage, total: activityTotalPages })}
+                      {t("pagination.pageOf", {
+                        current: activityPage,
+                        total: activityTotalPages,
+                      })}
                     </span>
                     <Button
                       type="button"
@@ -574,7 +582,9 @@ export function TeamMembersPageClient() {
         <CardHeader className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <CardTitle>{t("workspaces.members.title")}</CardTitle>
-            <CardDescription>{t("workspaces.members.description")}</CardDescription>
+            <CardDescription>
+              {t("workspaces.members.description")}
+            </CardDescription>
           </div>
           <Button
             type="button"
@@ -611,14 +621,18 @@ export function TeamMembersPageClient() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{member.userId}</p>
+                  <p className="truncate text-sm font-medium">
+                    {member.userId}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {t("workspaces.members.joinedAt", {
                       date: formatDateTime(member.joinedAt),
                     })}
                   </p>
                 </div>
-                <Badge variant={member.role === "owner" ? "default" : "outline"}>
+                <Badge
+                  variant={member.role === "owner" ? "default" : "outline"}
+                >
                   <Shield className="size-3" />
                   {formatWorkspaceRole(t, member.role)}
                 </Badge>
@@ -652,7 +666,9 @@ export function TeamMembersPageClient() {
               onClick={() => void refreshInvites()}
               disabled={invitesLoading}
             >
-              <RefreshCw className={cn("size-4", invitesLoading && "animate-spin")} />
+              <RefreshCw
+                className={cn("size-4", invitesLoading && "animate-spin")}
+              />
               {t("workspaces.refresh")}
             </Button>
             <div className="flex items-center gap-2">

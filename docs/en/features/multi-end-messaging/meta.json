@@ -1,10 +1,4 @@
 {
   "title": "Interaction Rebuild: Multi-end and Messaging",
-  "pages": [
-    "mobile",
-    "im",
-    "self-hosted",
-    "cloud-subscription",
-    "multilingual"
-  ]
+  "pages": ["mobile", "im", "self-hosted", "cloud-subscription", "multilingual"]
 }

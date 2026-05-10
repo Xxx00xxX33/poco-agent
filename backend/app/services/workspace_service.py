@@ -75,7 +75,9 @@ class WorkspaceService:
         db.refresh(workspace)
         return workspace
 
-    def list_workspaces(self, db: Session, current_user: User) -> list[WorkspaceResponse]:
+    def list_workspaces(
+        self, db: Session, current_user: User
+    ) -> list[WorkspaceResponse]:
         self.ensure_personal_workspace(db, current_user)
         workspaces = WorkspaceRepository.list_by_user(db, current_user.id)
         return [self._build_workspace_response(item) for item in workspaces]

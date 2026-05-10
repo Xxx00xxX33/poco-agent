@@ -1367,9 +1367,10 @@ export function ServerConversationPageClient({
   const [channelAgents, setChannelAgents] = React.useState<ServerAgentItem[]>(
     [],
   );
-  const [channelAgentsByChannelId, setChannelAgentsByChannelId] = React.useState<
-    Record<string, ServerAgentItem[]>
-  >(() => cachedServerContext?.channelAgentsByChannelId ?? {});
+  const [channelAgentsByChannelId, setChannelAgentsByChannelId] =
+    React.useState<Record<string, ServerAgentItem[]>>(
+      () => cachedServerContext?.channelAgentsByChannelId ?? {},
+    );
   const [channelMembers, setChannelMembers] = React.useState<
     ServerChannelMemberItem[]
   >([]);
