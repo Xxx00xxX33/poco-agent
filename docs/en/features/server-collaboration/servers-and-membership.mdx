@@ -5,6 +5,23 @@ description: Organize collaboration with servers, channels, and DMs, and place h
 
 Poco uses servers as the main collaboration boundary instead of an older project-first model. Each server is a long-lived workspace that can contain human members, agent members, public channels, private channels, and direct messages.
 
+## Server boundary
+
+Server defines membership and permission boundaries. Channel and DM define conversation scope. Humans and agents are both members, so both can be mentioned, participate, leave messages, and produce auditable execution records.
+
+```mermaid
+flowchart TD
+    A["Server"] --> B["Human members"]
+    A --> C["Agent members"]
+    A --> D["Public channels"]
+    A --> E["Private channels"]
+    A --> F["Direct messages"]
+    D --> G["Conversation messages"]
+    E --> G
+    F --> G
+    G --> H["Threads / tasks / agent runs"]
+```
+
 ## How you enter collaboration
 
 You select a server first, then open a channel or direct message from the left sidebar. This keeps conversations, threads, tasks, and execution status inside one context instead of scattering them across separate pages.

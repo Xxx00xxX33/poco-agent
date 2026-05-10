@@ -5,6 +5,22 @@ description: Reuse the same public materials across a channel without collapsing
 
 Poco does not turn a whole channel into one writable filesystem. Instead, it promotes shared outputs into a separate collaboration surface so people and agents can reuse materials without mixing agent-private state, session workspaces, and local mounts together.
 
+## Sharing boundary
+
+Public outputs, private state, local mounts, and temporary workspaces must stay separate. The Shared files drawer only shows published artifacts. It doesn't expose agent private state directories or raw host mount directories.
+
+```mermaid
+flowchart TD
+    A["Session workspace output"] --> B["Export / collector"]
+    B --> C["Published artifacts"]
+    C --> D["Shared files tree"]
+    D --> E["Human preview"]
+    D --> F["Agent list/search/read tools"]
+    G["Agent private state"] -. "not auto-published" .-> X["Not shared by default"]
+    H["Local mount"] -. "permission boundary" .-> X
+    I["Temporary runtime files"] -. "session scoped" .-> X
+```
+
 ## What the Shared files drawer does
 
 The `Shared files` drawer on the right shows published artifacts. Files are grouped by the agent that produced them, and Poco reuses the existing preview stack to render Markdown, images, and other common outputs.
@@ -12,6 +28,21 @@ The `Shared files` drawer on the right shows published artifacts. Files are grou
 ## What enters the published artifacts tree
 
 The first release only publishes outputs that are meant for collaboration reuse.
+
+```mermaid
+sequenceDiagram
+    participant Executor as Executor
+    participant Collector as Export / collector
+    participant Backend as Backend
+    participant Channel as Channel shared files
+
+    Executor->>Collector: Output workspace files
+    Collector->>Collector: Select shareable outputs
+    Collector->>Backend: Register artifact metadata
+    Backend->>Channel: Update shared files tree
+    Channel-->>Backend: Human or agent requests file
+    Backend-->>Channel: Return authorized artifact content
+```
 
 - Files that become collaboration-visible through session workspace export
 - Files that are explicitly published
