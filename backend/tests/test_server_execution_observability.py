@@ -374,6 +374,63 @@ class ServerExecutionObservabilityTests(unittest.TestCase):
         self.assertEqual(placeholder.content["text"], "Final answer full")
         self.assertEqual(placeholder.text_preview, "Final answer full")
 
+    def test_completed_callback_preserves_existing_full_agent_session_text(
+        self,
+    ) -> None:
+        service = CallbackService.__new__(CallbackService)
+        long_text = "Final answer " * 80
+        summary = long_text[:280]
+        placeholder = ServerChannelMessage(
+            id=uuid.uuid4(),
+            channel_id=self.channel_id,
+            author_user_id=None,
+            message_type="system",
+            content={
+                "source": "agent_session",
+                "session_id": str(self.session_id),
+                "execution_status": "running",
+                "summary": summary,
+                "text": long_text,
+                "actor_label": "API Specialist",
+                "agent_handle": "api-specialist",
+                "agent_visual_key": "preset-visual-01",
+            },
+            text_preview=long_text,
+            thread_root_message_id=None,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        db_session = SimpleNamespace(
+            id=self.session_id,
+            config_snapshot={
+                "channel_id": str(self.channel_id),
+                "agent_identity_id": str(self.agent_id),
+            },
+            state_patch=None,
+        )
+        callback = AgentCallbackRequest(
+            session_id=str(self.session_id),
+            time=datetime.now(UTC),
+            status=CallbackStatus.COMPLETED,
+            progress=100,
+        )
+
+        with patch(
+            "app.services.callback_service.ServerChannelMessageRepository.find_execution_placeholder",
+            return_value=placeholder,
+        ):
+            replaced = service._sync_execution_placeholder_to_server_channel(
+                self.db,
+                db_session=db_session,
+                db_run=None,
+                callback=callback,
+            )
+
+        self.assertTrue(replaced)
+        self.assertEqual(placeholder.content["source"], "agent_session")
+        self.assertEqual(placeholder.content["text"], long_text.strip())
+        self.assertEqual(placeholder.text_preview, long_text.strip())
+
     def test_find_execution_placeholder_prefers_run_id_over_session_only(self) -> None:
         run_id_target = uuid.uuid4()
         trigger_message_id = uuid.uuid4()

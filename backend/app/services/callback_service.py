@@ -473,7 +473,13 @@ class CallbackService:
         elif callback.status == CallbackStatus.FAILED:
             content["summary"] = summary or "Execution failed."
 
-        replacement_text = full_text or summary
+        existing_final_text = ""
+        if content.get("source") == "agent_session":
+            existing_text = content.get("text")
+            if isinstance(existing_text, str):
+                existing_final_text = existing_text.strip()
+
+        replacement_text = full_text or existing_final_text or summary
         if callback.status == CallbackStatus.COMPLETED and replacement_text:
             agent_label = str(content.get("actor_label") or content.get("agent_label") or "Agent")
             placeholder.text_preview = replacement_text

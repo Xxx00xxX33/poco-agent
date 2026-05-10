@@ -52,6 +52,12 @@ import { ServerAgentAvatar } from "./server-agent-avatar";
 const overlayDrawerClassName =
   "absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-border bg-card md:left-[17rem] md:w-auto lg:left-[18rem] xl:static xl:h-full xl:w-full xl:min-w-0 xl:shrink-0";
 
+const drawerHeaderClassName =
+  "flex w-full max-w-full flex-wrap items-center justify-between gap-3 overflow-hidden border-b border-border px-4 py-4 sm:px-6 sm:py-5";
+
+const drawerHeaderActionsClassName =
+  "ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2";
+
 export function ThreadDrawer({
   thread,
   agents,
@@ -152,7 +158,7 @@ export function ThreadDrawer({
 
   return (
     <aside className={overlayDrawerClassName}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
+      <div className={drawerHeaderClassName}>
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"
@@ -305,7 +311,7 @@ export function AgentDrawer({
     : null;
   return (
     <aside className={overlayDrawerClassName}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
+      <div className={drawerHeaderClassName}>
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"
@@ -507,7 +513,7 @@ export function ExecutionDrawer({
 
   return (
     <aside className={overlayDrawerClassName}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
+      <div className={drawerHeaderClassName}>
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"
@@ -523,7 +529,7 @@ export function ExecutionDrawer({
             {t("conversationView.execution.title")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={drawerHeaderActionsClassName}>
           <Button
             type="button"
             variant="outline"
@@ -574,7 +580,7 @@ export function TaskDrawer({
   const { t } = useT("translation");
   return (
     <aside className={overlayDrawerClassName}>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-5">
+      <div className={drawerHeaderClassName}>
         <div className="flex min-w-0 items-center gap-3">
           <Button
             type="button"
