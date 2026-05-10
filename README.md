@@ -60,7 +60,7 @@ A safer, more beautiful, and easier-to-use OpenClaw alternative
 
 |                                            Channel Collaboration                                            |                                         Shared Files                                         |
 | :---------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------: |
-|                    ![Channel collaboration](docs/assets/channel-agent-collaboration.jpg)                    |                     ![Shared files](docs/assets/channel-shared-file.jpg)                     |
+|                   ![Channel collaboration](assets/images/channel-agent-collaboration.jpg)                   |                    ![Shared files](assets/images/channel-shared-file.jpg)                    |
 | Start from a channel message, mention a persistent agent, and follow task progress in the execution drawer. | Published artifacts are grouped by agent so teammates and agents can reuse the same outputs. |
 
 |                                                    Project Settings                                                    |                                          Preset Editor                                           |

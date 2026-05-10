@@ -58,7 +58,7 @@
 
 |                                   频道协作                                   |                                  共享文件                                   |
 | :--------------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
-|           ![频道协作](docs/assets/channel-agent-collaboration.jpg)           |            ![Shared files](docs/assets/channel-shared-file.jpg)             |
+|          ![频道协作](assets/images/channel-agent-collaboration.jpg)          |           ![Shared files](assets/images/channel-shared-file.jpg)            |
 | 从频道消息出发，提及持久化 Agent，并在 execution drawer 中查看任务执行进度。 | 已发布 artifacts 会按 Agent 分组，方便团队成员和其他 Agent 复用同一批成果。 |
 
 |                               项目设置                                |                               Preset 编辑                               |
